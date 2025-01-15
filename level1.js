@@ -1,3 +1,13 @@
+// Main game configuration 
+const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+let tiltValue = 0;
+
+if (isMobile && window.DeviceOrientationEvent) {
+    window.addEventListener('deviceorientation', (event) => {
+        tiltValue = event.gamma || 0; // Gamma measures left-right tilt (-90 to 90)
+    });
+}
+
 export default class Level1 extends Phaser.Scene {
     constructor() {
         super({ key: 'Level1' });
@@ -103,159 +113,49 @@ export default class Level1 extends Phaser.Scene {
         this.playerHealth = 10;
         this.maxHealth = 10;
     
-        // Health bar graphics
-        
-    
-        
-    
-        // Collision handlers
-        this.physics.add.collider(this.player, this.enemies, this.handlePlayerEnemyCollision, null, this);
-        this.physics.add.collider(this.projectiles, this.enemies, this.handleProjectileEnemyCollision, null, this);
-        this.physics.add.collider(this.enemies, this.platforms);
-
         this.updateHealthUI(); // Initialize health bar
         this.updateEnemyCountUI(); // Initialize enemy count
 
-    }
-    
-    spawnEnemy() {
-        const { width, height } = this.scale;
-        const spawnLocation = Phaser.Math.Between(0, 2);
-        const x = spawnLocation === 0 ? Phaser.Math.Between(50, width - 50) : spawnLocation === 1 ? 0 : width;
-        const y = spawnLocation === 0 ? 0 : Phaser.Math.Between(50, height - 100);
-
-        const enemy = this.enemies.create(x, y, 'skeleton');
-        enemy.setCollideWorldBounds(true);
-        enemy.setBounce(0.2);
-        enemy.isJumping = false;
-
-        this.time.addEvent({
-            delay: 500,
-            callback: () => this.enemyAI(enemy),
-            loop: true,
-        });
-    }
-
-    enemyAI(enemy) {
-        if (!enemy.body || !this.player.body) return;
-        const playerX = this.player.x;
-
-        if (enemy.x < playerX - 10) {
-            enemy.setVelocityX(100);
-            enemy.setFlipX(false);
-        } else if (enemy.x > playerX + 10) {
-            enemy.setVelocityX(-100);
-            enemy.setFlipX(true);
-        } else {
-            enemy.setVelocityX(0);
-        }
-
-        if (Phaser.Math.Between(0, 100) < 20 && enemy.body.touching.down && Math.abs(enemy.x - playerX) < 200) {
-            enemy.setVelocityY(-300);
-        }
-    }
-
-    handlePlayerEnemyCollision(player, enemy) {
-        enemy.destroy();
-        this.playerHealth--;
-    
-        // Update health bar
-        this.updateHealthUI();
-
-    
-        if (this.playerHealth <= 0) {
-            this.gameOver();
-        }
-    }
-
-    handleProjectileEnemyCollision(projectile, enemy) {
-        projectile.destroy();
-        enemy.destroy();
-        this.totalEnemiesDefeated++;
-    
-        // Spawn a health pack after 12 enemies are defeated
-        if (this.totalEnemiesDefeated === 12) {
-            this.spawnHealthPack();
-        }
-    
-        // Update enemy countdown
-        this.updateEnemyCountUI();
-
-    
-        if (this.totalEnemiesDefeated >= 20) {
-            this.levelComplete();
-        }
-    }
-    
-    gameOver() {
-        // Stop background music
-        if (this.levelMusic) this.levelMusic.stop();
-    
-        // Stop spawning enemies
-        if (this.enemySpawnTimer) this.enemySpawnTimer.remove();
-    
-        // Safely clear enemies and projectiles
-        this.enemies.clear(true, true); // Destroys all active enemies
-        this.projectiles.clear(true, true); // Destroys all active projectiles
-    
-        // Display game over screen
-        this.add.image(this.scale.width / 2, this.scale.height / 2, 'gameOver').setOrigin(0.5);
-    
-        // Restart the scene after input
-        this.input.keyboard.once('keydown-SPACE', () => {
-            this.scene.restart();
-        });
-    }
-    
-    levelComplete() {
-        // Stop background music
-        if (this.levelMusic) this.levelMusic.stop();
-    
-        // Stop spawning enemies
-        if (this.enemySpawnTimer) this.enemySpawnTimer.remove();
-    
-        // Safely clear enemies and projectiles
-        this.enemies.clear(true, true); // Destroys all active enemies
-        this.projectiles.clear(true, true); // Destroys all active projectiles
-    
-        // Display level complete screen
-        this.add.image(this.scale.width / 2, this.scale.height / 2, 'levelComplete').setOrigin(0.5);
-    
-        // Proceed to the next level after input
-        this.input.keyboard.once('keydown-SPACE', () => {
-            this.scene.start('Level2'); // Assuming Level2 is the next scene
+        // Touch input for mobile
+        this.input.on('pointerdown', (pointer) => {
+            if (pointer.downY > pointer.upY + 50) {
+                // Swipe up to jump
+                if (this.player.body.touching.down) {
+                    this.player.setVelocityY(-500);
+                }
+            } else {
+                // Tap to attack
+                this.fireProjectile();
+            }
         });
     }
     
     update() {
-        if (!this.player || !this.cursors) return;
-        this.player.setVelocityX(0);
+        // Movement
+        if (isMobile) {
+            const sensitivity = 5;
+            this.player.setVelocityX(tiltValue * sensitivity);
 
-        if (this.cursors.left.isDown) {
-            this.player.setVelocityX(-160);
-            this.player.setFlipX(true);
-            if (!this.isJumping) this.player.play('walk', true);
-        } else if (this.cursors.right.isDown) {
-            this.player.setVelocityX(160);
-            this.player.setFlipX(false);
-            if (!this.isJumping) this.player.play('walk', true);
-        } else if (this.player.body.touching.down && !this.isJumping) {
-            this.player.play('idle', true);
-        }
+            if (tiltValue > 0) this.player.setFlipX(false);
+            else if (tiltValue < 0) this.player.setFlipX(true);
+        } else {
+            this.player.setVelocityX(0);
 
-        if (this.cursors.up.isDown && this.player.body.touching.down && !this.isJumping) {
-            this.isJumping = true;
-            this.player.setVelocityY(-500);
-            this.player.play('jump', true);
-        }
+            if (this.cursors.left.isDown) {
+                this.player.setVelocityX(-160);
+                this.player.setFlipX(true);
+            } else if (this.cursors.right.isDown) {
+                this.player.setVelocityX(160);
+                this.player.setFlipX(false);
+            }
 
-        if (this.player.body.touching.down && this.isJumping) {
-            this.isJumping = false;
-            this.player.play('idle', true);
-        }
+            if (this.cursors.up.isDown && this.player.body.touching.down) {
+                this.player.setVelocityY(-500); // Jump for desktop
+            }
 
-        if (Phaser.Input.Keyboard.JustDown(this.fireKey)) {
-            this.fireProjectile();
+            if (Phaser.Input.Keyboard.JustDown(this.fireKey)) {
+                this.fireProjectile(); // Attack for desktop
+            }
         }
     }
 
@@ -269,30 +169,60 @@ export default class Level1 extends Phaser.Scene {
         }
     }
 
-    spawnHealthPack() {
+    spawnEnemy() {
         const { width } = this.scale;
-    
-        // Random horizontal position for the health pack
         const x = Phaser.Math.Between(50, width - 50);
-    
-        // Create the health pack slightly above the ground so it falls naturally
-        const healthPack = this.healthPacks.create(x, 50, 'healthPack'); // Start at a higher y position
-        healthPack.setBounce(0.5); // Add a bounce for visual effect
-        healthPack.setCollideWorldBounds(true);
-    
-        // Add collision with platforms so the health pack lands on them
-        this.physics.add.collider(healthPack, this.platforms);
+        const enemy = this.enemies.create(x, 0, 'skeleton');
+        enemy.setCollideWorldBounds(true);
+        enemy.setBounce(1);
+    }
+
+    handlePlayerEnemyCollision(player, enemy) {
+        enemy.destroy();
+        this.playerHealth--;
+        this.updateHealthUI();
+
+        if (this.playerHealth <= 0) this.gameOver();
+    }
+
+    handleProjectileEnemyCollision(projectile, enemy) {
+        projectile.destroy();
+        enemy.destroy();
+        this.totalEnemiesDefeated++;
+        this.updateEnemyCountUI();
+
+        if (this.totalEnemiesDefeated >= 20) this.levelComplete();
     }
 
     handlePlayerHealthPackCollision(player, healthPack) {
-        healthPack.destroy(); // Remove the health pack
-    
-        // Increase player's health by 5, but not beyond the maximum
+        healthPack.destroy();
         this.playerHealth = Math.min(this.playerHealth + 5, this.maxHealth);
-    
-        // Update health bar
         this.updateHealthUI();
-
     }
-    
+
+    gameOver() {
+        if (this.levelMusic) this.levelMusic.stop();
+        if (this.enemySpawnTimer) this.enemySpawnTimer.remove();
+
+        this.enemies.clear(true, true);
+        this.projectiles.clear(true, true);
+
+        this.add.image(this.scale.width / 2, this.scale.height / 2, 'gameOver').setOrigin(0.5);
+        this.input.keyboard.once('keydown-SPACE', () => {
+            this.scene.restart();
+        });
+    }
+
+    levelComplete() {
+        if (this.levelMusic) this.levelMusic.stop();
+        if (this.enemySpawnTimer) this.enemySpawnTimer.remove();
+
+        this.enemies.clear(true, true);
+        this.projectiles.clear(true, true);
+
+        this.add.image(this.scale.width / 2, this.scale.height / 2, 'levelComplete').setOrigin(0.5);
+        this.input.keyboard.once('keydown-SPACE', () => {
+            this.scene.start('Level2');
+        });
+    }
 }
