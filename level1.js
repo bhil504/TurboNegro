@@ -158,29 +158,34 @@ export default class Level1 extends Phaser.Scene {
     }
 
     enemyAI(enemy) {
-        if (!enemy || !this.player) return;
-
+        // Ensure the enemy and player exist, and the enemy has a valid body
+        if (!enemy || !enemy.body || !this.player || !this.player.body) {
+            console.warn("Invalid enemy or player object in enemyAI.");
+            return;
+        }
+    
         const playerX = this.player.x;
-
+    
+        // Horizontal movement logic
         if (enemy.x < playerX - 10) {
-            enemy.setVelocityX(50);
-            enemy.setFlipX(false);
+            enemy.setVelocityX(50); // Move right
+            enemy.setFlipX(false);  // Face right
         } else if (enemy.x > playerX + 10) {
-            enemy.setVelocityX(-50);
-            enemy.setFlipX(true);
+            enemy.setVelocityX(-50); // Move left
+            enemy.setFlipX(true);   // Face left
         } else {
-            enemy.setVelocityX(0);
+            enemy.setVelocityX(0); // Stop moving when close to player
         }
-
-        // Enemy jumping behavior
+    
+        // Jumping behavior
         if (
-            Phaser.Math.Between(0, 100) < 20 &&
-            enemy.body.touching.down &&
-            Math.abs(enemy.x - playerX) < 200
+            Phaser.Math.Between(0, 100) < 20 && // 20% chance to jump
+            enemy.body.touching.down &&        // Only jump if touching the ground
+            Math.abs(enemy.x - playerX) < 200  // Jump only if within 200 pixels of the player
         ) {
-            enemy.setVelocityY(-300);
+            enemy.setVelocityY(-300); // Jump velocity
         }
-    }
+    }    
 
     handlePlayerEnemyCollision(player, enemy) {
         enemy.destroy();
