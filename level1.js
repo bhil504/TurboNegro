@@ -3,6 +3,15 @@ export default class Level1 extends Phaser.Scene {
         super({ key: 'Level1' });
     }
 
+    updateHealthUI() {
+        const healthPercentage = (this.playerHealth / this.maxHealth) * 100;
+        document.getElementById('health-bar-inner').style.width = `${healthPercentage}%`;
+    }
+    
+    updateEnemyCountUI() {
+        document.getElementById('enemy-count').innerText = `Enemies Left: ${20 - this.totalEnemiesDefeated}`;
+    }
+    
     preload() {
         console.log("Preloading assets...");
         this.load.image('level1Background', 'assets/Levels/BackGrounds/Level1.png');
@@ -95,37 +104,20 @@ export default class Level1 extends Phaser.Scene {
         this.maxHealth = 10;
     
         // Health bar graphics
-        this.healthBar = this.add.graphics();
-        this.updateHealthBar();
+        
     
-        // Enemy countdown
-        this.enemyCountdown = this.add.text(width - 200, 20, `Enemies Left: ${20 - this.totalEnemiesDefeated}`, {
-            fontSize: '20px',
-            fill: '#fff',
-            backgroundColor: '#000', // Add background for better visibility
-        });
+        
     
         // Collision handlers
         this.physics.add.collider(this.player, this.enemies, this.handlePlayerEnemyCollision, null, this);
         this.physics.add.collider(this.projectiles, this.enemies, this.handleProjectileEnemyCollision, null, this);
         this.physics.add.collider(this.enemies, this.platforms);
-    }
-    
-    updateHealthBar() {
-        this.healthBar.clear();
-        const barWidth = 200;
-        const barHeight = 20;
-        const healthPercentage = this.playerHealth / this.maxHealth;
-    
-        // Background bar
-        this.healthBar.fillStyle(0x808080); // Gray background
-        this.healthBar.fillRect(20, 20, barWidth, barHeight);
-    
-        // Health bar (green)
-        this.healthBar.fillStyle(0x00ff00); // Green
-        this.healthBar.fillRect(20, 20, barWidth * healthPercentage, barHeight);
-    }
 
+        this.updateHealthUI(); // Initialize health bar
+        this.updateEnemyCountUI(); // Initialize enemy count
+
+    }
+    
     spawnEnemy() {
         const { width, height } = this.scale;
         const spawnLocation = Phaser.Math.Between(0, 2);
@@ -168,7 +160,8 @@ export default class Level1 extends Phaser.Scene {
         this.playerHealth--;
     
         // Update health bar
-        this.updateHealthBar();
+        this.updateHealthUI();
+
     
         if (this.playerHealth <= 0) {
             this.gameOver();
@@ -186,7 +179,8 @@ export default class Level1 extends Phaser.Scene {
         }
     
         // Update enemy countdown
-        this.enemyCountdown.setText(`Enemies Left: ${20 - this.totalEnemiesDefeated}`);
+        this.updateEnemyCountUI();
+
     
         if (this.totalEnemiesDefeated >= 20) {
             this.levelComplete();
@@ -212,7 +206,6 @@ export default class Level1 extends Phaser.Scene {
             this.scene.restart();
         });
     }
-    
     
     levelComplete() {
         // Stop background music
@@ -298,7 +291,8 @@ export default class Level1 extends Phaser.Scene {
         this.playerHealth = Math.min(this.playerHealth + 5, this.maxHealth);
     
         // Update health bar
-        this.updateHealthBar();
+        this.updateHealthUI();
+
     }
     
 }

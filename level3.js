@@ -3,12 +3,21 @@ export default class Level3 extends Phaser.Scene {
         super({ key: 'Level3' });
     }
 
+    updateHealthUI() {
+        const healthPercentage = (this.playerHealth / this.maxHealth) * 100;
+        document.getElementById('health-bar-inner').style.width = `${healthPercentage}%`;
+    }
+
+    updateEnemyCountUI() {
+        document.getElementById('enemy-count').innerText = `Enemies Left: ${40 - this.totalEnemiesDefeated}`;
+    }
+
     preload() {
         console.log("Preloading assets for Level 3...");
         this.load.image('level3Background', 'assets/Levels/BackGrounds/Level3.png');
         this.load.image('ledgeLeft', 'assets/Levels/Platforms/LedgeLeft.png');
         this.load.image('ledgeRight', 'assets/Levels/Platforms/LedgeRight.png');
-        this.load.image('balcony', 'assets/Levels/Platforms/Balcony.png');
+        this.load.image('platform', 'assets/Levels/Platforms/platform.png');
         this.load.image('turboNegroWalking', 'assets/Characters/Character1/TurboNegroWalking.png');
         this.load.image('turboNegroStanding1', 'assets/Characters/Character1/TurboNegroStanding/TurboNegroStanding1.png');
         this.load.image('turboNegroStanding2', 'assets/Characters/Character1/TurboNegroStanding/TurboNegroStanding2.png');
@@ -24,58 +33,47 @@ export default class Level3 extends Phaser.Scene {
 
     create() {
         const { width, height } = this.scale;
-    
         console.log("Creating Level 3...");
-    
-        // Background setup
+
         this.add.image(800, height / 2, 'level3Background')
             .setDisplaySize(1600, height)
             .setOrigin(0.5);
-    
-        // Background music
+
         this.levelMusic = this.sound.add('level3Music', { loop: true, volume: 0.2 });
         this.levelMusic.play();
-    
-        // Set up physics bounds and camera
+
         this.cameras.main.setBounds(0, 0, 1600, height);
         this.physics.world.setBounds(0, 0, 1600, height);
-    
-        // Platforms
+
         this.platforms = this.physics.add.staticGroup();
-    
-        // Invisible ground
         this.platforms.create(800, height - 12, null)
             .setDisplaySize(1600, 20)
             .setVisible(false)
             .refreshBody();
-    
-        // Left ledge platform
+
         this.platforms.create(100, height - 230, null)
             .setDisplaySize(200, 10)
             .setVisible(false)
             .refreshBody();
-        this.add.image(100, height - 180, 'ledgeLeft').setOrigin(0.5, 1).setScale(0.8);
-    
-        // Right ledge platform
+        this.add.image(100, height - 180, 'ledgeLeft').setOrigin(0.5, 1).setScale(0.8).setDepth(2);
+
         this.platforms.create(1500, height - 230, null)
             .setDisplaySize(200, 10)
             .setVisible(false)
             .refreshBody();
-        this.add.image(1500, height - 180, 'ledgeRight').setOrigin(0.5, 1).setScale(0.8);
-    
-        // Center balcony platform
-        this.platforms.create(800, height - 325, null)
-            .setDisplaySize(300, 10) // Adjusted width to better match the balcony
+        this.add.image(1500, height - 180, 'ledgeRight').setOrigin(0.5, 1).setScale(0.8).setDepth(2);
+
+        this.platforms.create(800, height - 165, null)
+            .setDisplaySize(300, 10)
             .setVisible(false)
             .refreshBody();
-        this.add.image(800, height - 260, 'balcony').setOrigin(0.5, 1);
-    
-        // Player setup
+        this.add.image(800, height - 148, 'platform').setOrigin(0.5, 1).setDepth(2);
+
         this.player = this.physics.add.sprite(200, height - 100, 'turboNegroStanding1');
         this.player.setCollideWorldBounds(true);
         this.physics.add.collider(this.player, this.platforms);
-    
-        // Animations
+        this.player.setDepth(1);
+
         this.anims.create({
             key: 'idle',
             frames: [
@@ -88,58 +86,83 @@ export default class Level3 extends Phaser.Scene {
             repeat: -1,
         });
         this.anims.create({ key: 'walk', frames: [{ key: 'turboNegroWalking' }], frameRate: 8, repeat: -1 });
-    
-        // Input setup
+
         this.cursors = this.input.keyboard.createCursorKeys();
         this.fireKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
-    
-        // Projectiles
-        this.projectiles = this.physics.add.group({ defaultKey: 'projectileCD' });
-        this.enemyProjectiles = this.physics.add.group({ defaultKey: 'Beads' });
-    
-        // Camera follow
+
+        this.projectiles = this.physics.add.group({ 
+            defaultKey: 'projectileCD', 
+            collideWorldBounds: false,
+            runChildUpdate: true, 
+        });
+        this.enemyProjectiles = this.physics.add.group();
+        this.enemies = this.physics.add.group();
+        this.trumpetEnemies = this.physics.add.group();
+        this.healthPacks = this.physics.add.group();
+
+        this.playerHealth = 10;
+        this.maxHealth = 10;
+        this.updateHealthUI();
+
+        this.totalEnemiesDefeated = 0;
+        this.updateEnemyCountUI();
+
         this.cameras.main.startFollow(this.player);
-    
-        // Add Mardi Gras Blimp
-        this.mardiGrasBlimp = this.physics.add.sprite(-100, 50, 'MardiGrasBlimp');
-        this.mardiGrasBlimp.setVelocityX(100); // Moves across the screen
-        this.mardiGrasBlimp.body.allowGravity = false; // No gravity
-        this.mardiGrasBlimp.setDepth(2); // Set on top layer
-    
-        // Disable collisions between the blimp and platforms
-        this.physics.add.collider(this.mardiGrasBlimp, this.platforms, null, () => false);
-    
-        // Fire beads every 5 seconds
-        this.time.addEvent({
-            delay: 5000,
-            loop: true,
-            callback: this.fireBeads,
-            callbackScope: this,
-        });
-    
-        // Respawn Blimp every 7 seconds
-        this.time.addEvent({
-            delay: 7000,
-            loop: true,
-            callback: this.spawnBlimp,
-            callbackScope: this,
-        });
-    
-        // Collisions
-        this.physics.add.collider(this.projectiles, this.mardiGrasBlimp, this.destroyBlimp, null, this);
+
+        this.createBlimpPath();
+
+        this.physics.add.overlap(this.projectiles, this.mardiGrasBlimp, this.destroyBlimp, null, this);
         this.physics.add.overlap(this.enemyProjectiles, this.player, this.handleBeadCollision, null, this);
-    
+        this.physics.add.collider(this.enemies, this.platforms);
+        this.physics.add.collider(this.trumpetEnemies, this.platforms);
+        this.physics.add.collider(this.player, this.trumpetEnemies, this.handleTrumpetSkeletonCollision, null, this);
+        this.physics.add.collider(this.player, this.enemies, this.handlePlayerEnemyCollision, null, this);
+        this.physics.add.collider(this.projectiles, this.enemies, this.handleProjectileEnemyCollision, null, this);
+        this.physics.add.collider(this.projectiles, this.trumpetEnemies, this.handleProjectileEnemyCollision, null, this);
+        this.physics.add.collider(this.healthPacks, this.platforms);
+        this.physics.add.overlap(this.player, this.healthPacks, this.handlePlayerHealthPackCollision, null, this);
+
+        this.enemySpawnTimer = this.time.addEvent({
+            delay: 2000,
+            callback: this.spawnMardiGrasZombie,
+            callbackScope: this,
+            loop: true,
+        });
+
+        this.trumpetSpawnTimer = this.time.addEvent({
+            delay: 3000, 
+            callback: this.spawnTrumpetSkeleton,
+            callbackScope: this,
+            loop: true,
+        });
+
+        // Collision for Mardi Gras Zombie
+        this.physics.add.collider(
+            this.player,
+            this.enemies,
+            this.handlePlayerEnemyCollision,
+            null,
+            this
+        );
+
+        // Collision for Trumpet Skeleton
+        this.physics.add.collider(
+            this.player,
+            this.trumpetEnemies,
+            this.handleTrumpetSkeletonCollision,
+            null,
+            this
+        );
+
+
         console.log("Level 3 setup complete.");
     }
-    
-    
+
     update() {
         if (!this.player || !this.cursors) return;
-    
-        // Reset player velocity
+
         this.player.setVelocityX(0);
-    
-        // Left and right movement
+
         if (this.cursors.left.isDown) {
             this.player.setVelocityX(-160);
             this.player.setFlipX(true);
@@ -151,136 +174,373 @@ export default class Level3 extends Phaser.Scene {
         } else if (this.player.body.touching.down) {
             this.player.play('idle', true);
         }
-    
-        // Jumping
+
         if (this.cursors.up.isDown && this.player.body.touching.down) {
             this.player.setVelocityY(-500);
             console.log("Player jumps!");
         }
-    
-        // Fire projectile
+
         if (Phaser.Input.Keyboard.JustDown(this.fireKey)) {
             this.fireProjectile();
         }
-    
-        // Check blimp position and reset if it goes off the right edge
-        if (this.mardiGrasBlimp.x > 1600) {
-            // Reset blimp to the left side and randomize its height
-            this.mardiGrasBlimp.setPosition(-100, Phaser.Math.Between(50, 150));
-            this.mardiGrasBlimp.setVelocityX(100); // Ensure it keeps moving to the right
-        }
     }
-    
+
     fireProjectile() {
         const projectile = this.projectiles.create(this.player.x, this.player.y, 'projectileCD');
         if (projectile) {
             projectile.body.setAllowGravity(false);
             projectile.setVelocityX(this.player.flipX ? -500 : 500);
+            console.log("Projectile fired!");
+
+            projectile.setCollideWorldBounds(false);
+            projectile.body.onWorldBounds = true;
+
+            this.physics.world.on('worldbounds', (body) => {
+                if (body.gameObject === projectile && projectile.active) {
+                    projectile.destroy();
+                    console.log("Projectile destroyed off-screen!");
+                }
+            });
         }
+    }
+
+    handleBeadCollision(player, bead) {
+        if (bead) {
+            bead.destroy();
+            this.playerHealth -= 2;
+            console.log("Player hit by bead! Health -2");
+            this.updateHealthUI();
+
+            if (this.playerHealth <= 0) {
+                this.gameOver();
+            }
+        }
+    }
+
+    destroyBlimp(projectile, blimp) {
+        if (projectile) {
+            projectile.destroy();
+            console.log("Projectile destroyed!");
+        }
+
+        if (blimp) {
+            blimp.destroy();
+            console.log("Blimp destroyed!");
+
+            if (this.fireBeadsTimer) {
+                this.fireBeadsTimer.remove();
+                this.fireBeadsTimer = null;
+            }
+
+            this.time.delayedCall(5000, () => {
+                this.createBlimpPath();
+            });
+        }
+    }
+
+    handlePlayerEnemyCollision(player, enemy) {
+        if (enemy && enemy.active) {
+            enemy.destroy(); // Destroy enemy
+            this.playerHealth -= 1; // Decrease player health
+            console.log("Player hit by Mardi Gras Zombie! Health -1");
+    
+            this.updateHealthUI(); // Update health bar UI
+            if (this.playerHealth <= 0) {
+                this.gameOver(); // End the game if health reaches 0
+            }
+        }
+    }
+
+    handleProjectileEnemyCollision(projectile, enemy) {
+        if (projectile && projectile.active) {
+            projectile.destroy();
+            console.log("Projectile destroyed!");
+        }
+
+        if (enemy && enemy.active) {
+            console.log(`Enemy destroyed: ${enemy.texture.key}`);
+            enemy.destroy();
+
+            this.totalEnemiesDefeated++;
+            console.log(`Total Enemies Defeated: ${this.totalEnemiesDefeated}`);
+
+            this.updateEnemyCountUI();
+
+            if (this.totalEnemiesDefeated % 12 === 0) {
+                this.spawnHealthPack();
+                console.log("Health pack spawned!");
+            }
+
+            if (this.totalEnemiesDefeated >= 40) {
+                console.log("Level Complete Triggered!");
+                this.levelComplete();
+            }
+        }
+    }
+
+    spawnHealthPack() {
+        const { width } = this.scale;
+        const x = Phaser.Math.Between(50, width - 50);
+        const healthPack = this.healthPacks.create(x, 50, 'healthPack');
+        healthPack.setBounce(0.5);
+        healthPack.setCollideWorldBounds(true);
+        console.log("Health pack spawned at:", x);
+    }
+
+    handlePlayerHealthPackCollision(player, healthPack) {
+        healthPack.destroy();
+        this.playerHealth = Math.min(this.playerHealth + 5, this.maxHealth);
+        this.updateHealthUI();
+        console.log("Health pack collected! Health +5");
+    }
+
+    levelComplete() {
+        console.log("Level Complete!");
+        if (this.levelMusic) this.levelMusic.stop();
+        if (this.enemySpawnTimer) this.enemySpawnTimer.remove();
+        if (this.trumpetSpawnTimer) this.trumpetSpawnTimer.remove();
+        if (this.fireBeadsTimer) this.fireBeadsTimer.remove();
+        this.enemies.clear(true, true);
+        this.trumpetEnemies.clear(true, true);
+        this.projectiles.clear(true, true);
+        if (this.mardiGrasBlimp) {
+            this.mardiGrasBlimp.destroy();
+            this.mardiGrasBlimp = null;
+        }
+        this.add.image(this.scale.width / 2, this.scale.height / 2, 'levelComplete').setOrigin(0.5);
+    
+        this.input.keyboard.once('keydown-SPACE', () => {
+            this.scene.start('Level4');
+        });
+    }   
+    
+    gameOver() {
+        console.log("Game Over!");
+        if (this.levelMusic) this.levelMusic.stop();
+        if (this.enemySpawnTimer) this.enemySpawnTimer.remove();
+        if (this.trumpetSpawnTimer) this.trumpetSpawnTimer.remove();
+        if (this.fireBeadsTimer) this.fireBeadsTimer.remove();
+        this.enemies.clear(true, true);
+        this.trumpetEnemies.clear(true, true);
+        this.projectiles.clear(true, true);
+        if (this.mardiGrasBlimp) {
+            this.mardiGrasBlimp.destroy();
+            this.mardiGrasBlimp = null;
+        }
+        this.add.image(this.scale.width / 2, this.scale.height / 2, 'gameOver').setOrigin(0.5);
+    
+        this.input.keyboard.once('keydown-SPACE', () => {
+            this.scene.restart();
+        });
+    }       
+
+    updateHealthBar() {
+        if (!this.healthBar) return;
+
+        this.healthBar.clear();
+
+        const barWidth = 200;
+        const barHeight = 20;
+        const healthPercentage = Phaser.Math.Clamp(this.playerHealth / this.maxHealth, 0, 1);
+
+        const barColor = healthPercentage > 0.5 ? 0x00ff00 : healthPercentage > 0.25 ? 0xffff00 : 0xff0000;
+
+        this.healthBar.fillStyle(0x808080);
+        this.healthBar.fillRect(20, 20, barWidth, barHeight);
+
+        this.healthBar.fillStyle(barColor);
+        this.healthBar.fillRect(20, 20, barWidth * healthPercentage, barHeight);
+    }
+
+    createBlimpPath() {
+    const path = [
+        { x: 100, y: 50 },
+        { x: 1400, y: 100 },
+        { x: 1200, y: 500 },
+        { x: 200, y: 400 },
+    ];
+
+    let currentPoint = 0;
+
+    const moveBlimp = () => {
+        if (!this.mardiGrasBlimp || !this.mardiGrasBlimp.active) {
+            return; // Exit if the blimp no longer exists
+        }
+
+        const nextPoint = path[currentPoint];
+        this.tweens.add({
+            targets: this.mardiGrasBlimp,
+            x: nextPoint.x,
+            y: nextPoint.y,
+            duration: 3000,
+            ease: 'Linear',
+            onComplete: () => {
+                currentPoint = (currentPoint + 1) % path.length;
+                moveBlimp(); // Continue moving the blimp
+            },
+        });
+    };
+
+    if (this.mardiGrasBlimp) {
+        this.mardiGrasBlimp.destroy();
+    }
+
+    this.mardiGrasBlimp = this.physics.add.sprite(path[0].x, path[0].y, 'MardiGrasBlimp');
+    this.mardiGrasBlimp.setDepth(3);
+    this.mardiGrasBlimp.body.setAllowGravity(false);
+    this.mardiGrasBlimp.body.setImmovable(true);
+
+    moveBlimp();
+
+    this.physics.add.overlap(
+        this.projectiles,
+        this.mardiGrasBlimp,
+        this.destroyBlimp,
+        null,
+        this
+    );
+
+    if (this.fireBeadsTimer) {
+        this.fireBeadsTimer.remove();
+    }
+
+    this.fireBeadsTimer = this.time.addEvent({
+        delay: 5000,
+        loop: true,
+        callback: this.fireBeads,
+        callbackScope: this,
+    });
     }
 
     fireBeads() {
         if (this.mardiGrasBlimp.active) {
             const bead = this.enemyProjectiles.create(this.mardiGrasBlimp.x, this.mardiGrasBlimp.y, 'Beads');
             bead.body.setAllowGravity(false);
-    
-            // Aim at the player
-            const angle = Phaser.Math.Angle.Between(this.mardiGrasBlimp.x, this.mardiGrasBlimp.y, this.player.x, this.player.y);
+
+            const angle = Phaser.Math.Angle.Between(
+                this.mardiGrasBlimp.x,
+                this.mardiGrasBlimp.y,
+                this.player.x,
+                this.player.y
+            );
             bead.setVelocity(Math.cos(angle) * 300, Math.sin(angle) * 300);
         }
-    }
-    
-    spawnBlimp() {
-        if (this.blimpRespawning) return; // Prevent duplicate spawns
-        this.blimpRespawning = false; // Reset respawn flag
-
-        // Reset blimp properties
-        this.mardiGrasBlimp.setPosition(-100, Phaser.Math.Between(50, 150));
-        this.mardiGrasBlimp.setActive(true);
-        this.mardiGrasBlimp.setVisible(true);
-        this.mardiGrasBlimp.setVelocityX(100); // Restart its movement
-
-        // Reapply the collider to ensure no collision with platforms
-        this.physics.add.collider(this.mardiGrasBlimp, this.platforms, null, () => false);
-
-        console.log("Blimp respawned!");
-    }
-    
-    
-    destroyBlimp(projectile, blimp) {
-        if (projectile) projectile.destroy();
-    
-        if (blimp) {
-            blimp.setActive(false);
-            blimp.setVisible(false);
-            blimp.body.setVelocity(0);
-            blimp.body.checkCollision.none = true; // Ensure all collision checks are disabled
-            blimp.setPosition(-100, -100); // Move it offscreen
-        }
-    
-        console.log("Blimp destroyed!");
-    
-        // Set the respawn flag and schedule respawn
-        this.blimpRespawning = true;
-        this.time.delayedCall(5000, () => {
-            this.spawnBlimp();
-        });
-    }
-    
-    handleBeadCollision(player, bead) {
-        bead.destroy();
-        console.log("Player hit by beads! Health -3");
-        // Add health reduction logic here
     }
 
     spawnMardiGrasZombie() {
         const { width } = this.scale;
         const x = Phaser.Math.Between(50, width - 50);
-        const enemy = this.enemies.create(x, 0, 'skeleton');
-        enemy.setCollideWorldBounds(true).setBounce(0.2);
 
-        // Enemy AI from Level 2
+        const zombie = this.enemies.create(x, 0, 'skeleton');
+        zombie.setCollideWorldBounds(true);
+        zombie.setBounce(0.2);
+        zombie.setVelocityX(Phaser.Math.Between(-100, 100));
+
         this.time.addEvent({
             delay: 500,
-            callback: () => this.enemyAI(enemy),
+            callback: () => {
+                if (zombie && zombie.active) {
+                    this.zombieAI(zombie);
+                }
+            },
             loop: true,
         });
     }
 
     spawnTrumpetSkeleton() {
-        const { width } = this.scale;
-        const x = Math.random() < 0.5 ? 0 : width;
-        const enemy = this.trumpetEnemies.create(x, 0, 'trumpetSkeleton');
-        enemy.setCollideWorldBounds(true);
-
-        // Enemy AI from Level 2
+        const { width, height } = this.scale;
+        const x = Math.random() < 0.5 ? 0 : width; // Spawn on the left or right edge
+        const y = height - 150; // Near the ground level
+    
+        const trumpetSkeleton = this.trumpetEnemies.create(x, y, 'trumpetSkeleton');
+        trumpetSkeleton.setCollideWorldBounds(true);
+        trumpetSkeleton.body.allowGravity = true;
+    
+        // Add jumping behavior
+        trumpetSkeleton.isLanded = true;
+    
         this.time.addEvent({
-            delay: 500,
-            callback: () => this.enemyAI(enemy),
+            delay: 1500, // Jump every 1.5 seconds if landed
             loop: true,
+            callback: () => {
+                if (trumpetSkeleton.active && trumpetSkeleton.body && trumpetSkeleton.isLanded) {
+                    trumpetSkeleton.setVelocityY(-300); // Jump height
+                    const direction = this.player.x > trumpetSkeleton.x ? 150 : -150; // Move toward player
+                    trumpetSkeleton.setVelocityX(direction); // Adjust velocity
+                    trumpetSkeleton.isLanded = false; // Mark as jumping
+                }
+            },
+        });
+    
+        // Detect landing on platforms
+        this.physics.add.collider(trumpetSkeleton, this.platforms, () => {
+            trumpetSkeleton.setVelocityX(0);
+            trumpetSkeleton.isLanded = true;
+        });
+    
+        // Attack player when near
+        this.time.addEvent({
+            delay: 1000, // Attack every 1 second
+            loop: true,
+            callback: () => {
+                if (
+                    trumpetSkeleton.active &&
+                    trumpetSkeleton.body &&
+                    trumpetSkeleton.isLanded &&
+                    Phaser.Math.Distance.Between(this.player.x, this.player.y, trumpetSkeleton.x, trumpetSkeleton.y) < 150
+                ) {
+                    this.trumpetSkeletonAttack(trumpetSkeleton);
+                }
+            },
         });
     }
 
-    enemyAI(enemy) {
-        if (!enemy.active) return;
-
+    zombieAI(zombie) {
+        if (!zombie || !zombie.body || !this.player || !this.player.body) return;
+    
         const playerX = this.player.x;
-
-        if (enemy.x < playerX - 10) {
-            enemy.setVelocityX(100);
-        } else if (enemy.x > playerX + 10) {
-            enemy.setVelocityX(-100);
+    
+        if (zombie.x < playerX - 10) {
+            zombie.setVelocityX(100);
+            zombie.setFlipX(false);
+        } else if (zombie.x > playerX + 10) {
+            zombie.setVelocityX(-100);
+            zombie.setFlipX(true);
         } else {
-            enemy.setVelocityX(0);
+            zombie.setVelocityX(0);
         }
+    
+        if (
+            Phaser.Math.Between(0, 100) < 20 &&
+            zombie.body.touching.down &&
+            Math.abs(zombie.x - playerX) < 200
+        ) {
+            zombie.setVelocityY(-300);
+        }
+    }    
 
-        if (Phaser.Math.Between(0, 100) < 20 && enemy.body.touching.down) {
-            enemy.setVelocityY(-300);
+    handleTrumpetSkeletonCollision(player, trumpetSkeleton) {
+        if (trumpetSkeleton && trumpetSkeleton.active) {
+            trumpetSkeleton.destroy(); // Destroy enemy
+            this.playerHealth -= 1; // Trumpet Skeleton deals more damage
+            console.log("Player hit by Trumpet Skeleton! Health -2");
+    
+            this.updateHealthUI(); // Update health bar UI
+            if (this.playerHealth <= 0) {
+                this.gameOver(); // End the game if health reaches 0
+            }
         }
+    
     }
 
-    handleProjectileEnemyCollision(projectile, enemy) {
-        projectile.destroy();
-        enemy.destroy();
+    trumpetSkeletonAttack(trumpetSkeleton) {
+        console.log('Trumpet Skeleton attacks!');
+        this.playerHealth -= 2; // Inflict 2 points of damage
+        this.updateHealthBar();
+    
+        if (this.playerHealth <= 0) {
+            this.gameOver();
+        }
     }
+    
 }
