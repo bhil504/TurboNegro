@@ -103,27 +103,10 @@ export default class Level1 extends Phaser.Scene {
         this.playerHealth = 10;
         this.maxHealth = 10;
     
-        // Touch input for mobile
-        const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-        let tiltValue = 0;
-
-        if (isMobile && window.DeviceOrientationEvent) {
-            window.addEventListener('deviceorientation', (event) => {
-                tiltValue = event.gamma || 0;
-            });
-        }
-
-        this.input.on('pointerdown', (pointer) => {
-            if (pointer.downY > pointer.upY + 50) {
-                // Swipe up to jump
-                if (this.player.body.touching.down) {
-                    this.player.setVelocityY(-500);
-                }
-            } else {
-                // Tap to attack
-                this.fireProjectile();
-            }
-        });
+        // Health bar graphics
+        
+    
+        
     
         // Collision handlers
         this.physics.add.collider(this.player, this.enemies, this.handlePlayerEnemyCollision, null, this);
@@ -146,61 +129,40 @@ export default class Level1 extends Phaser.Scene {
         enemy.setBounce(0.2);
         enemy.isJumping = false;
 
-        // Add basic enemy behavior
         this.time.addEvent({
             delay: 500,
             callback: () => this.enemyAI(enemy),
             loop: true,
         });
-
-        // Optional: Log enemy spawn details
-        console.log("Enemy spawned at", x, y);
     }
 
     enemyAI(enemy) {
-        // Ensure the enemy and player exist, and the enemy has a valid body
-        if (!enemy || !enemy.body || !this.player || !this.player.body) {
-            console.warn("Invalid enemy or player object in enemyAI.");
-            return;
-        }
-    
+        if (!enemy.body || !this.player.body) return;
         const playerX = this.player.x;
-    
-        // Horizontal movement logic
+
         if (enemy.x < playerX - 10) {
-            enemy.setVelocityX(50); // Move right
-            enemy.setFlipX(false);  // Face right
+            enemy.setVelocityX(100);
+            enemy.setFlipX(false);
         } else if (enemy.x > playerX + 10) {
-            enemy.setVelocityX(-50); // Move left
-            enemy.setFlipX(true);   // Face left
+            enemy.setVelocityX(-100);
+            enemy.setFlipX(true);
         } else {
-            enemy.setVelocityX(0); // Stop moving when close to player
+            enemy.setVelocityX(0);
         }
-    
-        // Jumping behavior
-        if (
-            Phaser.Math.Between(0, 100) < 20 && // 20% chance to jump
-            enemy.body.touching.down &&        // Only jump if touching the ground
-            Math.abs(enemy.x - playerX) < 200  // Jump only if within 200 pixels of the player
-        ) {
-            enemy.setVelocityY(-300); // Jump velocity
+
+        if (Phaser.Math.Between(0, 100) < 20 && enemy.body.touching.down && Math.abs(enemy.x - playerX) < 200) {
+            enemy.setVelocityY(-300);
         }
-    }    
+    }
 
     handlePlayerEnemyCollision(player, enemy) {
         enemy.destroy();
         this.playerHealth--;
-
+    
         // Update health bar
         this.updateHealthUI();
 
-        // Add visual feedback for collision (e.g., player flash)
-        this.player.setTint(0xff0000);
-        this.time.delayedCall(200, () => {
-            this.player.clearTint();
-        });
-
-        // Check if the player is out of health
+    
         if (this.playerHealth <= 0) {
             this.gameOver();
         }
@@ -267,55 +229,35 @@ export default class Level1 extends Phaser.Scene {
     
     update() {
         if (!this.player || !this.cursors) return;
+        this.player.setVelocityX(0);
 
-        // Handle movement for desktop and mobile
-        if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-            const sensitivity = 5;
-            this.player.setVelocityX(tiltValue * sensitivity);
-
-            if (tiltValue > 0) {
-                this.player.setFlipX(false);
-                if (!this.isJumping) this.player.play('walk', true);
-            } else if (tiltValue < 0) {
-                this.player.setFlipX(true);
-                if (!this.isJumping) this.player.play('walk', true);
-            } else if (this.player.body.touching.down && !this.isJumping) {
-                this.player.play('idle', true);
-            }
-        } else {
-            this.player.setVelocityX(0);
-
-            if (this.cursors.left.isDown) {
-                this.player.setVelocityX(-160);
-                this.player.setFlipX(true);
-                if (!this.isJumping) this.player.play('walk', true);
-            } else if (this.cursors.right.isDown) {
-                this.player.setVelocityX(160);
-                this.player.setFlipX(false);
-                if (!this.isJumping) this.player.play('walk', true);
-            } else if (this.player.body.touching.down && !this.isJumping) {
-                this.player.play('idle', true);
-            }
-
-            if (this.cursors.up.isDown && this.player.body.touching.down && !this.isJumping) {
-                this.isJumping = true;
-                this.player.setVelocityY(-500);
-                this.player.play('jump', true);
-            }
+        if (this.cursors.left.isDown) {
+            this.player.setVelocityX(-160);
+            this.player.setFlipX(true);
+            if (!this.isJumping) this.player.play('walk', true);
+        } else if (this.cursors.right.isDown) {
+            this.player.setVelocityX(160);
+            this.player.setFlipX(false);
+            if (!this.isJumping) this.player.play('walk', true);
+        } else if (this.player.body.touching.down && !this.isJumping) {
+            this.player.play('idle', true);
         }
 
-        // Reset jumping state when on the ground
+        if (this.cursors.up.isDown && this.player.body.touching.down && !this.isJumping) {
+            this.isJumping = true;
+            this.player.setVelocityY(-500);
+            this.player.play('jump', true);
+        }
+
         if (this.player.body.touching.down && this.isJumping) {
             this.isJumping = false;
             this.player.play('idle', true);
         }
 
-        // Handle projectile firing for desktop and mobile
         if (Phaser.Input.Keyboard.JustDown(this.fireKey)) {
             this.fireProjectile();
         }
     }
-
 
     fireProjectile() {
         const projectile = this.projectiles.create(this.player.x, this.player.y, 'projectileCD');
@@ -324,14 +266,6 @@ export default class Level1 extends Phaser.Scene {
             projectile.setVisible(true);
             projectile.body.setAllowGravity(false);
             projectile.setVelocityX(this.player.flipX ? -500 : 500);
-
-            // Add a lifespan to the projectile
-            this.time.delayedCall(2000, () => {
-                if (projectile.active) projectile.destroy();
-            });
-
-            // Optional: Add effects for the projectile launch
-            console.log("Projectile fired at", this.player.flipX ? "left" : "right");
         }
     }
 
@@ -352,18 +286,13 @@ export default class Level1 extends Phaser.Scene {
 
     handlePlayerHealthPackCollision(player, healthPack) {
         healthPack.destroy(); // Remove the health pack
-
+    
         // Increase player's health by 5, but not beyond the maximum
-        const healthBefore = this.playerHealth;
         this.playerHealth = Math.min(this.playerHealth + 5, this.maxHealth);
-
-        // Provide feedback for health increase
-        if (this.playerHealth > healthBefore) {
-            console.log("Health increased! Current health:", this.playerHealth);
-        }
-
+    
         // Update health bar
         this.updateHealthUI();
+
     }
     
 }
