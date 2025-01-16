@@ -71,16 +71,21 @@
         }
 
         #game-container {
-            width: 90%;
-            max-width: 1100px;
-            aspect-ratio: 16 / 9;
+            width: 100%;
+            height: 0;
+            padding-bottom: 56.25%; /* Aspect ratio 16:9 */
+            position: relative;
             margin: 0 auto;
-            border-radius: 10px;
-            border: 2px solid #555;
             background: linear-gradient(180deg, #111, #222);
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.8);
-            position: relative;
-            overflow: hidden; /* Prevent canvas from spilling */
+        }
+
+        #game-container canvas {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
         }
 
         /* Controls Styling */
@@ -188,24 +193,23 @@
         }
 
         const config = {
-    type: Phaser.AUTO,
-    parent: 'game-container', // Match this to your container
-    scale: {
-        mode: Phaser.Scale.FIT, // Automatically scale to fit
-        autoCenter: Phaser.Scale.CENTER_BOTH, // Center horizontally and vertically
-    },
-    width: window.innerWidth, // Fullscreen width
-    height: window.innerHeight, // Fullscreen height
-    physics: {
-        default: 'arcade',
-        arcade: {
-            gravity: { y: 300 },
-            debug: false,
-        },
-    },
-    scene: [StartMenu, Level1, Level2, Level3, Level4, Level5, BossFight],
-};
-
+            type: Phaser.AUTO,
+            parent: 'game-container', // Match this to your container
+            scale: {
+                mode: Phaser.Scale.FIT, // Automatically scale to fit
+                autoCenter: Phaser.Scale.CENTER_BOTH, // Center horizontally and vertically
+            },
+            width: 800, // Default width (optional, will scale dynamically)
+            height: 450, // Default height (optional, will scale dynamically)
+            physics: {
+                default: 'arcade',
+                arcade: {
+                    gravity: { y: 300 },
+                    debug: false,
+                },
+            },
+            scene: [StartMenu, Level1, Level2, Level3, Level4, Level5, BossFight],
+        };
 
         const game = new Phaser.Game(config);
     </script>
