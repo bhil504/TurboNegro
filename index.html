@@ -5,29 +5,30 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Turbo Negro - Game</title>
     <style>
+        /* General Body Styling */
         body {
             font-family: 'Arial', sans-serif;
             margin: 0;
             background-color: #121212;
             color: #fff;
             display: flex;
-            flex-direction: column;
             align-items: center;
             justify-content: center;
             height: 100vh;
             overflow: hidden;
         }
 
+        /* Main Container */
         #main-container {
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: flex-start; /* Adjust to start aligning game properly */
+            justify-content: center;
             width: 100%;
             height: 100%;
-            overflow: hidden;
         }
 
+        /* UI Container Styling */
         #ui-container {
             display: flex;
             justify-content: space-between;
@@ -35,11 +36,12 @@
             width: 90%;
             max-width: 1100px;
             padding: 10px;
+            box-sizing: border-box;
             background: linear-gradient(90deg, #222, #333);
             border: 2px solid #555;
             border-radius: 8px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.6);
-            z-index: 2;
+            margin-bottom: 10px;
         }
 
         #health-bar-container, #enemy-count {
@@ -49,6 +51,7 @@
             background: rgba(50, 50, 50, 0.8);
             border-radius: 8px;
             color: #fff;
+            text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.8);
         }
 
         #health-bar {
@@ -57,6 +60,7 @@
             background-color: #770000;
             border-radius: 12px;
             border: 2px solid #444;
+            overflow: hidden;
         }
 
         #health-bar-inner {
@@ -67,23 +71,19 @@
         }
 
         #game-container {
-            width: 100%;
-            height: calc(100vh - 100px); /* Ensure proper spacing */
-            aspect-ratio: 16 / 9; /* Maintain the aspect ratio */
-            position: relative;
+            width: 90%;
+            max-width: 1100px;
+            aspect-ratio: 16 / 9;
+            margin: 0 auto;
+            border-radius: 10px;
+            border: 2px solid #555;
             background: linear-gradient(180deg, #111, #222);
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.8);
-            overflow: hidden; /* Prevent overflow issues */
+            position: relative;
+            overflow: hidden; /* Prevent canvas from spilling */
         }
 
-        #game-container canvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-        }
-
+        /* Controls Styling */
         #controls {
             display: flex;
             justify-content: center;
@@ -100,26 +100,39 @@
             padding: 10px 15px;
             border: none;
             border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.6);
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.2s ease;
         }
 
         .control-button:hover {
             background: linear-gradient(180deg, #555, #777);
             transform: scale(1.05);
         }
+
+        .control-button:active {
+            background: #999;
+            transform: scale(1);
+        }
     </style>
 </head>
 <body>
     <div id="main-container">
+        <!-- UI Container -->
         <div id="ui-container">
             <div id="health-bar-container">
                 Health: <div id="health-bar"><div id="health-bar-inner"></div></div>
             </div>
-            <div><h1 style="margin: 0;">Turbo Negro!</h1></div>
+            <div><h1 style="margin: 0; text-shadow: 2px 2px 6px rgba(0,0,0,0.8);">Turbo Negro!</h1></div>
             <div id="enemy-count">Enemies Left: 0</div>
         </div>
 
+        <!-- Phaser Game Container -->
         <div id="game-container"></div>
 
+        <!-- On-Screen Controls -->
         <div id="controls">
             <button id="left" class="control-button">Left</button>
             <button id="jump" class="control-button">Jump</button>
@@ -128,8 +141,11 @@
         </div>
     </div>
 
+    <!-- Phaser Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.55.2/phaser.min.js"></script>
+
     <script type="module">
+        // Import the game scenes
         import StartMenu from './startMenu.js';
         import Level1 from './level1.js';
         import Level2 from './level2.js';
@@ -160,30 +176,31 @@
 
         function setupDeviceOrientation() {
             window.addEventListener('deviceorientation', (event) => {
-                const gamma = event.gamma || 0;
-                if (Math.abs(gamma - gammaBaseline) > 10) {
-                    console.log(gamma > gammaBaseline ? 'Moving Right' : 'Moving Left');
+                const gamma = event.gamma - gammaBaseline;
+                if (Math.abs(gamma) > 10) {
+                    console.log(gamma > 0 ? 'Moving Right' : 'Moving Left');
                 }
             });
 
             window.addEventListener('touchstart', () => {
-                gammaBaseline = event.gamma || 0;
+                gammaBaseline = gammaBaseline || event.gamma || 0;
             }, { once: true });
         }
 
         const config = {
             type: Phaser.AUTO,
-            parent: 'game-container',
             scale: {
-                mode: Phaser.Scale.FIT,
-                autoCenter: Phaser.Scale.CENTER_BOTH,
+                mode: Phaser.Scale.FIT, // Ensures game fits within parent container
+                autoCenter: Phaser.Scale.CENTER_BOTH, // Centers the game
             },
-            width: 800,
-            height: 450,
+            width: 1100,
+            height: 500,
+            backgroundColor: '#000000',
+            parent: 'game-container',
             physics: {
                 default: 'arcade',
                 arcade: {
-                    gravity: { y: 300 },
+                    gravity: { y: 200 },
                     debug: false,
                 },
             },
@@ -191,13 +208,6 @@
         };
 
         const game = new Phaser.Game(config);
-
-        window.addEventListener('resize', () => {
-            const uiHeight = document.getElementById('ui-container').offsetHeight;
-            const width = window.innerWidth;
-            const height = window.innerHeight - uiHeight;
-            game.scale.resize(width, height);
-        });
     </script>
 </body>
 </html>
