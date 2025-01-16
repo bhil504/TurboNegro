@@ -15,7 +15,7 @@
             align-items: center;
             justify-content: center;
             height: 100vh;
-            overflow: hidden;
+            overflow: hidden; /* Prevent scrolling */
         }
 
         /* Main Container */
@@ -24,8 +24,9 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            width: 100%;
-            height: 100%;
+            width: 100vw; /* Full width */
+            height: 100vh; /* Full height */
+            overflow: hidden; /* Prevent overflow */
         }
 
         /* UI Container Styling */
@@ -71,9 +72,8 @@
         }
 
         #game-container {
-            width: 100%;
-            max-width: 1100px;
-            aspect-ratio: 16 / 9;
+            width: 100vw; /* Full viewport width */
+            height: calc(100vh - 100px); /* Adjust height for UI */
             border-radius: 10px;
             border: 2px solid #555;
             background: linear-gradient(180deg, #111, #222);
@@ -159,15 +159,6 @@
         </div>
     </div>
 
-    <!-- Debugging and Instructions -->
-    <div class="instructions">
-        Tilt your device left and right to move. Swipe up to jump, tap to attack!
-    </div>
-    <div class="debug">
-        <div>Gamma (Tilt Left/Right): <span id="gamma">0</span></div>
-        <div>Beta (Tilt Forward/Backward): <span id="beta">0</span></div>
-    </div>
-
     <!-- Phaser Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.55.2/phaser.min.js"></script>
 
@@ -183,8 +174,10 @@
         const config = {
             type: Phaser.AUTO,
             scale: {
-                mode: Phaser.Scale.RESIZE, // Automatically resizes game to fit the screen
+                mode: Phaser.Scale.FIT, // Maintain aspect ratio and fit the game
                 autoCenter: Phaser.Scale.CENTER_BOTH,
+                width: 800, // Base game width
+                height: 450, // Base game height
             },
             parent: 'game-container',
             backgroundColor: '#000',
