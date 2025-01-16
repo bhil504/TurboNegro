@@ -116,6 +116,28 @@
             background: #999;
             transform: scale(1);
         }
+
+        .instructions {
+            position: absolute;
+            top: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 14px;
+        }
+
+        .debug {
+            position: absolute;
+            bottom: 10px;
+            left: 10px;
+            background: rgba(0, 0, 0, 0.7);
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            font-size: 12px;
+        }
     </style>
 </head>
 <body>
@@ -139,6 +161,15 @@
             <button id="right" class="control-button">Right</button>
             <button id="attack" class="control-button">Attack</button>
         </div>
+    </div>
+
+    <!-- Debugging and Instructions -->
+    <div id="instructions" class="instructions">
+        Tilt your device left and right to move. Swipe up to jump, tap to attack!
+    </div>
+    <div id="debug" class="debug">
+        <div>Gamma (Tilt Left/Right): <span id="gamma">0</span></div>
+        <div>Beta (Tilt Forward/Backward): <span id="beta">0</span></div>
     </div>
 
     <!-- Phaser Library -->
@@ -175,6 +206,27 @@
         };
 
         const game = new Phaser.Game(config);
+
+        // Debugging Overlay
+        window.addEventListener('deviceorientation', (event) => {
+            document.getElementById('gamma').textContent = event.gamma.toFixed(2);
+            document.getElementById('beta').textContent = event.beta.toFixed(2);
+        });
+
+        // Permission Request for iOS Devices
+        window.addEventListener('click', () => {
+            if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+                DeviceOrientationEvent.requestPermission()
+                    .then((response) => {
+                        if (response === 'granted') {
+                            console.log('Tilt controls enabled!');
+                        } else {
+                            alert('Tilt controls require your permission.');
+                        }
+                    })
+                    .catch(console.error);
+            }
+        });
     </script>
 </body>
 </html>
