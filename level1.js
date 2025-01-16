@@ -77,63 +77,45 @@ export default class Level1 extends Phaser.Scene {
         this.cursors = this.input.keyboard.createCursorKeys();
         this.fireKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
     
-        // Scaling for mobile
-        this.scale.scaleMode = Phaser.Scale.RESIZE;
-        this.scale.refresh();
+        // Create a group for health packs
+        this.healthPacks = this.physics.add.group();
     
-        // Request permission for tilt controls
-        if (window.DeviceOrientationEvent && typeof DeviceOrientationEvent.requestPermission === 'function') {
-            const grantButton = this.add.text(10, 10, 'Enable Tilt Controls', {
-                fontSize: '16px',
-                fill: '#fff',
-                backgroundColor: '#000',
-                padding: { x: 10, y: 5 },
-            }).setInteractive();
+        // Add collision detection for health packs and platforms
+        this.physics.add.collider(this.healthPacks, this.platforms);
     
-            grantButton.on('pointerdown', async () => {
-                try {
-                    const permission = await DeviceOrientationEvent.requestPermission();
-                    if (permission === 'granted') {
-                        this.enableTiltControls();
-                    } else {
-                        console.warn('Device orientation permission denied.');
-                    }
-                    grantButton.destroy(); // Remove button after enabling
-                } catch (error) {
-                    console.error('Permission request failed:', error);
-                }
-            });
-        } else {
-            this.enableTiltControls(); // Enable directly if no permission is required
-        }
-
-        // Pointer-based movement for mobile
-        this.leftButton = this.add.image(50, 550, 'leftButton').setInteractive();
-        this.rightButton = this.add.image(150, 550, 'rightButton').setInteractive();
-
-        this.leftButton.on('pointerdown', () => {
-            isMovingLeft = true;
+        // Add collision detection for player and health packs
+        this.physics.add.overlap(this.player, this.healthPacks, this.handlePlayerHealthPackCollision, null, this);
+    
+        // Projectile and enemy groups
+        this.projectiles = this.physics.add.group({ defaultKey: 'projectileCD' });
+        this.enemies = this.physics.add.group();
+        this.totalEnemiesDefeated = 0;
+    
+        // Enemy spawn timer
+        this.enemySpawnTimer = this.time.addEvent({
+            delay: 1000,
+            callback: this.spawnEnemy,
+            callbackScope: this,
+            loop: true,
         });
+    
+        // Player health
+        this.playerHealth = 10;
+        this.maxHealth = 10;
+    
+        // Health bar graphics
+        
+    
+        
+    
+        // Collision handlers
+        this.physics.add.collider(this.player, this.enemies, this.handlePlayerEnemyCollision, null, this);
+        this.physics.add.collider(this.projectiles, this.enemies, this.handleProjectileEnemyCollision, null, this);
+        this.physics.add.collider(this.enemies, this.platforms);
 
-        this.rightButton.on('pointerdown', () => {
-            isMovingRight = true;
-        });
+        this.updateHealthUI(); // Initialize health bar
+        this.updateEnemyCountUI(); // Initialize enemy count
 
-        this.leftButton.on('pointerup', () => {
-            isMovingLeft = false;
-        });
-
-        this.rightButton.on('pointerup', () => {
-            isMovingRight = false;
-        });
-
-        this.leftButton.on('pointerout', () => {
-            isMovingLeft = false;
-        });
-
-        this.rightButton.on('pointerout', () => {
-            isMovingRight = false;
-        });
     }
     
     spawnEnemy() {
@@ -312,41 +294,5 @@ export default class Level1 extends Phaser.Scene {
         this.updateHealthUI();
 
     }
-
-    enableTiltControls() {
-        const MAX_TILT_ANGLE = 30;
-        const MOVE_SPEED = 160;
-
-        this.handleTilt = (event) => {
-            if (!event.gamma) return;
-
-            const normalizedTilt = Phaser.Math.Clamp(event.gamma / MAX_TILT_ANGLE, -1, 1);
-            const velocityX = normalizedTilt * MOVE_SPEED;
-
-            if (Math.abs(normalizedTilt) < 0.1) {
-                this.player.setVelocityX(0); // Prevent jitter
-                return;
-            }
-
-            this.player.setVelocityX(velocityX);
-            this.player.setFlipX(velocityX < 0);
-
-            if (!this.isJumping && Math.abs(velocityX) > 0) {
-                this.player.play('walk', true);
-            } else if (!this.isJumping) {
-                this.player.play('idle', true);
-            }
-        };
-
-        window.addEventListener('deviceorientation', this.handleTilt);
-
-        this.events.on('pause', () => {
-            window.removeEventListener('deviceorientation', this.handleTilt);
-        });
-
-        this.events.on('resume', () => {
-            window.addEventListener('deviceorientation', this.handleTilt);
-        });
-    }
-
+    
 }
