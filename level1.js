@@ -226,7 +226,7 @@ export default class Level1 extends Phaser.Scene {
     update() {
         if (!this.player || !this.cursors) return;
 
-        const sensitivity = 5; // Adjust sensitivity for tilt
+        const sensitivity = 4; // Adjust sensitivity for tilt
 
         // Mobile Tilt Controls
         if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
@@ -327,17 +327,6 @@ export default class Level1 extends Phaser.Scene {
         this.updateHealthUI();
     }
     
-    setupMobileTilt() {
-        const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-    
-        if (isMobile && window.DeviceOrientationEvent) {
-            window.addEventListener('deviceorientation', (event) => {
-                // Subtract the calibrated base tilt (neutral position)
-                this.tiltValue = event.gamma - this.baseTiltX || 0; // Gamma controls left/right
-            });
-        }
-    }
-    
     calibrateTilt() {
         const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 
@@ -357,6 +346,5 @@ export default class Level1 extends Phaser.Scene {
             });
         }
     }
-
-
+    
 }
