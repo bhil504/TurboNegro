@@ -26,96 +26,62 @@ export default class Level1 extends Phaser.Scene {
         this.load.image('skeleton', 'assets/Characters/Enemies/MardiGrasZombie.png');
         this.load.image('gameOver', 'assets/UI/gameOver.png');
         this.load.image('levelComplete', 'assets/UI/levelComplete.png');
-        this.load.image('healthPack', 'assets/Characters/Pickups/HealthPack.png'); // Health pack asset
+        this.load.image('healthPack', 'assets/Characters/Pickups/HealthPack.png');
         this.load.audio('level1Music', 'assets/Audio/BlownMoneyAudubonPark.mp3');
         console.log("Assets preloaded successfully.");
     }
 
-    create() { 
+    create() {
         const { width, height } = this.scale;
-    
-        // Play background music
+
+        // Background and music
+        this.add.image(width / 2, height / 2, 'level1Background').setDisplaySize(width, height);
         this.levelMusic = this.sound.add('level1Music', { loop: true, volume: 0.5 });
         this.levelMusic.play();
-    
-        // Add background
-        this.add.image(width / 2, height / 2, 'level1Background').setDisplaySize(width, height);
-    
-        // Add platforms
+
+        // Platforms
         this.platforms = this.physics.add.staticGroup();
-        this.platforms.create(width / 2, height - 20, null)
-            .setDisplaySize(width, 20)
-            .setVisible(false)
-            .refreshBody();
-    
-        const balcony = this.platforms.create(width / 2, height - 350, 'balcony')
-            .setScale(1)
-            .refreshBody();
+        this.platforms.create(width / 2, height - 20, null).setDisplaySize(width, 20).setVisible(false).refreshBody();
+        const balcony = this.platforms.create(width / 2, height - 350, 'balcony').setScale(1).refreshBody();
         balcony.body.setSize(280, 10).setOffset((balcony.displayWidth - 280) / 2, balcony.displayHeight - 75);
-    
+
         // Player setup
         this.player = this.physics.add.sprite(100, height - 100, 'turboNegroStanding1');
         this.player.setCollideWorldBounds(true);
         this.physics.add.collider(this.player, this.platforms);
-    
+
         // Animations
-        this.anims.create({
-            key: 'idle',
-            frames: [
-                { key: 'turboNegroStanding1' },
-                { key: 'turboNegroStanding2' },
-                { key: 'turboNegroStanding3' },
-                { key: 'turboNegroStanding4' },
-            ],
-            frameRate: 4,
-            repeat: -1,
-        });
+        this.anims.create({ key: 'idle', frames: [{ key: 'turboNegroStanding1' }, { key: 'turboNegroStanding2' }, { key: 'turboNegroStanding3' }, { key: 'turboNegroStanding4' }], frameRate: 4, repeat: -1 });
         this.anims.create({ key: 'walk', frames: [{ key: 'turboNegroWalking' }], frameRate: 8, repeat: -1 });
         this.anims.create({ key: 'jump', frames: [{ key: 'turboNegroJump' }], frameRate: 1 });
-    
+
         // Input setup
         this.cursors = this.input.keyboard.createCursorKeys();
         this.fireKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
-    
-        // Create a group for health packs
-        this.healthPacks = this.physics.add.group();
-    
-        // Add collision detection for health packs and platforms
-        this.physics.add.collider(this.healthPacks, this.platforms);
-    
-        // Add collision detection for player and health packs
-        this.physics.add.overlap(this.player, this.healthPacks, this.handlePlayerHealthPackCollision, null, this);
-    
-        // Projectile and enemy groups
-        this.projectiles = this.physics.add.group({ defaultKey: 'projectileCD' });
-        this.enemies = this.physics.add.group();
-        this.totalEnemiesDefeated = 0;
-    
-        // Enemy spawn timer
-        this.enemySpawnTimer = this.time.addEvent({
-            delay: 1000,
-            callback: this.spawnEnemy,
-            callbackScope: this,
-            loop: true,
-        });
-    
-        // Player health
+
+        // Mobile-specific inputs
+        if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+            this.setupMobileControls();
+        }
+
+        // Health and enemy setup
         this.playerHealth = 10;
         this.maxHealth = 10;
-    
-        // Health bar graphics
-        
-    
-        
-    
-        // Collision handlers
+        this.totalEnemiesDefeated = 0;
+        this.updateHealthUI();
+        this.updateEnemyCountUI();
+
+        this.projectiles = this.physics.add.group({ defaultKey: 'projectileCD' });
+        this.enemies = this.physics.add.group();
+        this.enemySpawnTimer = this.time.addEvent({ delay: 1000, callback: this.spawnEnemy, callbackScope: this, loop: true });
+
+        this.healthPacks = this.physics.add.group();
+        this.physics.add.collider(this.healthPacks, this.platforms);
+        this.physics.add.overlap(this.player, this.healthPacks, this.handlePlayerHealthPackCollision, null, this);
+
         this.physics.add.collider(this.player, this.enemies, this.handlePlayerEnemyCollision, null, this);
         this.physics.add.collider(this.projectiles, this.enemies, this.handleProjectileEnemyCollision, null, this);
         this.physics.add.collider(this.enemies, this.platforms);
-
-        this.updateHealthUI(); // Initialize health bar
-        this.updateEnemyCountUI(); // Initialize enemy count
-
     }
     
     spawnEnemy() {
@@ -228,30 +194,22 @@ export default class Level1 extends Phaser.Scene {
     }
     
     update() {
-        if (!this.player || !this.cursors) return;
-        this.player.setVelocityX(0);
-
         if (this.cursors.left.isDown) {
             this.player.setVelocityX(-160);
             this.player.setFlipX(true);
-            if (!this.isJumping) this.player.play('walk', true);
+            this.player.play('walk', true);
         } else if (this.cursors.right.isDown) {
             this.player.setVelocityX(160);
             this.player.setFlipX(false);
-            if (!this.isJumping) this.player.play('walk', true);
-        } else if (this.player.body.touching.down && !this.isJumping) {
+            this.player.play('walk', true);
+        } else if (this.player.body.touching.down) {
+            this.player.setVelocityX(0);
             this.player.play('idle', true);
         }
 
-        if (this.cursors.up.isDown && this.player.body.touching.down && !this.isJumping) {
-            this.isJumping = true;
+        if (this.cursors.up.isDown && this.player.body.touching.down) {
             this.player.setVelocityY(-500);
             this.player.play('jump', true);
-        }
-
-        if (this.player.body.touching.down && this.isJumping) {
-            this.isJumping = false;
-            this.player.play('idle', true);
         }
 
         if (Phaser.Input.Keyboard.JustDown(this.fireKey)) {
@@ -294,5 +252,48 @@ export default class Level1 extends Phaser.Scene {
         this.updateHealthUI();
 
     }
+
+    setupMobileControls() {
+        window.addEventListener('deviceorientation', (event) => {
+            const tilt = event.gamma;
+            if (tilt !== null) {
+                if (tilt > 10) {
+                    this.player.setVelocityX(160);
+                    this.player.setFlipX(false);
+                    this.player.play('walk', true);
+                } else if (tilt < -10) {
+                    this.player.setVelocityX(-160);
+                    this.player.setFlipX(true);
+                    this.player.play('walk', true);
+                } else {
+                    this.player.setVelocityX(0);
+                    this.player.play('idle', true);
+                }
+            }
+        });
+
+        let touchStartY = null;
+        window.addEventListener('touchstart', (event) => {
+            touchStartY = event.touches[0].clientY;
+        });
+        window.addEventListener('touchend', (event) => {
+            const touchEndY = event.changedTouches[0].clientY;
+            if (touchStartY !== null && touchEndY < touchStartY - 50) {
+                if (this.player.body.touching.down) {
+                    this.player.setVelocityY(-500);
+                    this.player.play('jump', true);
+                }
+            }
+            touchStartY = null;
+        });
+
+        window.addEventListener('touchstart', (event) => {
+            if (event.target.tagName !== 'BUTTON') {
+                this.fireProjectile();
+            }
+        });
+    }
+
+
     
 }
