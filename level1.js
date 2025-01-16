@@ -163,6 +163,34 @@ export default class Level1 extends Phaser.Scene {
     
         this.updateHealthUI(); // Initialize health bar
         this.updateEnemyCountUI(); // Initialize enemy count
+    
+        // Pointer-based movement for mobile
+        this.leftButton = this.add.image(50, 550, 'leftButton').setInteractive();
+        this.rightButton = this.add.image(150, 550, 'rightButton').setInteractive();
+    
+        this.leftButton.on('pointerdown', () => {
+            isMovingLeft = true;
+        });
+    
+        this.rightButton.on('pointerdown', () => {
+            isMovingRight = true;
+        });
+    
+        this.leftButton.on('pointerup', () => {
+            isMovingLeft = false;
+        });
+    
+        this.rightButton.on('pointerup', () => {
+            isMovingRight = false;
+        });
+    
+        this.leftButton.on('pointerout', () => {
+            isMovingLeft = false;
+        });
+    
+        this.rightButton.on('pointerout', () => {
+            isMovingRight = false;
+        });
     }
     
     spawnEnemy() {
