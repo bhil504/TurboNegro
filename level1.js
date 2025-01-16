@@ -5,6 +5,18 @@ export default class Level1 extends Phaser.Scene {
         this.tiltValue = 0;     // Initialize tilt value for mobile
     }
 
+    calibrateTilt() {
+        const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    
+        if (isMobile && window.DeviceOrientationEvent) {
+            window.addEventListener('deviceorientation', (event) => {
+                this.baseTiltX = event.gamma || 0; // Capture the baseline gamma (x-axis)
+                this.baseTiltY = event.beta || 0;  // Capture the baseline beta (y-axis)
+            }, { once: true }); // Only capture the initial values
+        }
+    }
+    
+
     updateHealthUI() {
         const healthPercentage = (this.playerHealth / this.maxHealth) * 100;
         document.getElementById('health-bar-inner').style.width = `${healthPercentage}%`;
@@ -44,8 +56,14 @@ export default class Level1 extends Phaser.Scene {
         this.add.image(width / 2, height / 2, 'level1Background').setDisplaySize(width, height);
     
         this.platforms = this.physics.add.staticGroup();
-        this.platforms.create(width / 2, height - 20, null).setDisplaySize(width, 20).setVisible(false).refreshBody();
-        const balcony = this.platforms.create(width / 2, height - 350, 'balcony').setScale(1).refreshBody();
+        this.platforms.create(width / 2, height - 20, null)
+            .setDisplaySize(width, 20)
+            .setVisible(false)
+            .refreshBody();
+    
+        const balcony = this.platforms.create(width / 2, height - 350, 'balcony')
+            .setScale(1)
+            .refreshBody();
         balcony.body.setSize(280, 10).setOffset((balcony.displayWidth - 280) / 2, balcony.displayHeight - 75);
     
         // Player setup
@@ -61,6 +79,7 @@ export default class Level1 extends Phaser.Scene {
         this.fireKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
     
         // Mobile tilt input
+        this.calibrateTilt(); // Calibrate tilt at the start of the level
         this.setupMobileTilt();
     
         // Button-based controls
@@ -89,6 +108,7 @@ export default class Level1 extends Phaser.Scene {
         this.updateHealthUI();
         this.updateEnemyCountUI();
     }
+    
 
     setupMobileTilt() {
         const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
@@ -139,40 +159,46 @@ export default class Level1 extends Phaser.Scene {
     }
 
     createControlButtons() {
-        const { width, height } = this.scale;
-    
-        // Left Button
-        const leftButton = this.add.rectangle(50, height - 50, 100, 50, 0x0000ff).setInteractive();
-        leftButton.on('pointerdown', () => {
-            this.player.setVelocityX(-160);
-            this.player.setFlipX(true);
-            this.player.play('walk', true);
-        });
-        leftButton.on('pointerup', () => {
-            this.player.setVelocityX(0);
-            this.player.play('idle', true);
-        });
-    
-        // Right Button
-        const rightButton = this.add.rectangle(200, height - 50, 100, 50, 0x0000ff).setInteractive();
-        rightButton.on('pointerdown', () => {
-            this.player.setVelocityX(160);
-            this.player.setFlipX(false);
-            this.player.play('walk', true);
-        });
-        rightButton.on('pointerup', () => {
-            this.player.setVelocityX(0);
-            this.player.play('idle', true);
-        });
-    
-        // Jump Button
-        const jumpButton = this.add.rectangle(width - 100, height - 50, 100, 50, 0xff0000).setInteractive();
-        jumpButton.on('pointerdown', () => {
-            if (this.player.body.touching.down) {
-                this.player.setVelocityY(-500);
-            }
-        });
-    }
+    const { width, height } = this.scale;
+
+    // Left Button
+    const leftButton = this.add.rectangle(50, height - 100, 100, 100, 0x0000ff).setInteractive();
+    leftButton.on('pointerdown', () => {
+        this.player.setVelocityX(-160);
+        this.player.setFlipX(true);
+        this.player.play('walk', true);
+    });
+    leftButton.on('pointerup', () => {
+        this.player.setVelocityX(0);
+        this.player.play('idle', true);
+    });
+
+    // Right Button
+    const rightButton = this.add.rectangle(200, height - 100, 100, 100, 0x0000ff).setInteractive();
+    rightButton.on('pointerdown', () => {
+        this.player.setVelocityX(160);
+        this.player.setFlipX(false);
+        this.player.play('walk', true);
+    });
+    rightButton.on('pointerup', () => {
+        this.player.setVelocityX(0);
+        this.player.play('idle', true);
+    });
+
+    // Jump Button
+    const jumpButton = this.add.rectangle(width - 150, height - 100, 100, 100, 0xff0000).setInteractive();
+    jumpButton.on('pointerdown', () => {
+        if (this.player.body.touching.down) {
+            this.player.setVelocityY(-500);
+        }
+    });
+
+    // Attack Button
+    const attackButton = this.add.rectangle(width - 50, height - 100, 100, 100, 0x00ff00).setInteractive();
+    attackButton.on('pointerdown', () => {
+        this.fireProjectile();
+    });
+}
 
     setupCollisions() {
         // Health packs
@@ -322,7 +348,8 @@ export default class Level1 extends Phaser.Scene {
     
         // Handle tilt-based movement for mobile
         if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-            const tiltVelocity = Phaser.Math.Clamp(this.tiltValue * sensitivity, -160, 160);
+            const tiltX = this.tiltValue - this.baseTiltX; // Calculate tilt relative to the baseline
+            const tiltVelocity = Phaser.Math.Clamp(tiltX * sensitivity, -160, 160);
             this.player.setVelocityX(tiltVelocity);
     
             if (tiltVelocity > 0) {
@@ -336,7 +363,7 @@ export default class Level1 extends Phaser.Scene {
             }
         } else {
             // Handle desktop controls
-            this.player.setVelocityX(0); // Default velocity
+            this.player.setVelocityX(0);
     
             if (this.cursors.left.isDown) {
                 this.player.setVelocityX(-160);
@@ -351,7 +378,7 @@ export default class Level1 extends Phaser.Scene {
             }
     
             if (this.cursors.up.isDown && this.player.body.touching.down) {
-                this.player.setVelocityY(-500); // Jump
+                this.player.setVelocityY(-500);
                 this.player.play('jump', true);
             }
         }
@@ -366,6 +393,7 @@ export default class Level1 extends Phaser.Scene {
             this.player.play('idle', true);
         }
     }
+    
 
     fireProjectile() {
         const projectile = this.projectiles.create(this.player.x, this.player.y, 'projectileCD');
