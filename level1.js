@@ -1,21 +1,7 @@
 export default class Level1 extends Phaser.Scene {
     constructor() {
         super({ key: 'Level1' });
-        this.isJumping = false; // Initialize jumping state
-        this.tiltValue = 0;     // Initialize tilt value for mobile
     }
-
-    calibrateTilt() {
-        const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-    
-        if (isMobile && window.DeviceOrientationEvent) {
-            window.addEventListener('deviceorientation', (event) => {
-                this.baseTiltX = event.gamma || 0; // Capture the baseline gamma (x-axis)
-                this.baseTiltY = event.beta || 0;  // Capture the baseline beta (y-axis)
-            }, { once: true }); // Only capture the initial values
-        }
-    }
-    
 
     updateHealthUI() {
         const healthPercentage = (this.playerHealth / this.maxHealth) * 100;
@@ -45,16 +31,17 @@ export default class Level1 extends Phaser.Scene {
         console.log("Assets preloaded successfully.");
     }
 
-    create() {
+    create() { 
         const { width, height } = this.scale;
     
-        // Background music
+        // Play background music
         this.levelMusic = this.sound.add('level1Music', { loop: true, volume: 0.5 });
         this.levelMusic.play();
     
-        // Background and platforms
+        // Add background
         this.add.image(width / 2, height / 2, 'level1Background').setDisplaySize(width, height);
     
+        // Add platforms
         this.platforms = this.physics.add.staticGroup();
         this.platforms.create(width / 2, height - 20, null)
             .setDisplaySize(width, 20)
@@ -72,55 +59,6 @@ export default class Level1 extends Phaser.Scene {
         this.physics.add.collider(this.player, this.platforms);
     
         // Animations
-        this.createAnimations();
-    
-        // Input setup
-        this.cursors = this.input.keyboard.createCursorKeys();
-        this.fireKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
-    
-        // Mobile tilt input
-        this.calibrateTilt(); // Calibrate tilt at the start of the level
-        this.setupMobileTilt();
-    
-        // Button-based controls
-        this.createControlButtons();
-    
-        // Groups for projectiles, health packs, and enemies
-        this.healthPacks = this.physics.add.group();
-        this.projectiles = this.physics.add.group({ defaultKey: 'projectileCD' });
-        this.enemies = this.physics.add.group();
-        this.totalEnemiesDefeated = 0;
-    
-        // Collision setup
-        this.setupCollisions();
-    
-        // Enemy spawn timer
-        this.enemySpawnTimer = this.time.addEvent({
-            delay: 1000,
-            callback: this.spawnEnemy,
-            callbackScope: this,
-            loop: true,
-        });
-    
-        // Player health
-        this.playerHealth = 10;
-        this.maxHealth = 10;
-        this.updateHealthUI();
-        this.updateEnemyCountUI();
-    }
-    
-
-    setupMobileTilt() {
-        const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-    
-        if (isMobile && window.DeviceOrientationEvent) {
-            window.addEventListener('deviceorientation', (event) => {
-                this.tiltValue = Phaser.Math.Clamp(event.gamma || 0, -45, 45);
-            });
-        }
-    }
-
-    createAnimations() {
         this.anims.create({
             key: 'idle',
             frames: [
@@ -134,17 +72,47 @@ export default class Level1 extends Phaser.Scene {
         });
         this.anims.create({ key: 'walk', frames: [{ key: 'turboNegroWalking' }], frameRate: 8, repeat: -1 });
         this.anims.create({ key: 'jump', frames: [{ key: 'turboNegroJump' }], frameRate: 1 });
-    }
-
-    setupMobileInput() {
-        const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
     
+        // Input setup
+        this.cursors = this.input.keyboard.createCursorKeys();
+        this.fireKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+    
+        // Create a group for health packs
+        this.healthPacks = this.physics.add.group();
+    
+        // Add collision detection for health packs and platforms
+        this.physics.add.collider(this.healthPacks, this.platforms);
+    
+        // Add collision detection for player and health packs
+        this.physics.add.overlap(this.player, this.healthPacks, this.handlePlayerHealthPackCollision, null, this);
+    
+        // Projectile and enemy groups
+        this.projectiles = this.physics.add.group({ defaultKey: 'projectileCD' });
+        this.enemies = this.physics.add.group();
+        this.totalEnemiesDefeated = 0;
+    
+        // Enemy spawn timer
+        this.enemySpawnTimer = this.time.addEvent({
+            delay: 1000,
+            callback: this.spawnEnemy,
+            callbackScope: this,
+            loop: true,
+        });
+    
+        // Player health
+        this.playerHealth = 10;
+        this.maxHealth = 10;
+    
+        // Touch input for mobile
+        const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+        let tiltValue = 0;
+
         if (isMobile && window.DeviceOrientationEvent) {
             window.addEventListener('deviceorientation', (event) => {
-                this.tiltValue = event.gamma || 0;
+                tiltValue = event.gamma || 0;
             });
         }
-    
+
         this.input.on('pointerdown', (pointer) => {
             if (pointer.downY > pointer.upY + 50) {
                 // Swipe up to jump
@@ -156,59 +124,15 @@ export default class Level1 extends Phaser.Scene {
                 this.fireProjectile();
             }
         });
-    }
-
-    createControlButtons() {
-    const { width, height } = this.scale;
-
-    // Left Button
-    const leftButton = this.add.rectangle(50, height - 100, 100, 100, 0x0000ff).setInteractive();
-    leftButton.on('pointerdown', () => {
-        this.player.setVelocityX(-160);
-        this.player.setFlipX(true);
-        this.player.play('walk', true);
-    });
-    leftButton.on('pointerup', () => {
-        this.player.setVelocityX(0);
-        this.player.play('idle', true);
-    });
-
-    // Right Button
-    const rightButton = this.add.rectangle(200, height - 100, 100, 100, 0x0000ff).setInteractive();
-    rightButton.on('pointerdown', () => {
-        this.player.setVelocityX(160);
-        this.player.setFlipX(false);
-        this.player.play('walk', true);
-    });
-    rightButton.on('pointerup', () => {
-        this.player.setVelocityX(0);
-        this.player.play('idle', true);
-    });
-
-    // Jump Button
-    const jumpButton = this.add.rectangle(width - 150, height - 100, 100, 100, 0xff0000).setInteractive();
-    jumpButton.on('pointerdown', () => {
-        if (this.player.body.touching.down) {
-            this.player.setVelocityY(-500);
-        }
-    });
-
-    // Attack Button
-    const attackButton = this.add.rectangle(width - 50, height - 100, 100, 100, 0x00ff00).setInteractive();
-    attackButton.on('pointerdown', () => {
-        this.fireProjectile();
-    });
-}
-
-    setupCollisions() {
-        // Health packs
-        this.physics.add.collider(this.healthPacks, this.platforms);
-        this.physics.add.overlap(this.player, this.healthPacks, this.handlePlayerHealthPackCollision, null, this);
     
-        // Enemies and projectiles
+        // Collision handlers
         this.physics.add.collider(this.player, this.enemies, this.handlePlayerEnemyCollision, null, this);
         this.physics.add.collider(this.projectiles, this.enemies, this.handleProjectileEnemyCollision, null, this);
         this.physics.add.collider(this.enemies, this.platforms);
+
+        this.updateHealthUI(); // Initialize health bar
+        this.updateEnemyCountUI(); // Initialize enemy count
+
     }
     
     spawnEnemy() {
@@ -343,57 +267,55 @@ export default class Level1 extends Phaser.Scene {
     
     update() {
         if (!this.player || !this.cursors) return;
-    
-        const sensitivity = 4; // Sensitivity for tilt controls
-    
-        // Handle tilt-based movement for mobile
+
+        // Handle movement for desktop and mobile
         if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-            const tiltX = this.tiltValue - this.baseTiltX; // Calculate tilt relative to the baseline
-            const tiltVelocity = Phaser.Math.Clamp(tiltX * sensitivity, -160, 160);
-            this.player.setVelocityX(tiltVelocity);
-    
-            if (tiltVelocity > 0) {
+            const sensitivity = 5;
+            this.player.setVelocityX(tiltValue * sensitivity);
+
+            if (tiltValue > 0) {
                 this.player.setFlipX(false);
-                if (this.player.body.touching.down) this.player.play('walk', true);
-            } else if (tiltVelocity < 0) {
+                if (!this.isJumping) this.player.play('walk', true);
+            } else if (tiltValue < 0) {
                 this.player.setFlipX(true);
-                if (this.player.body.touching.down) this.player.play('walk', true);
-            } else if (this.player.body.touching.down) {
+                if (!this.isJumping) this.player.play('walk', true);
+            } else if (this.player.body.touching.down && !this.isJumping) {
                 this.player.play('idle', true);
             }
         } else {
-            // Handle desktop controls
             this.player.setVelocityX(0);
-    
+
             if (this.cursors.left.isDown) {
                 this.player.setVelocityX(-160);
                 this.player.setFlipX(true);
-                if (this.player.body.touching.down) this.player.play('walk', true);
+                if (!this.isJumping) this.player.play('walk', true);
             } else if (this.cursors.right.isDown) {
                 this.player.setVelocityX(160);
                 this.player.setFlipX(false);
-                if (this.player.body.touching.down) this.player.play('walk', true);
-            } else if (this.player.body.touching.down) {
+                if (!this.isJumping) this.player.play('walk', true);
+            } else if (this.player.body.touching.down && !this.isJumping) {
                 this.player.play('idle', true);
             }
-    
-            if (this.cursors.up.isDown && this.player.body.touching.down) {
+
+            if (this.cursors.up.isDown && this.player.body.touching.down && !this.isJumping) {
+                this.isJumping = true;
                 this.player.setVelocityY(-500);
                 this.player.play('jump', true);
             }
         }
-    
-        // Fire projectiles
+
+        // Reset jumping state when on the ground
+        if (this.player.body.touching.down && this.isJumping) {
+            this.isJumping = false;
+            this.player.play('idle', true);
+        }
+
+        // Handle projectile firing for desktop and mobile
         if (Phaser.Input.Keyboard.JustDown(this.fireKey)) {
             this.fireProjectile();
         }
-    
-        // Reset jump animation when on the ground
-        if (this.player.body.touching.down && this.player.anims.currentAnim?.key === 'jump') {
-            this.player.play('idle', true);
-        }
     }
-    
+
 
     fireProjectile() {
         const projectile = this.projectiles.create(this.player.x, this.player.y, 'projectileCD');
