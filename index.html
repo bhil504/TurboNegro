@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Turbo Negro - Game</title>
     <style>
-        /* General Body Styling */
         body {
             font-family: 'Arial', sans-serif;
             margin: 0;
@@ -18,7 +17,6 @@
             overflow: hidden;
         }
 
-        /* Main Container */
         #main-container {
             display: flex;
             flex-direction: column;
@@ -28,7 +26,6 @@
             height: 100%;
         }
 
-        /* UI Container Styling */
         #ui-container {
             display: flex;
             justify-content: space-between;
@@ -36,7 +33,6 @@
             width: 90%;
             max-width: 1100px;
             padding: 10px;
-            box-sizing: border-box;
             background: linear-gradient(90deg, #222, #333);
             border: 2px solid #555;
             border-radius: 8px;
@@ -51,7 +47,6 @@
             background: rgba(50, 50, 50, 0.8);
             border-radius: 8px;
             color: #fff;
-            text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.8);
         }
 
         #health-bar {
@@ -60,7 +55,6 @@
             background-color: #770000;
             border-radius: 12px;
             border: 2px solid #444;
-            overflow: hidden;
         }
 
         #health-bar-inner {
@@ -72,9 +66,8 @@
 
         #game-container {
             width: 100%;
-            max-width: 1000px; /* Limit maximum width */
-            max-height: 600px; /* Limit maximum height */
-            aspect-ratio: 16 / 9; /* Maintain 16:9 ratio */
+            height: calc(100vh - 120px);
+            aspect-ratio: 16 / 9;
             margin: 0 auto;
             position: relative;
             background: linear-gradient(180deg, #111, #222);
@@ -89,9 +82,8 @@
             height: 100%;
         }
 
-        /* Controls Styling */
         #controls {
-            display: flex;
+            display: none;
             justify-content: center;
             gap: 10px;
             margin-top: 10px;
@@ -106,39 +98,26 @@
             padding: 10px 15px;
             border: none;
             border-radius: 8px;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.6);
-            cursor: pointer;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            transition: all 0.2s ease;
         }
 
         .control-button:hover {
             background: linear-gradient(180deg, #555, #777);
             transform: scale(1.05);
         }
-
-        .control-button:active {
-            background: #999;
-            transform: scale(1);
-        }
     </style>
 </head>
 <body>
     <div id="main-container">
-        <!-- UI Container -->
         <div id="ui-container">
             <div id="health-bar-container">
                 Health: <div id="health-bar"><div id="health-bar-inner"></div></div>
             </div>
-            <div><h1 style="margin: 0; text-shadow: 2px 2px 6px rgba(0,0,0,0.8);">Turbo Negro!</h1></div>
+            <div><h1 style="margin: 0;">Turbo Negro!</h1></div>
             <div id="enemy-count">Enemies Left: 0</div>
         </div>
 
-        <!-- Phaser Game Container -->
         <div id="game-container"></div>
 
-        <!-- On-Screen Controls -->
         <div id="controls">
             <button id="left" class="control-button">Left</button>
             <button id="jump" class="control-button">Jump</button>
@@ -147,11 +126,8 @@
         </div>
     </div>
 
-    <!-- Phaser Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.55.2/phaser.min.js"></script>
-
     <script type="module">
-        // Import the game scenes
         import StartMenu from './startMenu.js';
         import Level1 from './level1.js';
         import Level2 from './level2.js';
@@ -182,14 +158,14 @@
 
         function setupDeviceOrientation() {
             window.addEventListener('deviceorientation', (event) => {
-                const gamma = event.gamma - gammaBaseline;
-                if (Math.abs(gamma) > 10) {
-                    console.log(gamma > 0 ? 'Moving Right' : 'Moving Left');
+                const gamma = event.gamma || 0;
+                if (Math.abs(gamma - gammaBaseline) > 10) {
+                    console.log(gamma > gammaBaseline ? 'Moving Right' : 'Moving Left');
                 }
             });
 
             window.addEventListener('touchstart', () => {
-                gammaBaseline = gammaBaseline || event.gamma || 0;
+                gammaBaseline = event.gamma || 0;
             }, { once: true });
         }
 
@@ -197,7 +173,7 @@
             type: Phaser.AUTO,
             parent: 'game-container',
             scale: {
-                mode: Phaser.Scale.ENVELOP,
+                mode: Phaser.Scale.FIT,
                 autoCenter: Phaser.Scale.CENTER_BOTH,
             },
             width: 800,
@@ -214,9 +190,11 @@
 
         const game = new Phaser.Game(config);
 
-        // Resize listener for dynamic scaling
         window.addEventListener('resize', () => {
-            game.scale.resize(window.innerWidth, window.innerHeight);
+            const uiHeight = document.getElementById('ui-container').offsetHeight;
+            const width = window.innerWidth;
+            const height = window.innerHeight - uiHeight;
+            game.scale.resize(width, height);
         });
     </script>
 </body>
