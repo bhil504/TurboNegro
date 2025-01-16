@@ -12,6 +12,7 @@
             background-color: #121212;
             color: #fff;
             display: flex;
+            flex-direction: column;
             align-items: center;
             justify-content: center;
             height: 100vh;
@@ -71,9 +72,9 @@
         }
 
         #game-container {
-            width: 90%;
+            width: 100%;
             max-width: 1100px;
-            aspect-ratio: 16 / 9;
+            aspect-ratio: 1100 / 500;
             margin: 0 auto;
             border-radius: 10px;
             border: 2px solid #555;
@@ -83,9 +84,8 @@
             overflow: hidden;
         }
 
-        /* Controls Styling */
         #controls {
-            display: flex;
+            display: none;
             justify-content: center;
             gap: 10px;
             margin-top: 10px;
@@ -132,7 +132,7 @@
         <!-- Phaser Game Container -->
         <div id="game-container"></div>
 
-        <!-- On-Screen Controls (Mobile Only) -->
+        <!-- On-Screen Controls -->
         <div id="controls">
             <button id="left" class="control-button">Left</button>
             <button id="jump" class="control-button">Jump</button>
@@ -180,16 +180,16 @@
             type: Phaser.AUTO,
             parent: 'game-container',
             scale: {
-                mode: Phaser.Scale.FIT,
+                mode: Phaser.Scale.ENVELOP, // Ensure the game fills the screen
                 autoCenter: Phaser.Scale.CENTER_BOTH,
             },
-            width: 800, // Smaller canvas for mobile
-            height: 360,
+            width: 1100,
+            height: 500,
             backgroundColor: '#000000',
             physics: {
                 default: 'arcade',
                 arcade: {
-                    gravity: { y: 200 },
+                    gravity: { y: 200 }, // Adjust gravity for mobile performance
                     debug: false,
                 },
             },
@@ -198,9 +198,18 @@
 
         const game = new Phaser.Game(isMobile ? configMobile : configDesktop);
 
+        // Show controls on mobile
         if (isMobile) {
             controls.style.display = 'flex';
         }
+
+        // Resize listener for mobile optimization
+        window.addEventListener('resize', () => {
+            const uiHeight = document.getElementById('ui-container').offsetHeight;
+            const width = window.innerWidth;
+            const height = window.innerHeight - uiHeight;
+            game.scale.resize(width, height);
+        });
     </script>
 </body>
 </html>
