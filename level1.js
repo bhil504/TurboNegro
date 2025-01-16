@@ -32,91 +32,125 @@ export default class Level1 extends Phaser.Scene {
     }
 
     create() { 
-        const { width, height } = this.scale;
-    
-        // Play background music
-        this.levelMusic = this.sound.add('level1Music', { loop: true, volume: 0.5 });
-        this.levelMusic.play();
-    
-        // Add background
-        this.add.image(width / 2, height / 2, 'level1Background').setDisplaySize(width, height);
-    
-        // Add platforms
-        this.platforms = this.physics.add.staticGroup();
-        this.platforms.create(width / 2, height - 20, null)
-            .setDisplaySize(width, 20)
-            .setVisible(false)
-            .refreshBody();
-    
-        const balcony = this.platforms.create(width / 2, height - 350, 'balcony')
-            .setScale(1)
-            .refreshBody();
-        balcony.body.setSize(280, 10).setOffset((balcony.displayWidth - 280) / 2, balcony.displayHeight - 75);
-    
-        // Player setup
-        this.player = this.physics.add.sprite(100, height - 100, 'turboNegroStanding1');
-        this.player.setCollideWorldBounds(true);
-        this.physics.add.collider(this.player, this.platforms);
-    
-        // Animations
-        this.anims.create({
-            key: 'idle',
-            frames: [
-                { key: 'turboNegroStanding1' },
-                { key: 'turboNegroStanding2' },
-                { key: 'turboNegroStanding3' },
-                { key: 'turboNegroStanding4' },
-            ],
-            frameRate: 4,
-            repeat: -1,
-        });
-        this.anims.create({ key: 'walk', frames: [{ key: 'turboNegroWalking' }], frameRate: 8, repeat: -1 });
-        this.anims.create({ key: 'jump', frames: [{ key: 'turboNegroJump' }], frameRate: 1 });
-    
-        // Input setup
-        this.cursors = this.input.keyboard.createCursorKeys();
-        this.fireKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
-    
-        // Create a group for health packs
-        this.healthPacks = this.physics.add.group();
-    
-        // Add collision detection for health packs and platforms
-        this.physics.add.collider(this.healthPacks, this.platforms);
-    
-        // Add collision detection for player and health packs
-        this.physics.add.overlap(this.player, this.healthPacks, this.handlePlayerHealthPackCollision, null, this);
-    
-        // Projectile and enemy groups
-        this.projectiles = this.physics.add.group({ defaultKey: 'projectileCD' });
-        this.enemies = this.physics.add.group();
-        this.totalEnemiesDefeated = 0;
-    
-        // Enemy spawn timer
-        this.enemySpawnTimer = this.time.addEvent({
-            delay: 1000,
-            callback: this.spawnEnemy,
-            callbackScope: this,
-            loop: true,
-        });
-    
-        // Player health
-        this.playerHealth = 10;
-        this.maxHealth = 10;
-    
-        // Health bar graphics
-        
-    
-        
-    
-        // Collision handlers
-        this.physics.add.collider(this.player, this.enemies, this.handlePlayerEnemyCollision, null, this);
-        this.physics.add.collider(this.projectiles, this.enemies, this.handleProjectileEnemyCollision, null, this);
-        this.physics.add.collider(this.enemies, this.platforms);
+    const { width, height } = this.scale;
 
-        this.updateHealthUI(); // Initialize health bar
-        this.updateEnemyCountUI(); // Initialize enemy count
+    // Play background music
+    this.levelMusic = this.sound.add('level1Music', { loop: true, volume: 0.5 });
+    this.levelMusic.play();
 
+    // Add background
+    this.add.image(width / 2, height / 2, 'level1Background').setDisplaySize(width, height);
+
+    // Add platforms
+    this.platforms = this.physics.add.staticGroup();
+    this.platforms.create(width / 2, height - 20, null)
+        .setDisplaySize(width, 20)
+        .setVisible(false)
+        .refreshBody();
+
+    const balcony = this.platforms.create(width / 2, height - 350, 'balcony')
+        .setScale(1)
+        .refreshBody();
+    balcony.body.setSize(280, 10).setOffset((balcony.displayWidth - 280) / 2, balcony.displayHeight - 75);
+
+    // Player setup
+    this.player = this.physics.add.sprite(100, height - 100, 'turboNegroStanding1');
+    this.player.setCollideWorldBounds(true);
+    this.physics.add.collider(this.player, this.platforms);
+
+    // Animations
+    this.anims.create({
+        key: 'idle',
+        frames: [
+            { key: 'turboNegroStanding1' },
+            { key: 'turboNegroStanding2' },
+            { key: 'turboNegroStanding3' },
+            { key: 'turboNegroStanding4' },
+        ],
+        frameRate: 4,
+        repeat: -1,
+    });
+    this.anims.create({ key: 'walk', frames: [{ key: 'turboNegroWalking' }], frameRate: 8, repeat: -1 });
+    this.anims.create({ key: 'jump', frames: [{ key: 'turboNegroJump' }], frameRate: 1 });
+
+    // Input setup
+    this.cursors = this.input.keyboard.createCursorKeys();
+    this.fireKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+
+    // Tilt controls for mobile
+    if (window.isMobile) {
+        window.addEventListener('deviceorientation', (event) => {
+            if (!event.gamma) return;
+            const gamma = event.gamma - window.gammaBaseline;
+            this.player.setVelocityX(gamma > 10 ? 160 : gamma < -10 ? -160 : 0);
+            this.player.setFlipX(gamma < 0);
+            if (!this.isJumping && Math.abs(gamma) > 10) this.player.play('walk', true);
+        });
     }
+
+    // Button controls
+    const leftButton = document.getElementById('left');
+    const rightButton = document.getElementById('right');
+    const jumpButton = document.getElementById('jump');
+    const attackButton = document.getElementById('attack');
+
+    leftButton.addEventListener('mousedown', () => {
+        this.player.setVelocityX(-160);
+        this.player.setFlipX(true);
+        if (!this.isJumping) this.player.play('walk', true);
+    });
+
+    rightButton.addEventListener('mousedown', () => {
+        this.player.setVelocityX(160);
+        this.player.setFlipX(false);
+        if (!this.isJumping) this.player.play('walk', true);
+    });
+
+    jumpButton.addEventListener('mousedown', () => {
+        if (this.player.body.touching.down && !this.isJumping) {
+            this.isJumping = true;
+            this.player.setVelocityY(-500);
+            this.player.play('jump', true);
+        }
+    });
+
+    attackButton.addEventListener('mousedown', () => this.fireProjectile());
+
+    // Create a group for health packs
+    this.healthPacks = this.physics.add.group();
+
+    // Add collision detection for health packs and platforms
+    this.physics.add.collider(this.healthPacks, this.platforms);
+
+    // Add collision detection for player and health packs
+    this.physics.add.overlap(this.player, this.healthPacks, this.handlePlayerHealthPackCollision, null, this);
+
+    // Projectile and enemy groups
+    this.projectiles = this.physics.add.group({ defaultKey: 'projectileCD' });
+    this.enemies = this.physics.add.group();
+    this.totalEnemiesDefeated = 0;
+
+    // Enemy spawn timer
+    this.enemySpawnTimer = this.time.addEvent({
+        delay: 1000,
+        callback: this.spawnEnemy,
+        callbackScope: this,
+        loop: true,
+    });
+
+    // Player health
+    this.playerHealth = 10;
+    this.maxHealth = 10;
+
+    // Collision handlers
+    this.physics.add.collider(this.player, this.enemies, this.handlePlayerEnemyCollision, null, this);
+    this.physics.add.collider(this.projectiles, this.enemies, this.handleProjectileEnemyCollision, null, this);
+    this.physics.add.collider(this.enemies, this.platforms);
+
+    this.updateHealthUI(); // Initialize health bar
+    this.updateEnemyCountUI(); // Initialize enemy count
+}
+
     
     spawnEnemy() {
         const { width, height } = this.scale;
