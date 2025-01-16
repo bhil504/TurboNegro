@@ -95,10 +95,12 @@ export default class Level1 extends Phaser.Scene {
                     const permission = await DeviceOrientationEvent.requestPermission();
                     if (permission === 'granted') {
                         this.enableTiltControls();
+                    } else {
+                        console.warn('Device orientation permission denied.');
                     }
                     grantButton.destroy(); // Remove button after enabling
-                } catch (e) {
-                    console.error('Permission request failed:', e);
+                } catch (error) {
+                    console.error('Permission request failed:', error);
                 }
             });
         } else {
@@ -315,11 +317,16 @@ export default class Level1 extends Phaser.Scene {
         const MAX_TILT_ANGLE = 30;
         const MOVE_SPEED = 160;
 
-        window.addEventListener('deviceorientation', (event) => {
+        this.handleTilt = (event) => {
             if (!event.gamma) return;
 
             const normalizedTilt = Phaser.Math.Clamp(event.gamma / MAX_TILT_ANGLE, -1, 1);
             const velocityX = normalizedTilt * MOVE_SPEED;
+
+            if (Math.abs(normalizedTilt) < 0.1) {
+                this.player.setVelocityX(0); // Prevent jitter
+                return;
+            }
 
             this.player.setVelocityX(velocityX);
             this.player.setFlipX(velocityX < 0);
@@ -329,7 +336,9 @@ export default class Level1 extends Phaser.Scene {
             } else if (!this.isJumping) {
                 this.player.play('idle', true);
             }
-        });
+        };
+
+        window.addEventListener('deviceorientation', this.handleTilt);
 
         this.events.on('pause', () => {
             window.removeEventListener('deviceorientation', this.handleTilt);
@@ -340,6 +349,4 @@ export default class Level1 extends Phaser.Scene {
         });
     }
 
-
-    
 }

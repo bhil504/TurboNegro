@@ -188,24 +188,24 @@
         }
 
         const config = {
-            type: Phaser.AUTO,
-            scale: {
-                mode: Phaser.Scale.FIT, // Ensures game fits within parent container
-                autoCenter: Phaser.Scale.CENTER_BOTH, // Centers the game
-            },
-            width: 1100,
-            height: 500,
-            backgroundColor: '#000000',
-            parent: 'game-container',
-            physics: {
-                default: 'arcade',
-                arcade: {
-                    gravity: { y: 200 },
-                    debug: false,
-                },
-            },
-            scene: [StartMenu, Level1, Level2, Level3, Level4, Level5, BossFight],
-        };
+    type: Phaser.AUTO,
+    parent: 'game-container', // Match this to your container
+    scale: {
+        mode: Phaser.Scale.FIT, // Automatically scale to fit
+        autoCenter: Phaser.Scale.CENTER_BOTH, // Center horizontally and vertically
+    },
+    width: window.innerWidth, // Fullscreen width
+    height: window.innerHeight, // Fullscreen height
+    physics: {
+        default: 'arcade',
+        arcade: {
+            gravity: { y: 300 },
+            debug: false,
+        },
+    },
+    scene: [StartMenu, Level1, Level2, Level3, Level4, Level5, BossFight],
+};
+
 
         const game = new Phaser.Game(config);
     </script>
