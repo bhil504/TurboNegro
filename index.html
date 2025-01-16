@@ -80,7 +80,7 @@
             background: linear-gradient(180deg, #111, #222);
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.8);
             position: relative;
-            overflow: hidden; /* Prevent canvas from spilling */
+            overflow: hidden;
         }
 
         /* Controls Styling */
@@ -132,7 +132,7 @@
         <!-- Phaser Game Container -->
         <div id="game-container"></div>
 
-        <!-- On-Screen Controls -->
+        <!-- On-Screen Controls (Mobile Only) -->
         <div id="controls">
             <button id="left" class="control-button">Left</button>
             <button id="jump" class="control-button">Jump</button>
@@ -145,7 +145,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.55.2/phaser.min.js"></script>
 
     <script type="module">
-        // Import the game scenes
         import StartMenu from './startMenu.js';
         import Level1 from './level1.js';
         import Level2 from './level2.js';
@@ -156,47 +155,37 @@
 
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         const controls = document.getElementById('controls');
-        let gammaBaseline = 0;
 
-        if (isMobile) {
-            controls.style.display = 'flex';
-
-            if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-                DeviceOrientationEvent.requestPermission().then(permissionState => {
-                    if (permissionState === 'granted') {
-                        setupDeviceOrientation();
-                    } else {
-                        alert('Permission to access device orientation was denied.');
-                    }
-                }).catch(console.error);
-            } else {
-                setupDeviceOrientation();
-            }
-        }
-
-        function setupDeviceOrientation() {
-            window.addEventListener('deviceorientation', (event) => {
-                const gamma = event.gamma - gammaBaseline;
-                if (Math.abs(gamma) > 10) {
-                    console.log(gamma > 0 ? 'Moving Right' : 'Moving Left');
-                }
-            });
-
-            window.addEventListener('touchstart', () => {
-                gammaBaseline = gammaBaseline || event.gamma || 0;
-            }, { once: true });
-        }
-
-        const config = {
+        const configDesktop = {
             type: Phaser.AUTO,
+            parent: 'game-container',
             scale: {
-                mode: Phaser.Scale.FIT, // Ensures game fits within parent container
-                autoCenter: Phaser.Scale.CENTER_BOTH, // Centers the game
+                mode: Phaser.Scale.FIT,
+                autoCenter: Phaser.Scale.CENTER_BOTH,
             },
             width: 1100,
             height: 500,
             backgroundColor: '#000000',
+            physics: {
+                default: 'arcade',
+                arcade: {
+                    gravity: { y: 300 },
+                    debug: false,
+                },
+            },
+            scene: [StartMenu, Level1, Level2, Level3, Level4, Level5, BossFight],
+        };
+
+        const configMobile = {
+            type: Phaser.AUTO,
             parent: 'game-container',
+            scale: {
+                mode: Phaser.Scale.FIT,
+                autoCenter: Phaser.Scale.CENTER_BOTH,
+            },
+            width: 800, // Smaller canvas for mobile
+            height: 360,
+            backgroundColor: '#000000',
             physics: {
                 default: 'arcade',
                 arcade: {
@@ -207,7 +196,11 @@
             scene: [StartMenu, Level1, Level2, Level3, Level4, Level5, BossFight],
         };
 
-        const game = new Phaser.Game(config);
+        const game = new Phaser.Game(isMobile ? configMobile : configDesktop);
+
+        if (isMobile) {
+            controls.style.display = 'flex';
+        }
     </script>
 </body>
 </html>
