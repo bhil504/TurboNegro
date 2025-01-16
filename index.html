@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Turbo Negro - Game</title>
     <style>
         /* General Body Styling */
@@ -15,7 +15,7 @@
             align-items: center;
             justify-content: center;
             height: 100vh;
-            overflow: hidden; /* Prevent scrolling */
+            overflow: hidden;
         }
 
         /* Main Container */
@@ -24,9 +24,8 @@
             flex-direction: column;
             align-items: center;
             justify-content: center;
-            width: 100vw; /* Full width */
-            height: 100vh; /* Full height */
-            overflow: hidden; /* Prevent overflow */
+            width: 100%;
+            height: 100%;
         }
 
         /* UI Container Styling */
@@ -72,8 +71,10 @@
         }
 
         #game-container {
-            width: 100vw; /* Full viewport width */
-            height: calc(100vh - 100px); /* Adjust height for UI */
+            width: 90%;
+            max-width: 1100px;
+            aspect-ratio: 16 / 9;
+            margin: 0 auto;
             border-radius: 10px;
             border: 2px solid #555;
             background: linear-gradient(180deg, #111, #222);
@@ -115,25 +116,6 @@
             background: #999;
             transform: scale(1);
         }
-
-        .instructions, .debug {
-            position: absolute;
-            background: rgba(0, 0, 0, 0.7);
-            color: white;
-            padding: 10px;
-            border-radius: 5px;
-            font-size: 14px;
-        }
-
-        .instructions {
-            top: 10px;
-            left: 10px;
-        }
-
-        .debug {
-            bottom: 10px;
-            left: 10px;
-        }
     </style>
 </head>
 <body>
@@ -163,6 +145,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.55.2/phaser.min.js"></script>
 
     <script type="module">
+        // Import the game scenes
         import StartMenu from './startMenu.js';
         import Level1 from './level1.js';
         import Level2 from './level2.js';
@@ -174,14 +157,13 @@
         const config = {
             type: Phaser.AUTO,
             scale: {
-                mode: Phaser.Scale.FIT, // Maintain aspect ratio and fit the game
-                autoCenter: Phaser.Scale.CENTER_BOTH,
-                width: 800, // Base game width
-                height: 450, // Base game height
+                mode: Phaser.Scale.FIT, // Ensures game fits within parent container
+                autoCenter: Phaser.Scale.CENTER_BOTH, // Centers the game
             },
+            width: 1100,
+            height: 500,
+            backgroundColor: '#000000',
             parent: 'game-container',
-            backgroundColor: '#000',
-            scene: [StartMenu, Level1, Level2, Level3, Level4, Level5, BossFight],
             physics: {
                 default: 'arcade',
                 arcade: {
@@ -189,30 +171,10 @@
                     debug: false,
                 },
             },
+            scene: [StartMenu, Level1, Level2, Level3, Level4, Level5, BossFight],
         };
 
         const game = new Phaser.Game(config);
-
-        // Debugging Device Orientation
-        window.addEventListener('deviceorientation', (event) => {
-            document.getElementById('gamma').textContent = event.gamma.toFixed(2);
-            document.getElementById('beta').textContent = event.beta.toFixed(2);
-        });
-
-        // Request Permission for iOS Devices
-        window.addEventListener('click', () => {
-            if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-                DeviceOrientationEvent.requestPermission()
-                    .then((response) => {
-                        if (response === 'granted') {
-                            console.log('Tilt controls enabled!');
-                        } else {
-                            alert('Tilt controls require your permission.');
-                        }
-                    })
-                    .catch(console.error);
-            }
-        });
     </script>
 </body>
 </html>
