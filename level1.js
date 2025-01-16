@@ -33,51 +33,64 @@ export default class Level1 extends Phaser.Scene {
 
     create() { 
         const { width, height } = this.scale;
-
+    
         // Play background music
         this.levelMusic = this.sound.add('level1Music', { loop: true, volume: 0.5 });
         this.levelMusic.play();
-
+    
         // Add background
         this.add.image(width / 2, height / 2, 'level1Background').setDisplaySize(width, height);
-
+    
         // Add platforms
         this.platforms = this.physics.add.staticGroup();
         this.platforms.create(width / 2, height - 20, null)
             .setDisplaySize(width, 20)
             .setVisible(false)
             .refreshBody();
-
+    
         const balcony = this.platforms.create(width / 2, height - 350, 'balcony')
             .setScale(1)
             .refreshBody();
         balcony.body.setSize(280, 10).setOffset((balcony.displayWidth - 280) / 2, balcony.displayHeight - 75);
-
+    
         // Player setup
         this.player = this.physics.add.sprite(100, height - 100, 'turboNegroStanding1');
         this.player.setCollideWorldBounds(true);
         this.physics.add.collider(this.player, this.platforms);
-
+    
         // Animations
-        this.createAnimations();
-
+        this.anims.create({
+            key: 'idle',
+            frames: [
+                { key: 'turboNegroStanding1' },
+                { key: 'turboNegroStanding2' },
+                { key: 'turboNegroStanding3' },
+                { key: 'turboNegroStanding4' },
+            ],
+            frameRate: 4,
+            repeat: -1,
+        });
+        this.anims.create({ key: 'walk', frames: [{ key: 'turboNegroWalking' }], frameRate: 8, repeat: -1 });
+        this.anims.create({ key: 'jump', frames: [{ key: 'turboNegroJump' }], frameRate: 1 });
+    
         // Input setup
         this.cursors = this.input.keyboard.createCursorKeys();
         this.fireKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
-
-        // Calibrate tilt and setup mobile input
-        this.calibrateTilt();
-        this.setupMobileTilt();
-
-        // Groups for projectiles, health packs, and enemies
+    
+        // Create a group for health packs
         this.healthPacks = this.physics.add.group();
+    
+        // Add collision detection for health packs and platforms
+        this.physics.add.collider(this.healthPacks, this.platforms);
+    
+        // Add collision detection for player and health packs
+        this.physics.add.overlap(this.player, this.healthPacks, this.handlePlayerHealthPackCollision, null, this);
+    
+        // Projectile and enemy groups
         this.projectiles = this.physics.add.group({ defaultKey: 'projectileCD' });
         this.enemies = this.physics.add.group();
         this.totalEnemiesDefeated = 0;
-
-        // Collision setup
-        this.setupCollisions();
-
+    
         // Enemy spawn timer
         this.enemySpawnTimer = this.time.addEvent({
             delay: 1000,
@@ -85,12 +98,41 @@ export default class Level1 extends Phaser.Scene {
             callbackScope: this,
             loop: true,
         });
-
+    
         // Player health
         this.playerHealth = 10;
         this.maxHealth = 10;
-        this.updateHealthUI();
-        this.updateEnemyCountUI();
+    
+        // Touch input for mobile
+        const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+        let tiltValue = 0;
+
+        if (isMobile && window.DeviceOrientationEvent) {
+            window.addEventListener('deviceorientation', (event) => {
+                tiltValue = event.gamma || 0;
+            });
+        }
+
+        this.input.on('pointerdown', (pointer) => {
+            if (pointer.downY > pointer.upY + 50) {
+                // Swipe up to jump
+                if (this.player.body.touching.down) {
+                    this.player.setVelocityY(-500);
+                }
+            } else {
+                // Tap to attack
+                this.fireProjectile();
+            }
+        });
+    
+        // Collision handlers
+        this.physics.add.collider(this.player, this.enemies, this.handlePlayerEnemyCollision, null, this);
+        this.physics.add.collider(this.projectiles, this.enemies, this.handleProjectileEnemyCollision, null, this);
+        this.physics.add.collider(this.enemies, this.platforms);
+
+        this.updateHealthUI(); // Initialize health bar
+        this.updateEnemyCountUI(); // Initialize enemy count
+
     }
     
     spawnEnemy() {
@@ -226,24 +268,21 @@ export default class Level1 extends Phaser.Scene {
     update() {
         if (!this.player || !this.cursors) return;
 
-        const sensitivity = 4; // Adjust sensitivity for tilt
-
-        // Mobile Tilt Controls
+        // Handle movement for desktop and mobile
         if (/Android|iPhone|iPad|iPod/i.test(navigator.userAgent)) {
-            const tiltVelocity = Phaser.Math.Clamp(this.tiltValue * sensitivity, -160, 160);
-            this.player.setVelocityX(tiltVelocity);
+            const sensitivity = 5;
+            this.player.setVelocityX(tiltValue * sensitivity);
 
-            if (tiltVelocity > 0) {
+            if (tiltValue > 0) {
                 this.player.setFlipX(false);
-                if (this.player.body.touching.down) this.player.play('walk', true);
-            } else if (tiltVelocity < 0) {
+                if (!this.isJumping) this.player.play('walk', true);
+            } else if (tiltValue < 0) {
                 this.player.setFlipX(true);
-                if (this.player.body.touching.down) this.player.play('walk', true);
-            } else if (this.player.body.touching.down) {
+                if (!this.isJumping) this.player.play('walk', true);
+            } else if (this.player.body.touching.down && !this.isJumping) {
                 this.player.play('idle', true);
             }
         } else {
-            // Desktop Controls
             this.player.setVelocityX(0);
 
             if (this.cursors.left.isDown) {
@@ -265,13 +304,13 @@ export default class Level1 extends Phaser.Scene {
             }
         }
 
-        // Reset jump animation when on the ground
+        // Reset jumping state when on the ground
         if (this.player.body.touching.down && this.isJumping) {
             this.isJumping = false;
             this.player.play('idle', true);
         }
 
-        // Fire projectiles
+        // Handle projectile firing for desktop and mobile
         if (Phaser.Input.Keyboard.JustDown(this.fireKey)) {
             this.fireProjectile();
         }
@@ -325,26 +364,6 @@ export default class Level1 extends Phaser.Scene {
 
         // Update health bar
         this.updateHealthUI();
-    }
-    
-    calibrateTilt() {
-        const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-
-        if (isMobile && window.DeviceOrientationEvent) {
-            window.addEventListener('deviceorientation', (event) => {
-                this.baseTiltX = event.gamma || 0; // Capture the neutral gamma position
-            }, { once: true }); // Only calibrate once
-        }
-    }
-
-    setupMobileTilt() {
-        const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-
-        if (isMobile && window.DeviceOrientationEvent) {
-            window.addEventListener('deviceorientation', (event) => {
-                this.tiltValue = event.gamma - this.baseTiltX || 0; // Subtract calibrated base tilt
-            });
-        }
     }
     
 }
