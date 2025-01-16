@@ -1,6 +1,8 @@
 export default class Level1 extends Phaser.Scene {
     constructor() {
         super({ key: 'Level1' });
+        this.isJumping = false; // Initialize jumping state
+        this.tiltValue = 0;     // Initialize tilt value for mobile
     }
 
     updateHealthUI() {
@@ -31,7 +33,7 @@ export default class Level1 extends Phaser.Scene {
         console.log("Assets preloaded successfully.");
     }
 
-    create() { 
+    create() {
         const { width, height } = this.scale;
     
         // Play background music
@@ -58,7 +60,41 @@ export default class Level1 extends Phaser.Scene {
         this.player.setCollideWorldBounds(true);
         this.physics.add.collider(this.player, this.platforms);
     
-        // Animations
+        // Create animations
+        this.createAnimations();
+    
+        // Input setup
+        this.cursors = this.input.keyboard.createCursorKeys();
+        this.fireKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+    
+        // Mobile-specific input
+        this.setupMobileInput();
+    
+        // Groups for health packs, projectiles, and enemies
+        this.healthPacks = this.physics.add.group();
+        this.projectiles = this.physics.add.group({ defaultKey: 'projectileCD' });
+        this.enemies = this.physics.add.group();
+        this.totalEnemiesDefeated = 0;
+    
+        // Add collision handlers
+        this.setupCollisions();
+    
+        // Enemy spawn timer
+        this.enemySpawnTimer = this.time.addEvent({
+            delay: 1000,
+            callback: this.spawnEnemy,
+            callbackScope: this,
+            loop: true,
+        });
+    
+        // Player health and UI updates
+        this.playerHealth = 10;
+        this.maxHealth = 10;
+        this.updateHealthUI(); // Initialize health bar
+        this.updateEnemyCountUI(); // Initialize enemy count
+    }
+
+    createAnimations() {
         this.anims.create({
             key: 'idle',
             frames: [
@@ -72,47 +108,17 @@ export default class Level1 extends Phaser.Scene {
         });
         this.anims.create({ key: 'walk', frames: [{ key: 'turboNegroWalking' }], frameRate: 8, repeat: -1 });
         this.anims.create({ key: 'jump', frames: [{ key: 'turboNegroJump' }], frameRate: 1 });
-    
-        // Input setup
-        this.cursors = this.input.keyboard.createCursorKeys();
-        this.fireKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
-    
-        // Create a group for health packs
-        this.healthPacks = this.physics.add.group();
-    
-        // Add collision detection for health packs and platforms
-        this.physics.add.collider(this.healthPacks, this.platforms);
-    
-        // Add collision detection for player and health packs
-        this.physics.add.overlap(this.player, this.healthPacks, this.handlePlayerHealthPackCollision, null, this);
-    
-        // Projectile and enemy groups
-        this.projectiles = this.physics.add.group({ defaultKey: 'projectileCD' });
-        this.enemies = this.physics.add.group();
-        this.totalEnemiesDefeated = 0;
-    
-        // Enemy spawn timer
-        this.enemySpawnTimer = this.time.addEvent({
-            delay: 1000,
-            callback: this.spawnEnemy,
-            callbackScope: this,
-            loop: true,
-        });
-    
-        // Player health
-        this.playerHealth = 10;
-        this.maxHealth = 10;
-    
-        // Touch input for mobile
-        const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-        let tiltValue = 0;
+    }
 
+    setupMobileInput() {
+        const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    
         if (isMobile && window.DeviceOrientationEvent) {
             window.addEventListener('deviceorientation', (event) => {
-                tiltValue = event.gamma || 0;
+                this.tiltValue = event.gamma || 0;
             });
         }
-
+    
         this.input.on('pointerdown', (pointer) => {
             if (pointer.downY > pointer.upY + 50) {
                 // Swipe up to jump
@@ -124,16 +130,19 @@ export default class Level1 extends Phaser.Scene {
                 this.fireProjectile();
             }
         });
+    }
+
+    setupCollisions() {
+        // Health packs
+        this.physics.add.collider(this.healthPacks, this.platforms);
+        this.physics.add.overlap(this.player, this.healthPacks, this.handlePlayerHealthPackCollision, null, this);
     
-        // Collision handlers
+        // Enemies and projectiles
         this.physics.add.collider(this.player, this.enemies, this.handlePlayerEnemyCollision, null, this);
         this.physics.add.collider(this.projectiles, this.enemies, this.handleProjectileEnemyCollision, null, this);
         this.physics.add.collider(this.enemies, this.platforms);
-
-        this.updateHealthUI(); // Initialize health bar
-        this.updateEnemyCountUI(); // Initialize enemy count
-
     }
+    
     
     spawnEnemy() {
         const { width, height } = this.scale;
