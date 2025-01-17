@@ -243,34 +243,26 @@ export default class Level1 extends Phaser.Scene {
     }
     
     update() {
-        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-        if (isMobile && this.cursorKeys) {
-            if (this.cursorKeys.up.isDown && this.player.body.touching.down) {
-                this.player.setVelocityY(-500);
-                this.player.play('jump', true);
-            }
-        } else {
-            if (this.cursors.left.isDown) {
-                this.player.setVelocityX(-160);
-                this.player.setFlipX(true);
-                this.player.play('walk', true);
-            } else if (this.cursors.right.isDown) {
-                this.player.setVelocityX(160);
-                this.player.setFlipX(false);
-                this.player.play('walk', true);
-            } else if (this.player.body.touching.down) {
-                this.player.setVelocityX(0);
-                this.player.play('idle', true);
-            }
+        if (this.cursors.left.isDown) {
+            this.player.setVelocityX(-160);
+            this.player.setFlipX(true);
+            this.player.play('walk', true);
+        } else if (this.cursors.right.isDown) {
+            this.player.setVelocityX(160);
+            this.player.setFlipX(false);
+            this.player.play('walk', true);
+        } else if (this.player.body.touching.down) {
+            this.player.setVelocityX(0);
+            this.player.play('idle', true);
+        }
 
-            if (this.cursors.up.isDown && this.player.body.touching.down) {
-                this.player.setVelocityY(-500);
-                this.player.play('jump', true);
-            }
+        if (this.cursors.up.isDown && this.player.body.touching.down) {
+            this.player.setVelocityY(-500);
+            this.player.play('jump', true);
+        }
 
-            if (Phaser.Input.Keyboard.JustDown(this.fireKey)) {
-                this.fireProjectile();
-            }
+        if (Phaser.Input.Keyboard.JustDown(this.fireKey)) {
+            this.fireProjectile();
         }
     }
 
@@ -351,20 +343,5 @@ export default class Level1 extends Phaser.Scene {
         });
     }
 
-    updateJoystickState() {
-        const forceX = this.joystick.forceX;
-
-        if (forceX < -0.5) {
-            this.player.setVelocityX(-160);
-            this.player.setFlipX(true);
-            this.player.play('walk', true);
-        } else if (forceX > 0.5) {
-            this.player.setVelocityX(160);
-            this.player.setFlipX(false);
-            this.player.play('walk', true);
-        } else {
-            this.player.setVelocityX(0);
-            this.player.play('idle', true);
-        }
-    }
+    
 }

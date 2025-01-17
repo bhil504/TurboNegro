@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Turbo Negro - Game</title>
     <style>
+        /* General Body Styling */
         body {
             font-family: 'Arial', sans-serif;
             margin: 0;
@@ -17,7 +18,8 @@
             height: 100vh;
             overflow: hidden;
         }
-
+    
+        /* Main Container */
         #main-container {
             display: flex;
             flex-direction: column;
@@ -26,10 +28,11 @@
             width: 100%;
             height: 100%;
         }
-
+    
+        /* UI Container Styling */
         #ui-container {
             display: flex;
-            flex-wrap: wrap;
+            flex-wrap: wrap; /* Allow wrapping for smaller screens */
             justify-content: space-between;
             align-items: center;
             width: 90%;
@@ -41,9 +44,14 @@
             border-radius: 8px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.6);
             margin-bottom: 10px;
-            gap: 10px;
+            gap: 10px; /* Add space between items */
         }
-
+    
+        #ui-container.mobile {
+            flex-direction: column; /* Stack items on mobile */
+            align-items: stretch; /* Stretch items to fill width */
+        }
+    
         #health-bar-container, #enemy-count {
             font-size: 16px;
             font-weight: bold;
@@ -52,28 +60,28 @@
             border-radius: 8px;
             color: #fff;
             text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.8);
-            flex: 1;
-            text-align: center;
+            flex: 1; /* Allow items to grow equally */
+            text-align: center; /* Center text on mobile */
         }
-
+    
         #health-bar {
             width: 100%;
-            max-width: 200px;
+            max-width: 200px; /* Limit max width */
             height: 20px;
             background-color: #770000;
             border-radius: 12px;
             border: 2px solid #444;
             overflow: hidden;
-            margin: 0 auto;
+            margin: 0 auto; /* Center on mobile */
         }
-
+    
         #health-bar-inner {
             width: 100%;
             height: 100%;
             background-color: #00aa00;
             transition: width 0.3s ease-in-out;
         }
-
+    
         #game-container {
             width: 100%;
             max-width: 1100px;
@@ -86,21 +94,58 @@
             position: relative;
             overflow: hidden;
         }
-
+    
         #controls {
-            display: flex;
+            display: none;
             justify-content: center;
-            gap: 20px;
+            gap: 10px;
             margin-top: 10px;
             width: 100%;
-            align-items: center;
+        }
+    
+        .control-button {
+            background: linear-gradient(180deg, #333, #555);
+            color: white;
+            font-size: 14px;
+            font-weight: bold;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.6);
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.2s ease;
+        }
+    
+        .control-button:hover {
+            background: linear-gradient(180deg, #555, #777);
+            transform: scale(1.05);
+        }
+    
+        .control-button:active {
+            background: #999;
+            transform: scale(1);
+        }
+    
+        @media (max-width: 768px) {
+            #ui-container {
+                flex-direction: column; /* Stack elements vertically */
+            }
+    
+            #health-bar-container, #enemy-count {
+                padding: 10px 20px; /* Larger touch area */
+            }
         }
 
-        #joystick-container {
-            width: 150px;
-            height: 150px;
-            position: relative;
-        }
+
+    #joystick-container {
+        width: 150px;
+        height: 150px;
+        position: relative;
+    }
+</style>
+
     </style>
     <script src="https://raw.githubusercontent.com/rexrainbow/phaser3-rex-notes/master/dist/rexvirtualjoystickplugin.min.js"></script>
 </head>
@@ -121,7 +166,9 @@
         <!-- On-Screen Controls -->
         <div id="controls">
             <div id="joystick-container"></div>
+            <button id="attack" class="control-button">Attack</button>
         </div>
+        
     </div>
 
     <!-- Phaser Library -->
@@ -138,7 +185,6 @@
 
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         const controls = document.getElementById('controls');
-        const joystickContainer = document.getElementById('joystick-container');
 
         const config = {
             type: Phaser.AUTO,
@@ -162,30 +208,46 @@
 
         const game = new Phaser.Game(config);
 
-        // Mobile Controls
+        // Show controls on mobile
         if (isMobile) {
             controls.style.display = 'flex';
 
-            const joystick = game.plugins.get('rexvirtualjoystickplugin').add(game.scene.scenes[0], {
-                x: joystickContainer.offsetWidth / 2,
-                y: joystickContainer.offsetHeight / 2,
-                radius: 50,
-                base: game.scene.scenes[0].add.circle(0, 0, 50, 0x888888),
-                thumb: game.scene.scenes[0].add.circle(0, 0, 25, 0xcccccc),
+            // Mobile tilt-to-move
+            window.addEventListener('deviceorientation', function(event) {
+                const tilt = event.gamma; // Gamma is left-to-right tilt
+                if (tilt !== null) {
+                    game.input.emit('tilt', tilt);
+                }
             });
 
-            const cursorKeys = joystick.createCursorKeys();
-
-            game.scene.scenes[0].input.on('pointerdown', () => game.input.emit('attack'));
-
-            game.events.on('update', () => {
-                if (cursorKeys.left.isDown) game.input.emit('move', 'left');
-                if (cursorKeys.right.isDown) game.input.emit('move', 'right');
-                if (cursorKeys.up.isDown) game.input.emit('jump');
+            // Swipe up to jump
+            let touchStartY = null;
+            window.addEventListener('touchstart', function(event) {
+                touchStartY = event.touches[0].clientY;
             });
+
+            window.addEventListener('touchend', function(event) {
+                const touchEndY = event.changedTouches[0].clientY;
+                if (touchStartY !== null && touchEndY < touchStartY - 50) {
+                    game.input.emit('jump');
+                }
+                touchStartY = null;
+            });
+
+            // Tap anywhere to attack
+            window.addEventListener('touchstart', function(event) {
+                if (event.target.className.includes('control-button')) return; // Prevent conflicts with buttons
+                game.input.emit('attack');
+            });
+
+            // Fallback on-screen buttons
+            document.getElementById('left').addEventListener('click', () => game.input.emit('move', 'left'));
+            document.getElementById('right').addEventListener('click', () => game.input.emit('move', 'right'));
+            document.getElementById('jump').addEventListener('click', () => game.input.emit('jump'));
+            document.getElementById('attack').addEventListener('click', () => game.input.emit('attack'));
         }
 
-        // Desktop Controls
+        // Desktop controls
         const cursors = game.input.keyboard.createCursorKeys();
         const spacebar = game.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
 
