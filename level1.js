@@ -60,7 +60,256 @@ export default class Level1 extends Phaser.Scene {
         this.cursors = this.input.keyboard.createCursorKeys();
         this.fireKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
     
-        // Simplified joystick for mobile
+        // Mobile-specific setup
+        if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+            console.log("Mobile device detected. Initializing controls...");
+            this.setupMobileControls(); // Tilt-based controls
+            this.setupJoystick(); // Joystick as fallback
+        }
+    
+        // Health and enemy setup
+        this.playerHealth = 10;
+        this.maxHealth = 10;
+        this.totalEnemiesDefeated = 0;
+        this.updateHealthUI();
+        this.updateEnemyCountUI();
+    
+        this.projectiles = this.physics.add.group({ defaultKey: 'projectileCD' });
+        this.enemies = this.physics.add.group();
+        this.enemySpawnTimer = this.time.addEvent({ delay: 1000, callback: this.spawnEnemy, callbackScope: this, loop: true });
+    
+        this.healthPacks = this.physics.add.group();
+        this.physics.add.collider(this.healthPacks, this.platforms);
+        this.physics.add.overlap(this.player, this.healthPacks, this.handlePlayerHealthPackCollision, null, this);
+    
+        this.physics.add.collider(this.player, this.enemies, this.handlePlayerEnemyCollision, null, this);
+        this.physics.add.collider(this.projectiles, this.enemies, this.handleProjectileEnemyCollision, null, this);
+        this.physics.add.collider(this.enemies, this.platforms);
+    }
+    
+    
+    
+    
+
+    
+    spawnEnemy() {
+        const { width, height } = this.scale;
+        const spawnLocation = Phaser.Math.Between(0, 2);
+        const x = spawnLocation === 0 ? Phaser.Math.Between(50, width - 50) : spawnLocation === 1 ? 0 : width;
+        const y = spawnLocation === 0 ? 0 : Phaser.Math.Between(50, height - 100);
+        
+        const enemy = this.enemies.create(x, y, 'skeleton');
+        enemy.setCollideWorldBounds(true);
+        enemy.setBounce(0.2);
+        enemy.isJumping = false;
+        
+        this.time.addEvent({
+            delay: 500,
+            callback: () => this.enemyAI(enemy),
+            loop: true,
+        });
+    }
+
+    enemyAI(enemy) {
+        if (!enemy.body || !this.player.body) return;
+        const playerX = this.player.x;
+        
+        if (enemy.x < playerX - 10) {
+            enemy.setVelocityX(100);
+            enemy.setFlipX(false);
+        } else if (enemy.x > playerX + 10) {
+            enemy.setVelocityX(-100);
+            enemy.setFlipX(true);
+        } else {
+            enemy.setVelocityX(0);
+        }
+        
+        if (Phaser.Math.Between(0, 100) < 20 && enemy.body.touching.down && Math.abs(enemy.x - playerX) < 200) {
+            enemy.setVelocityY(-300);
+        }
+    }
+    
+    handlePlayerEnemyCollision(player, enemy) {
+        enemy.destroy();
+        this.playerHealth--;
+        
+        // Update health bar
+        this.updateHealthUI();
+        
+        
+        if (this.playerHealth <= 0) {
+            this.gameOver();
+        }
+    }
+    
+    handleProjectileEnemyCollision(projectile, enemy) {
+        projectile.destroy();
+        enemy.destroy();
+        this.totalEnemiesDefeated++;
+        
+        // Spawn a health pack after 12 enemies are defeated
+        if (this.totalEnemiesDefeated === 12) {
+            this.spawnHealthPack();
+        }
+        
+        // Update enemy countdown
+        this.updateEnemyCountUI();
+        
+        
+        if (this.totalEnemiesDefeated >= 20) {
+            this.levelComplete();
+        }
+    }
+    
+    gameOver() {
+        // Stop background music
+        if (this.levelMusic) this.levelMusic.stop();
+        
+        // Stop spawning enemies
+        if (this.enemySpawnTimer) this.enemySpawnTimer.remove();
+        
+        // Safely clear enemies and projectiles
+        this.enemies.clear(true, true); // Destroys all active enemies
+        this.projectiles.clear(true, true); // Destroys all active projectiles
+        
+        // Display game over screen
+        this.add.image(this.scale.width / 2, this.scale.height / 2, 'gameOver').setOrigin(0.5);
+        
+        // Restart the scene after input
+        this.input.keyboard.once('keydown-SPACE', () => {
+            this.scene.restart();
+        });
+    }
+    
+    levelComplete() {
+        // Stop background music
+        if (this.levelMusic) this.levelMusic.stop();
+        
+        // Stop spawning enemies
+        if (this.enemySpawnTimer) this.enemySpawnTimer.remove();
+        
+        // Safely clear enemies and projectiles
+        this.enemies.clear(true, true); // Destroys all active enemies
+        this.projectiles.clear(true, true); // Destroys all active projectiles
+        
+        // Display level complete screen
+        this.add.image(this.scale.width / 2, this.scale.height / 2, 'levelComplete').setOrigin(0.5);
+        
+        // Proceed to the next level after input
+        this.input.keyboard.once('keydown-SPACE', () => {
+            this.scene.start('Level2'); // Assuming Level2 is the next scene
+        });
+    }
+    
+    update() {
+        if (this.cursors.left.isDown) {
+            this.player.setVelocityX(-160);
+            this.player.setFlipX(true);
+            this.player.play('walk', true);
+        } else if (this.cursors.right.isDown) {
+            this.player.setVelocityX(160);
+            this.player.setFlipX(false);
+            this.player.play('walk', true);
+        } else if (this.player.body.touching.down) {
+            this.player.setVelocityX(0);
+            this.player.play('idle', true);
+        }
+
+        if (this.cursors.up.isDown && this.player.body.touching.down) {
+            this.player.setVelocityY(-500);
+            this.player.play('jump', true);
+        }
+        
+        if (Phaser.Input.Keyboard.JustDown(this.fireKey)) {
+            this.fireProjectile();
+        }
+    }
+    
+    fireProjectile() {
+        const projectile = this.projectiles.create(this.player.x, this.player.y, 'projectileCD');
+        if (projectile) {
+            projectile.setActive(true);
+            projectile.setVisible(true);
+            projectile.body.setAllowGravity(false);
+            projectile.setVelocityX(this.player.flipX ? -500 : 500);
+        }
+    }
+
+    spawnHealthPack() {
+        const { width } = this.scale;
+        
+        // Random horizontal position for the health pack
+        const x = Phaser.Math.Between(50, width - 50);
+        
+        // Create the health pack slightly above the ground so it falls naturally
+        const healthPack = this.healthPacks.create(x, 50, 'healthPack'); // Start at a higher y position
+        healthPack.setBounce(0.5); // Add a bounce for visual effect
+        healthPack.setCollideWorldBounds(true);
+        
+        // Add collision with platforms so the health pack lands on them
+        this.physics.add.collider(healthPack, this.platforms);
+    }
+
+    handlePlayerHealthPackCollision(player, healthPack) {
+        healthPack.destroy(); // Remove the health pack
+        
+        // Increase player's health by 5, but not beyond the maximum
+        this.playerHealth = Math.min(this.playerHealth + 5, this.maxHealth);
+        
+        // Update health bar
+        this.updateHealthUI();
+        
+    }
+    
+    setupMobileControls() {
+        // Tilt controls
+        window.addEventListener('deviceorientation', (event) => {
+            const tilt = event.gamma;
+            if (tilt !== null) {
+                if (tilt > 10) {
+                    this.player.setVelocityX(160);
+                    this.player.setFlipX(false);
+                    this.player.play('walk', true);
+                } else if (tilt < -10) {
+                    this.player.setVelocityX(-160);
+                    this.player.setFlipX(true);
+                    this.player.play('walk', true);
+                } else {
+                    this.player.setVelocityX(0);
+                    this.player.play('idle', true);
+                }
+            }
+        });
+    
+        // Swipe up for jump
+        let touchStartY = null;
+        window.addEventListener('touchstart', (event) => {
+            touchStartY = event.touches[0].clientY;
+        });
+    
+        window.addEventListener('touchend', (event) => {
+            const touchEndY = event.changedTouches[0].clientY;
+            if (touchStartY !== null && touchEndY < touchStartY - 50) {
+                if (this.player.body.touching.down) {
+                    this.player.setVelocityY(-500);
+                    this.player.play('jump', true);
+                }
+            }
+            touchStartY = null;
+        });
+    
+        // Tap anywhere to attack
+        window.addEventListener('touchstart', (event) => {
+            if (event.target.tagName !== 'BUTTON') {
+                this.fireProjectile();
+            }
+        });
+    }
+    
+    
+    
+    
+    setupJoystick() {
         const joystickArea = document.getElementById('joystick-area');
         let joystickStartX = 0;
         let joystickStartY = 0;
@@ -99,322 +348,7 @@ export default class Level1 extends Phaser.Scene {
                 this.player.anims.play('idle', true);
             }
         });
-    
-        // Health and enemy setup
-        this.playerHealth = 10;
-        this.maxHealth = 10;
-        this.totalEnemiesDefeated = 0;
-        this.updateHealthUI();
-        this.updateEnemyCountUI();
-    
-        this.projectiles = this.physics.add.group({ defaultKey: 'projectileCD' });
-        this.enemies = this.physics.add.group();
-        this.enemySpawnTimer = this.time.addEvent({ delay: 1000, callback: this.spawnEnemy, callbackScope: this, loop: true });
-    
-        this.healthPacks = this.physics.add.group();
-        this.physics.add.collider(this.healthPacks, this.platforms);
-        this.physics.add.overlap(this.player, this.healthPacks, this.handlePlayerHealthPackCollision, null, this);
-    
-        this.physics.add.collider(this.player, this.enemies, this.handlePlayerEnemyCollision, null, this);
-        this.physics.add.collider(this.projectiles, this.enemies, this.handleProjectileEnemyCollision, null, this);
-        this.physics.add.collider(this.enemies, this.platforms);
     }
     
-    
-
-    setupOnScreenButtonActions() {
-        const leftButton = document.getElementById('left');
-        const rightButton = document.getElementById('right');
-        const jumpButton = document.getElementById('jump');
-        const attackButton = document.getElementById('attack');
-
-        leftButton.addEventListener('mousedown', () => {
-            this.player.setVelocityX(-160);
-            this.player.setFlipX(true);
-            this.player.play('walk', true);
-        });
-        leftButton.addEventListener('mouseup', () => {
-            this.player.setVelocityX(0);
-            this.player.play('idle', true);
-        });
-
-        rightButton.addEventListener('mousedown', () => {
-            this.player.setVelocityX(160);
-            this.player.setFlipX(false);
-            this.player.play('walk', true);
-        });
-        rightButton.addEventListener('mouseup', () => {
-            this.player.setVelocityX(0);
-            this.player.play('idle', true);
-        });
-
-        jumpButton.addEventListener('click', () => {
-            if (this.player.body.touching.down) {
-                this.player.setVelocityY(-500);
-                this.player.play('jump', true);
-            }
-        });
-
-        attackButton.addEventListener('click', () => {
-            this.fireProjectile();
-        });
-    }
-
-    spawnEnemy() {
-        const { width, height } = this.scale;
-        const spawnLocation = Phaser.Math.Between(0, 2);
-        const x = spawnLocation === 0 ? Phaser.Math.Between(50, width - 50) : spawnLocation === 1 ? 0 : width;
-        const y = spawnLocation === 0 ? 0 : Phaser.Math.Between(50, height - 100);
-
-        const enemy = this.enemies.create(x, y, 'skeleton');
-        enemy.setCollideWorldBounds(true);
-        enemy.setBounce(0.2);
-        enemy.isJumping = false;
-
-        this.time.addEvent({
-            delay: 500,
-            callback: () => this.enemyAI(enemy),
-            loop: true,
-        });
-    }
-
-    enemyAI(enemy) {
-        if (!enemy.body || !this.player.body) return;
-        const playerX = this.player.x;
-
-        if (enemy.x < playerX - 10) {
-            enemy.setVelocityX(100);
-            enemy.setFlipX(false);
-        } else if (enemy.x > playerX + 10) {
-            enemy.setVelocityX(-100);
-            enemy.setFlipX(true);
-        } else {
-            enemy.setVelocityX(0);
-        }
-
-        if (Phaser.Math.Between(0, 100) < 20 && enemy.body.touching.down && Math.abs(enemy.x - playerX) < 200) {
-            enemy.setVelocityY(-300);
-        }
-    }
-
-    handlePlayerEnemyCollision(player, enemy) {
-        enemy.destroy();
-        this.playerHealth--;
-    
-        // Update health bar
-        this.updateHealthUI();
-
-    
-        if (this.playerHealth <= 0) {
-            this.gameOver();
-        }
-    }
-
-    handleProjectileEnemyCollision(projectile, enemy) {
-        projectile.destroy();
-        enemy.destroy();
-        this.totalEnemiesDefeated++;
-    
-        // Spawn a health pack after 12 enemies are defeated
-        if (this.totalEnemiesDefeated === 12) {
-            this.spawnHealthPack();
-        }
-    
-        // Update enemy countdown
-        this.updateEnemyCountUI();
-
-    
-        if (this.totalEnemiesDefeated >= 20) {
-            this.levelComplete();
-        }
-    }
-    
-    gameOver() {
-        // Stop background music
-        if (this.levelMusic) this.levelMusic.stop();
-    
-        // Stop spawning enemies
-        if (this.enemySpawnTimer) this.enemySpawnTimer.remove();
-    
-        // Safely clear enemies and projectiles
-        this.enemies.clear(true, true); // Destroys all active enemies
-        this.projectiles.clear(true, true); // Destroys all active projectiles
-    
-        // Display game over screen
-        this.add.image(this.scale.width / 2, this.scale.height / 2, 'gameOver').setOrigin(0.5);
-    
-        // Restart the scene after input
-        this.input.keyboard.once('keydown-SPACE', () => {
-            this.scene.restart();
-        });
-    }
-    
-    levelComplete() {
-        // Stop background music
-        if (this.levelMusic) this.levelMusic.stop();
-    
-        // Stop spawning enemies
-        if (this.enemySpawnTimer) this.enemySpawnTimer.remove();
-    
-        // Safely clear enemies and projectiles
-        this.enemies.clear(true, true); // Destroys all active enemies
-        this.projectiles.clear(true, true); // Destroys all active projectiles
-    
-        // Display level complete screen
-        this.add.image(this.scale.width / 2, this.scale.height / 2, 'levelComplete').setOrigin(0.5);
-    
-        // Proceed to the next level after input
-        this.input.keyboard.once('keydown-SPACE', () => {
-            this.scene.start('Level2'); // Assuming Level2 is the next scene
-        });
-    }
-    
-    update() {
-        if (this.cursors.left.isDown) {
-            this.player.setVelocityX(-160);
-            this.player.setFlipX(true);
-            this.player.play('walk', true);
-        } else if (this.cursors.right.isDown) {
-            this.player.setVelocityX(160);
-            this.player.setFlipX(false);
-            this.player.play('walk', true);
-        } else if (this.player.body.touching.down) {
-            this.player.setVelocityX(0);
-            this.player.play('idle', true);
-        }
-
-        if (this.cursors.up.isDown && this.player.body.touching.down) {
-            this.player.setVelocityY(-500);
-            this.player.play('jump', true);
-        }
-
-        if (Phaser.Input.Keyboard.JustDown(this.fireKey)) {
-            this.fireProjectile();
-        }
-    }
-
-    fireProjectile() {
-        const projectile = this.projectiles.create(this.player.x, this.player.y, 'projectileCD');
-        if (projectile) {
-            projectile.setActive(true);
-            projectile.setVisible(true);
-            projectile.body.setAllowGravity(false);
-            projectile.setVelocityX(this.player.flipX ? -500 : 500);
-        }
-    }
-
-    spawnHealthPack() {
-        const { width } = this.scale;
-    
-        // Random horizontal position for the health pack
-        const x = Phaser.Math.Between(50, width - 50);
-    
-        // Create the health pack slightly above the ground so it falls naturally
-        const healthPack = this.healthPacks.create(x, 50, 'healthPack'); // Start at a higher y position
-        healthPack.setBounce(0.5); // Add a bounce for visual effect
-        healthPack.setCollideWorldBounds(true);
-    
-        // Add collision with platforms so the health pack lands on them
-        this.physics.add.collider(healthPack, this.platforms);
-    }
-
-    handlePlayerHealthPackCollision(player, healthPack) {
-        healthPack.destroy(); // Remove the health pack
-    
-        // Increase player's health by 5, but not beyond the maximum
-        this.playerHealth = Math.min(this.playerHealth + 5, this.maxHealth);
-    
-        // Update health bar
-        this.updateHealthUI();
-
-    }
-
-    setupMobileControls() {
-        window.addEventListener('deviceorientation', (event) => {
-            const tilt = event.gamma;
-            if (tilt !== null) {
-                if (tilt > 10) {
-                    this.player.setVelocityX(160);
-                    this.player.setFlipX(false);
-                    this.player.play('walk', true);
-                } else if (tilt < -10) {
-                    this.player.setVelocityX(-160);
-                    this.player.setFlipX(true);
-                    this.player.play('walk', true);
-                } else {
-                    this.player.setVelocityX(0);
-                    this.player.play('idle', true);
-                }
-            }
-        });
-
-        let touchStartY = null;
-        window.addEventListener('touchstart', (event) => {
-            touchStartY = event.touches[0].clientY;
-        });
-        window.addEventListener('touchend', (event) => {
-            const touchEndY = event.changedTouches[0].clientY;
-            if (touchStartY !== null && touchEndY < touchStartY - 50) {
-                if (this.player.body.touching.down) {
-                    this.player.setVelocityY(-500);
-                    this.player.play('jump', true);
-                }
-            }
-            touchStartY = null;
-        });
-
-        window.addEventListener('touchstart', (event) => {
-            if (event.target.tagName !== 'BUTTON') {
-                this.fireProjectile();
-            }
-        });
-    }
-
-    setupOnScreenButtonActions() {
-        const leftButton = document.getElementById('left');
-        const rightButton = document.getElementById('right');
-        const jumpButton = document.getElementById('jump');
-        const attackButton = document.getElementById('attack-button');
-    
-        // Validate buttons before adding event listeners
-        if (leftButton) {
-            leftButton.addEventListener('mousedown', () => {
-                this.player.setVelocityX(-160);
-                this.player.setFlipX(true);
-                this.player.play('walk', true);
-            });
-            leftButton.addEventListener('mouseup', () => {
-                this.player.setVelocityX(0);
-                this.player.play('idle', true);
-            });
-        }
-    
-        if (rightButton) {
-            rightButton.addEventListener('mousedown', () => {
-                this.player.setVelocityX(160);
-                this.player.setFlipX(false);
-                this.player.play('walk', true);
-            });
-            rightButton.addEventListener('mouseup', () => {
-                this.player.setVelocityX(0);
-                this.player.play('idle', true);
-            });
-        }
-    
-        if (jumpButton) {
-            jumpButton.addEventListener('click', () => {
-                if (this.player.body.touching.down) {
-                    this.player.setVelocityY(-500);
-                    this.player.play('jump', true);
-                }
-            });
-        }
-    
-        if (attackButton) {
-            attackButton.addEventListener('click', () => {
-                this.fireProjectile();
-            });
-        }
-    }
     
 }
