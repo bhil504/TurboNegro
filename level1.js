@@ -82,8 +82,49 @@ export default class Level1 extends Phaser.Scene {
         this.physics.add.collider(this.player, this.enemies, this.handlePlayerEnemyCollision, null, this);
         this.physics.add.collider(this.projectiles, this.enemies, this.handleProjectileEnemyCollision, null, this);
         this.physics.add.collider(this.enemies, this.platforms);
+
+        // Setup on-screen button actions
+        this.setupOnScreenButtonActions();
     }
-    
+
+    setupOnScreenButtonActions() {
+        const leftButton = document.getElementById('left');
+        const rightButton = document.getElementById('right');
+        const jumpButton = document.getElementById('jump');
+        const attackButton = document.getElementById('attack');
+
+        leftButton.addEventListener('mousedown', () => {
+            this.player.setVelocityX(-160);
+            this.player.setFlipX(true);
+            this.player.play('walk', true);
+        });
+        leftButton.addEventListener('mouseup', () => {
+            this.player.setVelocityX(0);
+            this.player.play('idle', true);
+        });
+
+        rightButton.addEventListener('mousedown', () => {
+            this.player.setVelocityX(160);
+            this.player.setFlipX(false);
+            this.player.play('walk', true);
+        });
+        rightButton.addEventListener('mouseup', () => {
+            this.player.setVelocityX(0);
+            this.player.play('idle', true);
+        });
+
+        jumpButton.addEventListener('click', () => {
+            if (this.player.body.touching.down) {
+                this.player.setVelocityY(-500);
+                this.player.play('jump', true);
+            }
+        });
+
+        attackButton.addEventListener('click', () => {
+            this.fireProjectile();
+        });
+    }
+
     spawnEnemy() {
         const { width, height } = this.scale;
         const spawnLocation = Phaser.Math.Between(0, 2);
@@ -293,7 +334,4 @@ export default class Level1 extends Phaser.Scene {
             }
         });
     }
-
-
-    
 }
