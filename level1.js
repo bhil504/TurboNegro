@@ -40,11 +40,15 @@ export default class Level1 extends Phaser.Scene {
         this.levelMusic = this.sound.add('level1Music', { loop: true, volume: 0.5 });
         this.levelMusic.play();
     
-        // Platforms and player setup
+        // Platforms
         this.platforms = this.physics.add.staticGroup();
         this.platforms.create(width / 2, height - 20, null).setDisplaySize(width, 20).setVisible(false).refreshBody();
         const balcony = this.platforms.create(width / 2, height - 350, 'balcony').setScale(1).refreshBody();
-        this.player = this.physics.add.sprite(100, height - 100, 'turboNegroStanding1').setCollideWorldBounds(true);
+        balcony.body.setSize(280, 10).setOffset((balcony.displayWidth - 280) / 2, balcony.displayHeight - 75);
+    
+        // Player setup
+        this.player = this.physics.add.sprite(100, height - 100, 'turboNegroStanding1');
+        this.player.setCollideWorldBounds(true);
         this.physics.add.collider(this.player, this.platforms);
     
         // Animations
@@ -58,18 +62,35 @@ export default class Level1 extends Phaser.Scene {
     
         // Mobile-specific setup
         if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-            this.setupMobileControls();
-        } else {
-            console.log("Desktop detected. Skipping mobile controls.");
+            console.log("Mobile device detected. Initializing controls...");
+            this.setupMobileControls(); // Tilt-based controls
+            this.setupJoystick(); // Joystick as fallback
         }
     
-        // Enemy and health setup
+        // Health and enemy setup
         this.playerHealth = 10;
         this.maxHealth = 10;
         this.totalEnemiesDefeated = 0;
         this.updateHealthUI();
         this.updateEnemyCountUI();
+    
+        this.projectiles = this.physics.add.group({ defaultKey: 'projectileCD' });
+        this.enemies = this.physics.add.group();
+        this.enemySpawnTimer = this.time.addEvent({ delay: 1000, callback: this.spawnEnemy, callbackScope: this, loop: true });
+    
+        this.healthPacks = this.physics.add.group();
+        this.physics.add.collider(this.healthPacks, this.platforms);
+        this.physics.add.overlap(this.player, this.healthPacks, this.handlePlayerHealthPackCollision, null, this);
+    
+        this.physics.add.collider(this.player, this.enemies, this.handlePlayerEnemyCollision, null, this);
+        this.physics.add.collider(this.projectiles, this.enemies, this.handleProjectileEnemyCollision, null, this);
+        this.physics.add.collider(this.enemies, this.platforms);
     }
+    
+    
+    
+    
+
     
     spawnEnemy() {
         const { width, height } = this.scale;
