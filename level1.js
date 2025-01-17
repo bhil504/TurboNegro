@@ -40,15 +40,11 @@ export default class Level1 extends Phaser.Scene {
         this.levelMusic = this.sound.add('level1Music', { loop: true, volume: 0.5 });
         this.levelMusic.play();
     
-        // Platforms
+        // Platforms and player setup
         this.platforms = this.physics.add.staticGroup();
         this.platforms.create(width / 2, height - 20, null).setDisplaySize(width, 20).setVisible(false).refreshBody();
         const balcony = this.platforms.create(width / 2, height - 350, 'balcony').setScale(1).refreshBody();
-        balcony.body.setSize(280, 10).setOffset((balcony.displayWidth - 280) / 2, balcony.displayHeight - 75);
-    
-        // Player setup
-        this.player = this.physics.add.sprite(100, height - 100, 'turboNegroStanding1');
-        this.player.setCollideWorldBounds(true);
+        this.player = this.physics.add.sprite(100, height - 100, 'turboNegroStanding1').setCollideWorldBounds(true);
         this.physics.add.collider(this.player, this.platforms);
     
         // Animations
@@ -62,35 +58,18 @@ export default class Level1 extends Phaser.Scene {
     
         // Mobile-specific setup
         if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-            console.log("Mobile device detected. Initializing controls...");
-            this.setupMobileControls(); // Tilt-based controls
-            this.setupJoystick(); // Joystick as fallback
+            this.setupMobileControls();
+        } else {
+            console.log("Desktop detected. Skipping mobile controls.");
         }
     
-        // Health and enemy setup
+        // Enemy and health setup
         this.playerHealth = 10;
         this.maxHealth = 10;
         this.totalEnemiesDefeated = 0;
         this.updateHealthUI();
         this.updateEnemyCountUI();
-    
-        this.projectiles = this.physics.add.group({ defaultKey: 'projectileCD' });
-        this.enemies = this.physics.add.group();
-        this.enemySpawnTimer = this.time.addEvent({ delay: 1000, callback: this.spawnEnemy, callbackScope: this, loop: true });
-    
-        this.healthPacks = this.physics.add.group();
-        this.physics.add.collider(this.healthPacks, this.platforms);
-        this.physics.add.overlap(this.player, this.healthPacks, this.handlePlayerHealthPackCollision, null, this);
-    
-        this.physics.add.collider(this.player, this.enemies, this.handlePlayerEnemyCollision, null, this);
-        this.physics.add.collider(this.projectiles, this.enemies, this.handleProjectileEnemyCollision, null, this);
-        this.physics.add.collider(this.enemies, this.platforms);
     }
-    
-    
-    
-    
-
     
     spawnEnemy() {
         const { width, height } = this.scale;
@@ -262,51 +241,29 @@ export default class Level1 extends Phaser.Scene {
     }
     
     setupMobileControls() {
-        // Tilt controls
-        window.addEventListener('deviceorientation', (event) => {
-            const tilt = event.gamma;
-            if (tilt !== null) {
-                if (tilt > 10) {
-                    this.player.setVelocityX(160);
-                    this.player.setFlipX(false);
-                    this.player.play('walk', true);
-                } else if (tilt < -10) {
-                    this.player.setVelocityX(-160);
-                    this.player.setFlipX(true);
-                    this.player.play('walk', true);
-                } else {
-                    this.player.setVelocityX(0);
-                    this.player.play('idle', true);
+        if (window.DeviceOrientationEvent) {
+            window.addEventListener('deviceorientation', (event) => {
+                const tilt = event.gamma;
+                if (tilt !== null) {
+                    if (tilt > 10) {
+                        this.player.setVelocityX(160);
+                        this.player.setFlipX(false);
+                        this.player.play('walk', true);
+                    } else if (tilt < -10) {
+                        this.player.setVelocityX(-160);
+                        this.player.setFlipX(true);
+                        this.player.play('walk', true);
+                    } else {
+                        this.player.setVelocityX(0);
+                        this.player.play('idle', true);
+                    }
                 }
-            }
-        });
-    
-        // Swipe up for jump
-        let touchStartY = null;
-        window.addEventListener('touchstart', (event) => {
-            touchStartY = event.touches[0].clientY;
-        });
-    
-        window.addEventListener('touchend', (event) => {
-            const touchEndY = event.changedTouches[0].clientY;
-            if (touchStartY !== null && touchEndY < touchStartY - 50) {
-                if (this.player.body.touching.down) {
-                    this.player.setVelocityY(-500);
-                    this.player.play('jump', true);
-                }
-            }
-            touchStartY = null;
-        });
-    
-        // Tap anywhere to attack
-        window.addEventListener('touchstart', (event) => {
-            if (event.target.tagName !== 'BUTTON') {
-                this.fireProjectile();
-            }
-        });
+            });
+        } else {
+            console.warn("Tilt controls unavailable. Enabling joystick as fallback.");
+            this.setupJoystick();
+        }
     }
-    
-    
     
     
     setupJoystick() {
