@@ -137,15 +137,6 @@
                 padding: 10px 20px; /* Larger touch area */
             }
         }
-
-
-    #joystick-container {
-        width: 150px;
-        height: 150px;
-        position: relative;
-    }
-</style>
-
     </style>
     <script src="https://raw.githubusercontent.com/rexrainbow/phaser3-rex-notes/master/dist/rexvirtualjoystickplugin.min.js"></script>
 </head>
@@ -165,10 +156,11 @@
 
         <!-- On-Screen Controls -->
         <div id="controls">
-            <div id="joystick-container"></div>
+            <button id="left" class="control-button">Left</button>
+            <button id="jump" class="control-button">Jump</button>
+            <button id="right" class="control-button">Right</button>
             <button id="attack" class="control-button">Attack</button>
         </div>
-        
     </div>
 
     <!-- Phaser Library -->
