@@ -32,7 +32,7 @@ export default class Level1 extends Phaser.Scene {
         console.log("Assets preloaded successfully.");
     }
 
-    create() { 
+    create() {
         const { width, height } = this.scale;
     
         // Background and music
@@ -60,54 +60,45 @@ export default class Level1 extends Phaser.Scene {
         this.cursors = this.input.keyboard.createCursorKeys();
         this.fireKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
     
-        // Mobile-specific joystick setup
-        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-        if (isMobile) {
-            console.log("Mobile device detected. Initializing simplified joystick...");
+        // Simplified joystick for mobile
+        const joystickArea = document.getElementById('joystick-area');
+        let joystickStartX = 0;
+        let joystickStartY = 0;
     
-            const joystickArea = document.getElementById('joystick-area');
-            let joystickStartX = 0;
-            let joystickStartY = 0;
+        joystickArea.addEventListener('touchstart', (event) => {
+            const touch = event.touches[0];
+            joystickStartX = touch.clientX;
+            joystickStartY = touch.clientY;
+        });
     
-            joystickArea.addEventListener('touchstart', (event) => {
-                const touch = event.touches[0];
-                joystickStartX = touch.clientX;
-                joystickStartY = touch.clientY;
-            });
+        joystickArea.addEventListener('touchmove', (event) => {
+            const touch = event.touches[0];
+            const deltaX = touch.clientX - joystickStartX;
+            const deltaY = touch.clientY - joystickStartY;
     
-            joystickArea.addEventListener('touchmove', (event) => {
-                const touch = event.touches[0];
-                const deltaX = touch.clientX - joystickStartX;
-                const deltaY = touch.clientY - joystickStartY;
+            const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+            const maxDistance = 50;
     
-                const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-                const maxDistance = 50; // Limit joystick movement radius
+            const forceX = deltaX / Math.max(distance, maxDistance);
+            const forceY = deltaY / Math.max(distance, maxDistance);
     
-                // Normalize joystick input
-                const forceX = deltaX / Math.max(distance, maxDistance);
-                const forceY = deltaY / Math.max(distance, maxDistance);
+            if (this.player) {
+                this.player.setVelocityX(forceX * 160);
+                if (forceX > 0) this.player.setFlipX(false);
+                if (forceX < 0) this.player.setFlipX(true);
     
-                // Use forceX and forceY for player movement
-                if (this.player) {
-                    this.player.setVelocityX(forceX * 160); // Horizontal movement
-                    if (forceX > 0) this.player.setFlipX(false);
-                    if (forceX < 0) this.player.setFlipX(true);
-    
-                    // Vertical jump
-                    if (forceY < -0.5 && this.player.body.touching.down) {
-                        this.player.setVelocityY(-500); // Jump
-                    }
+                if (forceY < -0.5 && this.player.body.touching.down) {
+                    this.player.setVelocityY(-500); // Jump
                 }
-            });
+            }
+        });
     
-            joystickArea.addEventListener('touchend', () => {
-                // Stop player movement on touch release
-                if (this.player) {
-                    this.player.setVelocityX(0);
-                    this.player.anims.play('idle', true);
-                }
-            });
-        }
+        joystickArea.addEventListener('touchend', () => {
+            if (this.player) {
+                this.player.setVelocityX(0);
+                this.player.anims.play('idle', true);
+            }
+        });
     
         // Health and enemy setup
         this.playerHealth = 10;
@@ -127,10 +118,8 @@ export default class Level1 extends Phaser.Scene {
         this.physics.add.collider(this.player, this.enemies, this.handlePlayerEnemyCollision, null, this);
         this.physics.add.collider(this.projectiles, this.enemies, this.handleProjectileEnemyCollision, null, this);
         this.physics.add.collider(this.enemies, this.platforms);
-    
-        // Setup on-screen button actions
-        this.setupOnScreenButtonActions();
     }
+    
     
 
     setupOnScreenButtonActions() {
