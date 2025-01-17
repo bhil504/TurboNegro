@@ -95,44 +95,39 @@
             overflow: hidden;
         }
     
-        #joystick-container {
-            display: none; /* Hidden by default */
-            position: absolute;
-            bottom: 20px;
-            left: 20px;
-            width: 150px;
-            height: 150px;
-            background: rgba(0, 0, 0, 0.5);
-            border-radius: 50%;
+        #controls {
+            display: none;
             justify-content: center;
-            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+            width: 100%;
         }
-
-        #joystick-base {
-            width: 100px;
-            height: 100px;
-            background: rgba(100, 100, 100, 0.8);
-            border-radius: 50%;
-            position: relative;
+    
+        .control-button {
+            background: linear-gradient(180deg, #333, #555);
+            color: white;
+            font-size: 14px;
+            font-weight: bold;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.6);
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.2s ease;
         }
-
-        #joystick-handle {
-            width: 50px;
-            height: 50px;
-            background: rgba(255, 255, 255, 0.8);
-            border-radius: 50%;
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
+    
+        .control-button:hover {
+            background: linear-gradient(180deg, #555, #777);
+            transform: scale(1.05);
         }
-
-        @media (max-width: 768px) {
-            #joystick-container {
-                display: flex; /* Show joystick on mobile devices */
-            }
+    
+        .control-button:active {
+            background: #999;
+            transform: scale(1);
         }
-
+    
         @media (max-width: 768px) {
             #ui-container {
                 flex-direction: column; /* Stack elements vertically */
@@ -142,7 +137,7 @@
                 padding: 10px 20px; /* Larger touch area */
             }
         }
-    </style>
+</style>
     
 </head>
 <body>
@@ -160,7 +155,7 @@
         <div id="game-container"></div>
 
         <!-- On-Screen Controls -->
-        <div id="controls" style="display: none;">
+        <div id="controls">
             <button id="left" class="control-button">Left</button>
             <button id="jump" class="control-button">Jump</button>
             <button id="right" class="control-button">Right</button>
@@ -256,5 +251,4 @@
         });
     </script>
 </body>
-
 </html>
