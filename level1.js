@@ -79,12 +79,13 @@ export default class Level1 extends Phaser.Scene {
         this.physics.add.collider(this.projectiles, this.enemies, this.handleProjectileEnemyCollision, null, this);
         this.physics.add.collider(this.enemies, this.platforms);
     
-        // Desktop inputs
-        this.input.on('pointerdown', (pointer) => {
-            if (pointer.isDown) {
+        // Hook up the attack button to fireProjectile
+        const attackButton = document.getElementById('attack-button');
+        if (attackButton) {
+            attackButton.addEventListener('click', () => {
                 this.fireProjectile();
-            }
-        });
+            });
+        }
     
         // Mobile-specific controls
         if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
@@ -115,6 +116,7 @@ export default class Level1 extends Phaser.Scene {
             startY = null;
         });
     }
+    
     
     
     spawnEnemy() {
