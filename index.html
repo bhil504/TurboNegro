@@ -84,12 +84,19 @@
             overflow: hidden;
         }
 
-        #controls {
-            display: none;
-            justify-content: center;
-            gap: 10px;
+        #onscreen-controls {
+            display: flex;
+            justify-content: space-around;
+            align-items: center;
+            width: 90%;
+            max-width: 1100px;
             margin-top: 10px;
-            width: 100%;
+        }
+
+        #joystick-container {
+            width: 120px;
+            height: 120px;
+            position: relative;
         }
 
         .control-button {
@@ -129,6 +136,12 @@
             <div id="enemy-count">Enemies Left: 0</div>
         </div>
         <div id="game-container"></div>
+
+        <!-- On-Screen Controls -->
+        <div id="onscreen-controls">
+            <div id="joystick-container"></div>
+            <button id="attack-button" class="control-button">Attack</button>
+        </div>
     </div>
 
     <!-- Phaser Library -->
@@ -182,8 +195,8 @@
             game.scene.scenes.forEach((scene) => {
                 scene.sys.events.once('create', () => {
                     const joystick = scene.plugins.get('rexVirtualJoystick').add(scene, {
-                        x: scene.scale.width / 6,
-                        y: scene.scale.height - 100,
+                        x: 60,
+                        y: 60,
                         radius: 50,
                         base: scene.add.circle(0, 0, 50, 0x888888),
                         thumb: scene.add.circle(0, 0, 25, 0xcccccc),
@@ -191,14 +204,18 @@
                         forceMin: 10,
                     });
 
-                    scene.input.on('pointerdown', () => {
-                        // Example: Fire projectiles when tapping anywhere
+                    // Attach joystick to the container
+                    const joystickContainer = document.getElementById('joystick-container');
+                    joystickContainer.appendChild(joystick.base.displayList[0].canvas);
+                    joystickContainer.appendChild(joystick.thumb.displayList[0].canvas);
+
+                    const attackButton = document.getElementById('attack-button');
+                    attackButton.addEventListener('click', () => {
                         if (scene.player) {
-                            scene.fireProjectile(); // Adjust this based on your scene logic
+                            scene.fireProjectile();
                         }
                     });
 
-                    // Update player velocity based on joystick
                     joystick.on('update', () => {
                         if (scene.player) {
                             const force = joystick.force;
