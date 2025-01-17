@@ -34,91 +34,59 @@ export default class Level1 extends Phaser.Scene {
 
     create() {
         const { width, height } = this.scale;
-    
+
         // Background and music
         this.add.image(width / 2, height / 2, 'level1Background').setDisplaySize(width, height);
         this.levelMusic = this.sound.add('level1Music', { loop: true, volume: 0.5 });
         this.levelMusic.play();
-    
+
         // Platforms
         this.platforms = this.physics.add.staticGroup();
         this.platforms.create(width / 2, height - 20, null).setDisplaySize(width, 20).setVisible(false).refreshBody();
         const balcony = this.platforms.create(width / 2, height - 350, 'balcony').setScale(1).refreshBody();
         balcony.body.setSize(280, 10).setOffset((balcony.displayWidth - 280) / 2, balcony.displayHeight - 75);
-    
+
         // Player setup
         this.player = this.physics.add.sprite(100, height - 100, 'turboNegroStanding1');
         this.player.setCollideWorldBounds(true);
         this.physics.add.collider(this.player, this.platforms);
-    
+
         // Animations
-        this.anims.create({
-            key: 'idle',
-            frames: [
-                { key: 'turboNegroStanding1' },
-                { key: 'turboNegroStanding2' },
-                { key: 'turboNegroStanding3' },
-                { key: 'turboNegroStanding4' },
-            ],
-            frameRate: 4,
-            repeat: -1,
-        });
+        this.anims.create({ key: 'idle', frames: [{ key: 'turboNegroStanding1' }, { key: 'turboNegroStanding2' }, { key: 'turboNegroStanding3' }, { key: 'turboNegroStanding4' }], frameRate: 4, repeat: -1 });
         this.anims.create({ key: 'walk', frames: [{ key: 'turboNegroWalking' }], frameRate: 8, repeat: -1 });
         this.anims.create({ key: 'jump', frames: [{ key: 'turboNegroJump' }], frameRate: 1 });
-    
-        // Input setup for desktop
+
+        // Input setup
         this.cursors = this.input.keyboard.createCursorKeys();
         this.fireKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
-    
-        // Check for mobile device
-        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    
+
         // Mobile-specific inputs
-        if (isMobile) {
-            const onscreenControls = document.getElementById('onscreen-controls');
-            if (onscreenControls) {
-                onscreenControls.style.display = 'flex'; // Show joystick and attack button
-            }
-            this.setupMobileControls(); // Initialize joystick for mobile
+        if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+            this.setupMobileControls();
         }
-    
+
         // Health and enemy setup
         this.playerHealth = 10;
         this.maxHealth = 10;
         this.totalEnemiesDefeated = 0;
         this.updateHealthUI();
         this.updateEnemyCountUI();
-    
-        // Projectile and enemy setup
+
         this.projectiles = this.physics.add.group({ defaultKey: 'projectileCD' });
         this.enemies = this.physics.add.group();
-        this.enemySpawnTimer = this.time.addEvent({
-            delay: 1000,
-            callback: this.spawnEnemy,
-            callbackScope: this,
-            loop: true,
-        });
-    
-        // Health packs setup
+        this.enemySpawnTimer = this.time.addEvent({ delay: 1000, callback: this.spawnEnemy, callbackScope: this, loop: true });
+
         this.healthPacks = this.physics.add.group();
         this.physics.add.collider(this.healthPacks, this.platforms);
         this.physics.add.overlap(this.player, this.healthPacks, this.handlePlayerHealthPackCollision, null, this);
-    
-        // Collisions
+
         this.physics.add.collider(this.player, this.enemies, this.handlePlayerEnemyCollision, null, this);
         this.physics.add.collider(this.projectiles, this.enemies, this.handleProjectileEnemyCollision, null, this);
         this.physics.add.collider(this.enemies, this.platforms);
-    
-        // Desktop-specific controls
-        if (!isMobile) {
-            this.setupOnScreenButtonActions();
-        }
-    
-        // Add debug messages for testing
-        console.log('Level 1 created successfully');
+
+        // Setup on-screen button actions
+        this.setupOnScreenButtonActions();
     }
-    
-    
 
     setupOnScreenButtonActions() {
         const leftButton = document.getElementById('left');
@@ -414,40 +382,5 @@ export default class Level1 extends Phaser.Scene {
             });
         }
     }
-
-    setupMobileControls() {
-        const joystick = this.plugins.get('rexVirtualJoystick').add(this, {
-            x: this.scale.width * 0.15, // Adjust for left-side placement
-            y: this.scale.height * 0.85, // Near the bottom of the screen
-            radius: 50,
-            base: this.add.circle(0, 0, 50, 0x888888), // Gray circle for joystick base
-            thumb: this.add.circle(0, 0, 25, 0xcccccc), // Light gray thumb
-            dir: '8dir',
-            forceMin: 10,
-        });
-    
-        // Link joystick to player movement
-        joystick.on('update', () => {
-            if (this.player) {
-                const force = joystick.force;
-    
-                // Horizontal movement
-                this.player.setVelocityX(force.x * 160);
-                if (force.x !== 0) {
-                    this.player.setFlipX(force.x < 0); // Flip sprite based on direction
-                    this.player.play('walk', true);
-                } else {
-                    this.player.play('idle', true);
-                }
-    
-                // Jump logic
-                if (force.y < -0.5 && this.player.body.touching.down) {
-                    this.player.setVelocityY(-500); // Jump
-                    this.player.play('jump', true);
-                }
-            }
-        });
-    }
-    
     
 }
