@@ -1,3 +1,5 @@
+import rexvirtualjoystickplugin from './assets/plugins/rexvirtualjoystickplugin.min.js';
+
 export default class Level1 extends Phaser.Scene {
     constructor() {
         super({ key: 'Level1' });
