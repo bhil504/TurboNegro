@@ -28,7 +28,7 @@ export default class Level1 extends Phaser.Scene {
         this.load.image('levelComplete', 'assets/UI/levelComplete.png');
         this.load.image('healthPack', 'assets/Characters/Pickups/HealthPack.png');
         this.load.audio('level1Music', 'assets/Audio/BlownMoneyAudubonPark.mp3');
-        this.load.plugin('rexvirtualjoystickplugin', 'https://raw.githubusercontent.com/rexrainbow/phaser3-rex-notes/master/dist/rexvirtualjoystickplugin.min.js', true);
+        
         console.log("Assets preloaded successfully.");
     }
 
@@ -253,10 +253,7 @@ export default class Level1 extends Phaser.Scene {
             this.player.setVelocityY(-500);
             this.player.play('jump', true);
         }
-        if (this.cursorKeys.up.isDown && this.player.body.touching.down) {
-            this.player.setVelocityY(-500);
-            this.player.play('jump', true);
-        }
+
         if (Phaser.Input.Keyboard.JustDown(this.fireKey)) {
             this.fireProjectile();
         }
@@ -337,22 +334,5 @@ export default class Level1 extends Phaser.Scene {
                 this.fireProjectile();
             }
         });
-    }
-
-    updateJoystickState() {
-        const forceX = this.joystick.forceX;
-
-        if (forceX < -0.5) {
-            this.player.setVelocityX(-160);
-            this.player.setFlipX(true);
-            this.player.play('walk', true);
-        } else if (forceX > 0.5) {
-            this.player.setVelocityX(160);
-            this.player.setFlipX(false);
-            this.player.play('walk', true);
-        } else {
-            this.player.setVelocityX(0);
-            this.player.play('idle', true);
-        }
     }
 }
