@@ -155,8 +155,7 @@
     import Level5 from './level5.js';
     import BossFight from './bossFight.js';
 
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    const controls = document.getElementById('controls');
+    const isMobile = 'ontouchstart' in window;
 
     const config = {
         type: Phaser.AUTO,
@@ -184,73 +183,80 @@
                 },
             ],
         },
-        scene: [StartMenu, Level1, Level2, Level3, Level4, Level5, BossFight],
+        scene: [StartMenu, Level1WithJoystick, Level2, Level3, Level4, Level5, BossFight],
     };
 
     const game = new Phaser.Game(config);
 
-    if (isMobile) {
-        controls.style.display = 'flex';
-    }
-
-    // Resize listener for mobile optimization
     window.addEventListener('resize', () => {
         const uiHeight = document.getElementById('ui-container').offsetHeight;
-        const width = window.innerWidth;
-        const height = window.innerHeight - uiHeight;
-        game.scale.resize(width, height);
+        game.scale.resize(window.innerWidth, window.innerHeight - uiHeight);
     });
 
-    // Example joystick integration in a scene
-    class MainScene extends Phaser.Scene {
+    class Level1WithJoystick extends Phaser.Scene {
         constructor() {
-            super({ key: 'MainScene' });
+            super({ key: 'Level1WithJoystick' });
         }
 
         create() {
-            // Add joystick
-            this.joystick = this.plugins.get('rexVirtualJoystick').add(this, {
-                x: 100, // Position joystick near the left side
-                y: 400,
-                radius: 50,
-                base: this.add.circle(0, 0, 50, 0x888888),
-                thumb: this.add.circle(0, 0, 25, 0xcccccc),
-                dir: '8dir', // Directional control (4dir, 8dir, or full)
-                forceMin: 16,
-                enable: true,
-            });
+            // Parent create logic if extending Level1
+            super.create?.();
 
-            // Example: Listen for joystick movement
-            this.joystick.on('update', () => {
-                const cursorKeys = this.joystick.createCursorKeys();
-                if (cursorKeys.left.isDown) {
-                    console.log('Move left');
-                }
-                if (cursorKeys.right.isDown) {
-                    console.log('Move right');
-                }
-                if (cursorKeys.up.isDown) {
-                    console.log('Move up');
-                }
-                if (cursorKeys.down.isDown) {
-                    console.log('Move down');
-                }
-            });
+            if (isMobile) {
+                // Dynamic positioning
+                const joystickX = this.cameras.main.width * 0.15; // 15% from the left
+                const joystickY = this.cameras.main.height * 0.85; // 85% from the top
 
-            // Add the attack button next to the joystick
-            const attackButton = this.add.text(200, 400, 'Attack', {
-                font: '18px Arial',
-                fill: '#ffffff',
-            });
-            attackButton.setInteractive();
-            attackButton.on('pointerdown', () => {
-                console.log('Attack button pressed');
-            });
+                // Add joystick
+                this.joystick = this.plugins.get('rexVirtualJoystick').add(this, {
+                    x: joystickX,
+                    y: joystickY,
+                    radius: 50,
+                    base: this.add.circle(0, 0, 50, 0x888888),
+                    thumb: this.add.circle(0, 0, 25, 0xcccccc),
+                    dir: '8dir',
+                    forceMin: 16,
+                    enable: true,
+                });
+
+                this.joystick.on('update', () => {
+                    const cursorKeys = this.joystick.createCursorKeys();
+                    if (cursorKeys.left.isDown) {
+                        console.log('Move left');
+                    }
+                    if (cursorKeys.right.isDown) {
+                        console.log('Move right');
+                    }
+                    if (cursorKeys.up.isDown) {
+                        console.log('Move up');
+                    }
+                    if (cursorKeys.down.isDown) {
+                        console.log('Move down');
+                    }
+                });
+
+                // Add attack button near joystick
+                const attackButtonX = joystickX + 130; // Offset relative to joystick
+                const attackButtonY = joystickY;
+
+                const attackButton = this.add.text(attackButtonX, attackButtonY, 'Attack', {
+                    font: '18px Arial',
+                    fill: '#ffffff',
+                    backgroundColor: '#555',
+                    padding: { x: 10, y: 5 },
+                    borderRadius: 5,
+                });
+                attackButton.setInteractive();
+                attackButton.on('pointerdown', () => {
+                    console.log('Attack button pressed');
+                });
+            }
         }
     }
 
-    game.scene.add('MainScene', MainScene, true);
+    game.scene.add('Level1WithJoystick', Level1WithJoystick, true);
 </script>
+
 
 </body>
 </html>
