@@ -109,11 +109,15 @@ export default class Level1 extends Phaser.Scene {
         this.physics.add.collider(this.projectiles, this.enemies, this.handleProjectileEnemyCollision, null, this);
         this.physics.add.collider(this.enemies, this.platforms);
     
-        // Remove unused desktop-only button setup
+        // Desktop-specific controls
         if (!isMobile) {
             this.setupOnScreenButtonActions();
         }
+    
+        // Add debug messages for testing
+        console.log('Level 1 created successfully');
     }
+    
     
 
     setupOnScreenButtonActions() {
@@ -413,29 +417,21 @@ export default class Level1 extends Phaser.Scene {
 
     setupMobileControls() {
         const joystick = this.plugins.get('rexVirtualJoystick').add(this, {
-            x: this.scale.width * 0.15, // Left side, adjust as needed
-            y: this.scale.height * 0.85, // Near bottom
+            x: this.scale.width * 0.15, // Adjust for left-side placement
+            y: this.scale.height * 0.85, // Near the bottom of the screen
             radius: 50,
-            base: this.add.circle(0, 0, 50, 0x888888),
-            thumb: this.add.circle(0, 0, 25, 0xcccccc),
+            base: this.add.circle(0, 0, 50, 0x888888), // Gray circle for joystick base
+            thumb: this.add.circle(0, 0, 25, 0xcccccc), // Light gray thumb
             dir: '8dir',
             forceMin: 10,
         });
     
-        const joystickContainer = document.getElementById('joystick-container');
-        if (joystickContainer && joystick.base && joystick.thumb) {
-            // Render joystick base and thumb into the DOM
-            joystickContainer.appendChild(joystick.base.displayList[0].canvas);
-            joystickContainer.appendChild(joystick.thumb.displayList[0].canvas);
-        } else {
-            console.warn('Joystick or joystick container is missing.');
-        }
-    
+        // Link joystick to player movement
         joystick.on('update', () => {
             if (this.player) {
                 const force = joystick.force;
     
-                // Handle horizontal movement
+                // Horizontal movement
                 this.player.setVelocityX(force.x * 160);
                 if (force.x !== 0) {
                     this.player.setFlipX(force.x < 0); // Flip sprite based on direction
@@ -444,15 +440,14 @@ export default class Level1 extends Phaser.Scene {
                     this.player.play('idle', true);
                 }
     
-                // Handle jump
+                // Jump logic
                 if (force.y < -0.5 && this.player.body.touching.down) {
-                    this.player.setVelocityY(-500);
+                    this.player.setVelocityY(-500); // Jump
                     this.player.play('jump', true);
                 }
             }
         });
     }
-    
     
     
 }
