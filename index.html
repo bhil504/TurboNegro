@@ -148,7 +148,6 @@
 
 <script type="module">
     import StartMenu from './startMenu.js';
-    import Level1 from './level1.js';
     import Level2 from './level2.js';
     import Level3 from './level3.js';
     import Level4 from './level4.js';
@@ -190,7 +189,9 @@
 
     window.addEventListener('resize', () => {
         const uiHeight = document.getElementById('ui-container').offsetHeight;
-        game.scale.resize(window.innerWidth, window.innerHeight - uiHeight);
+        const width = window.innerWidth;
+        const height = window.innerHeight - uiHeight;
+        game.scale.resize(width, height);
     });
 
     class Level1WithJoystick extends Phaser.Scene {
@@ -199,13 +200,10 @@
         }
 
         create() {
-            // Parent create logic if extending Level1
-            super.create?.();
-
+            // Dynamic positioning for mobile devices
             if (isMobile) {
-                // Dynamic positioning
-                const joystickX = this.cameras.main.width * 0.15; // 15% from the left
-                const joystickY = this.cameras.main.height * 0.85; // 85% from the top
+                const joystickX = this.cameras.main.width * 0.15;
+                const joystickY = this.cameras.main.height * 0.85;
 
                 // Add joystick
                 this.joystick = this.plugins.get('rexVirtualJoystick').add(this, {
@@ -219,6 +217,7 @@
                     enable: true,
                 });
 
+                // Handle joystick input
                 this.joystick.on('update', () => {
                     const cursorKeys = this.joystick.createCursorKeys();
                     if (cursorKeys.left.isDown) {
@@ -235,16 +234,14 @@
                     }
                 });
 
-                // Add attack button near joystick
-                const attackButtonX = joystickX + 130; // Offset relative to joystick
+                // Add attack button
+                const attackButtonX = joystickX + 150;
                 const attackButtonY = joystickY;
-
                 const attackButton = this.add.text(attackButtonX, attackButtonY, 'Attack', {
                     font: '18px Arial',
                     fill: '#ffffff',
                     backgroundColor: '#555',
                     padding: { x: 10, y: 5 },
-                    borderRadius: 5,
                 });
                 attackButton.setInteractive();
                 attackButton.on('pointerdown', () => {
@@ -256,6 +253,7 @@
 
     game.scene.add('Level1WithJoystick', Level1WithJoystick, true);
 </script>
+
 
 
 </body>
