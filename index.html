@@ -18,7 +18,7 @@
             height: 100vh;
             overflow: hidden;
         }
-    
+
         /* Main Container */
         #main-container {
             display: flex;
@@ -28,11 +28,10 @@
             width: 100%;
             height: 100%;
         }
-    
+
         /* UI Container Styling */
         #ui-container {
             display: flex;
-            flex-wrap: wrap; /* Allow wrapping for smaller screens */
             justify-content: space-between;
             align-items: center;
             width: 90%;
@@ -44,14 +43,8 @@
             border-radius: 8px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.6);
             margin-bottom: 10px;
-            gap: 10px; /* Add space between items */
         }
-    
-        #ui-container.mobile {
-            flex-direction: column; /* Stack items on mobile */
-            align-items: stretch; /* Stretch items to fill width */
-        }
-    
+
         #health-bar-container, #enemy-count {
             font-size: 16px;
             font-weight: bold;
@@ -60,28 +53,24 @@
             border-radius: 8px;
             color: #fff;
             text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.8);
-            flex: 1; /* Allow items to grow equally */
-            text-align: center; /* Center text on mobile */
         }
-    
+
         #health-bar {
-            width: 100%;
-            max-width: 200px; /* Limit max width */
+            width: 200px;
             height: 20px;
             background-color: #770000;
             border-radius: 12px;
             border: 2px solid #444;
             overflow: hidden;
-            margin: 0 auto; /* Center on mobile */
         }
-    
+
         #health-bar-inner {
             width: 100%;
             height: 100%;
             background-color: #00aa00;
             transition: width 0.3s ease-in-out;
         }
-    
+
         #game-container {
             width: 100%;
             max-width: 1100px;
@@ -94,7 +83,7 @@
             position: relative;
             overflow: hidden;
         }
-    
+
         #controls {
             display: none;
             justify-content: center;
@@ -102,7 +91,7 @@
             margin-top: 10px;
             width: 100%;
         }
-    
+
         .control-button {
             background: linear-gradient(180deg, #333, #555);
             color: white;
@@ -117,28 +106,17 @@
             letter-spacing: 1px;
             transition: all 0.2s ease;
         }
-    
+
         .control-button:hover {
             background: linear-gradient(180deg, #555, #777);
             transform: scale(1.05);
         }
-    
+
         .control-button:active {
             background: #999;
             transform: scale(1);
         }
-    
-        @media (max-width: 768px) {
-            #ui-container {
-                flex-direction: column; /* Stack elements vertically */
-            }
-    
-            #health-bar-container, #enemy-count {
-                padding: 10px 20px; /* Larger touch area */
-            }
-        }
     </style>
-    <script src="https://raw.githubusercontent.com/rexrainbow/phaser3-rex-notes/master/dist/rexvirtualjoystickplugin.min.js"></script>
 </head>
 <body>
     <div id="main-container">
@@ -178,7 +156,7 @@
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         const controls = document.getElementById('controls');
 
-        const config = {
+        const configDesktop = {
             type: Phaser.AUTO,
             parent: 'game-container',
             scale: {
@@ -191,63 +169,46 @@
             physics: {
                 default: 'arcade',
                 arcade: {
-                    gravity: isMobile ? { y: 200 } : { y: 300 },
+                    gravity: { y: 300 },
                     debug: false,
                 },
             },
             scene: [StartMenu, Level1, Level2, Level3, Level4, Level5, BossFight],
         };
 
-        const game = new Phaser.Game(config);
+        const configMobile = {
+            type: Phaser.AUTO,
+            parent: 'game-container',
+            scale: {
+                mode: Phaser.Scale.ENVELOP, // Ensure the game fills the screen
+                autoCenter: Phaser.Scale.CENTER_BOTH,
+            },
+            width: 1100,
+            height: 500,
+            backgroundColor: '#000000',
+            physics: {
+                default: 'arcade',
+                arcade: {
+                    gravity: { y: 200 }, // Adjust gravity for mobile performance
+                    debug: false,
+                },
+            },
+            scene: [StartMenu, Level1, Level2, Level3, Level4, Level5, BossFight],
+        };
+
+        const game = new Phaser.Game(isMobile ? configMobile : configDesktop);
 
         // Show controls on mobile
         if (isMobile) {
             controls.style.display = 'flex';
-
-            // Mobile tilt-to-move
-            window.addEventListener('deviceorientation', function(event) {
-                const tilt = event.gamma; // Gamma is left-to-right tilt
-                if (tilt !== null) {
-                    game.input.emit('tilt', tilt);
-                }
-            });
-
-            // Swipe up to jump
-            let touchStartY = null;
-            window.addEventListener('touchstart', function(event) {
-                touchStartY = event.touches[0].clientY;
-            });
-
-            window.addEventListener('touchend', function(event) {
-                const touchEndY = event.changedTouches[0].clientY;
-                if (touchStartY !== null && touchEndY < touchStartY - 50) {
-                    game.input.emit('jump');
-                }
-                touchStartY = null;
-            });
-
-            // Tap anywhere to attack
-            window.addEventListener('touchstart', function(event) {
-                if (event.target.className.includes('control-button')) return; // Prevent conflicts with buttons
-                game.input.emit('attack');
-            });
-
-            // Fallback on-screen buttons
-            document.getElementById('left').addEventListener('click', () => game.input.emit('move', 'left'));
-            document.getElementById('right').addEventListener('click', () => game.input.emit('move', 'right'));
-            document.getElementById('jump').addEventListener('click', () => game.input.emit('jump'));
-            document.getElementById('attack').addEventListener('click', () => game.input.emit('attack'));
         }
 
-        // Desktop controls
-        const cursors = game.input.keyboard.createCursorKeys();
-        const spacebar = game.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
-
-        game.input.keyboard.on('keydown', (event) => {
-            if (event.code === 'ArrowLeft') game.input.emit('move', 'left');
-            if (event.code === 'ArrowRight') game.input.emit('move', 'right');
-            if (event.code === 'ArrowUp') game.input.emit('jump');
-            if (event.code === 'Space') game.input.emit('attack');
+        // Resize listener for mobile optimization
+        window.addEventListener('resize', () => {
+            const uiHeight = document.getElementById('ui-container').offsetHeight;
+            const width = window.innerWidth;
+            const height = window.innerHeight - uiHeight;
+            game.scale.resize(width, height);
         });
     </script>
 </body>
