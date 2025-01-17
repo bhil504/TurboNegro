@@ -83,6 +83,39 @@
             position: relative;
             overflow: hidden;
         }
+
+        #controls {
+            display: none;
+            justify-content: center;
+            gap: 10px;
+            margin-top: 10px;
+            width: 100%;
+        }
+
+        .control-button {
+            background: linear-gradient(180deg, #333, #555);
+            color: white;
+            font-size: 14px;
+            font-weight: bold;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 8px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.6);
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.2s ease;
+        }
+
+        .control-button:hover {
+            background: linear-gradient(180deg, #555, #777);
+            transform: scale(1.05);
+        }
+
+        .control-button:active {
+            background: #999;
+            transform: scale(1);
+        }
     </style>
 </head>
 <body>
@@ -98,51 +131,126 @@
 
         <!-- Phaser Game Container -->
         <div id="game-container"></div>
+
+        <!-- On-Screen Controls -->
+        <div id="controls">
+            <button id="left" class="control-button">Left</button>
+            <button id="jump" class="control-button">Jump</button>
+            <button id="right" class="control-button">Right</button>
+            <button id="attack" class="control-button">Attack</button>
+        </div>
     </div>
 
     <!-- Phaser Library -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.55.2/phaser.min.js"></script>
+    <!-- Include Phaser and rex-plugins -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.55.2/phaser.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/phaser3-rex-plugins@1.1.0/dist/rexvirtualjoystickplugin.min.js"></script>
 
-    <script type="module">
-        import StartMenu from './startMenu.js';
-        import Level1 from './level1.js';
-        import Level2 from './level2.js';
-        import Level3 from './level3.js';
-        import Level4 from './level4.js';
-        import Level5 from './level5.js';
-        import BossFight from './bossFight.js';
+<script type="module">
+    import StartMenu from './startMenu.js';
+    import Level1 from './level1.js';
+    import Level2 from './level2.js';
+    import Level3 from './level3.js';
+    import Level4 from './level4.js';
+    import Level5 from './level5.js';
+    import BossFight from './bossFight.js';
 
-        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const controls = document.getElementById('controls');
 
-        const config = {
-            type: Phaser.AUTO,
-            parent: 'game-container',
-            scale: {
-                mode: Phaser.Scale.FIT,
-                autoCenter: Phaser.Scale.CENTER_BOTH,
+    const config = {
+        type: Phaser.AUTO,
+        parent: 'game-container',
+        scale: {
+            mode: Phaser.Scale.FIT,
+            autoCenter: Phaser.Scale.CENTER_BOTH,
+        },
+        width: 1100,
+        height: 500,
+        backgroundColor: '#000000',
+        physics: {
+            default: 'arcade',
+            arcade: {
+                gravity: { y: 300 },
+                debug: false,
             },
-            width: 1100,
-            height: 500,
-            backgroundColor: '#000000',
-            physics: {
-                default: 'arcade',
-                arcade: {
-                    gravity: { y: isMobile ? 200 : 300 },
-                    debug: false,
+        },
+        plugins: {
+            scene: [
+                {
+                    key: 'rexVirtualJoystick',
+                    plugin: rexplugins.virtualjoystickplugin,
+                    mapping: 'add',
                 },
-            },
-            scene: [StartMenu, Level1, Level2, Level3, Level4, Level5, BossFight],
-        };
+            ],
+        },
+        scene: [StartMenu, Level1, Level2, Level3, Level4, Level5, BossFight],
+    };
 
-        const game = new Phaser.Game(config);
+    const game = new Phaser.Game(config);
 
-        // Resize listener for optimization
-        window.addEventListener('resize', () => {
-            const uiHeight = document.getElementById('ui-container').offsetHeight;
-            const width = window.innerWidth;
-            const height = window.innerHeight - uiHeight;
-            game.scale.resize(width, height);
-        });
-    </script>
+    if (isMobile) {
+        controls.style.display = 'flex';
+    }
+
+    // Resize listener for mobile optimization
+    window.addEventListener('resize', () => {
+        const uiHeight = document.getElementById('ui-container').offsetHeight;
+        const width = window.innerWidth;
+        const height = window.innerHeight - uiHeight;
+        game.scale.resize(width, height);
+    });
+
+    // Example joystick integration in a scene
+    class MainScene extends Phaser.Scene {
+        constructor() {
+            super({ key: 'MainScene' });
+        }
+
+        create() {
+            // Add joystick
+            this.joystick = this.plugins.get('rexVirtualJoystick').add(this, {
+                x: 100, // Position joystick near the left side
+                y: 400,
+                radius: 50,
+                base: this.add.circle(0, 0, 50, 0x888888),
+                thumb: this.add.circle(0, 0, 25, 0xcccccc),
+                dir: '8dir', // Directional control (4dir, 8dir, or full)
+                forceMin: 16,
+                enable: true,
+            });
+
+            // Example: Listen for joystick movement
+            this.joystick.on('update', () => {
+                const cursorKeys = this.joystick.createCursorKeys();
+                if (cursorKeys.left.isDown) {
+                    console.log('Move left');
+                }
+                if (cursorKeys.right.isDown) {
+                    console.log('Move right');
+                }
+                if (cursorKeys.up.isDown) {
+                    console.log('Move up');
+                }
+                if (cursorKeys.down.isDown) {
+                    console.log('Move down');
+                }
+            });
+
+            // Add the attack button next to the joystick
+            const attackButton = this.add.text(200, 400, 'Attack', {
+                font: '18px Arial',
+                fill: '#ffffff',
+            });
+            attackButton.setInteractive();
+            attackButton.on('pointerdown', () => {
+                console.log('Attack button pressed');
+            });
+        }
+    }
+
+    game.scene.add('MainScene', MainScene, true);
+</script>
+
 </body>
 </html>
