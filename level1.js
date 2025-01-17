@@ -335,4 +335,52 @@ export default class Level1 extends Phaser.Scene {
             }
         });
     }
+
+    setupOnScreenButtonActions() {
+        const leftButton = document.getElementById('left');
+        const rightButton = document.getElementById('right');
+        const jumpButton = document.getElementById('jump');
+        const attackButton = document.getElementById('attack-button');
+    
+        // Validate buttons before adding event listeners
+        if (leftButton) {
+            leftButton.addEventListener('mousedown', () => {
+                this.player.setVelocityX(-160);
+                this.player.setFlipX(true);
+                this.player.play('walk', true);
+            });
+            leftButton.addEventListener('mouseup', () => {
+                this.player.setVelocityX(0);
+                this.player.play('idle', true);
+            });
+        }
+    
+        if (rightButton) {
+            rightButton.addEventListener('mousedown', () => {
+                this.player.setVelocityX(160);
+                this.player.setFlipX(false);
+                this.player.play('walk', true);
+            });
+            rightButton.addEventListener('mouseup', () => {
+                this.player.setVelocityX(0);
+                this.player.play('idle', true);
+            });
+        }
+    
+        if (jumpButton) {
+            jumpButton.addEventListener('click', () => {
+                if (this.player.body.touching.down) {
+                    this.player.setVelocityY(-500);
+                    this.player.play('jump', true);
+                }
+            });
+        }
+    
+        if (attackButton) {
+            attackButton.addEventListener('click', () => {
+                this.fireProjectile();
+            });
+        }
+    }
+    
 }
