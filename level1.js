@@ -60,13 +60,6 @@ export default class Level1 extends Phaser.Scene {
         this.cursors = this.input.keyboard.createCursorKeys();
         this.fireKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
     
-        // Mobile-specific setup
-        if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-            console.log("Mobile device detected. Initializing controls...");
-            this.setupMobileControls(); // Tilt-based controls
-            this.setupJoystick(); // Joystick as fallback
-        }
-    
         // Health and enemy setup
         this.playerHealth = 10;
         this.maxHealth = 10;
@@ -85,12 +78,44 @@ export default class Level1 extends Phaser.Scene {
         this.physics.add.collider(this.player, this.enemies, this.handlePlayerEnemyCollision, null, this);
         this.physics.add.collider(this.projectiles, this.enemies, this.handleProjectileEnemyCollision, null, this);
         this.physics.add.collider(this.enemies, this.platforms);
+    
+        // Desktop inputs
+        this.input.on('pointerdown', (pointer) => {
+            if (pointer.isDown) {
+                this.fireProjectile();
+            }
+        });
+    
+        // Mobile-specific controls
+        if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+            console.log("Mobile device detected. Initializing controls...");
+            this.setupMobileControls(); // Adds tilt, swipe, and tap
+            this.setupJoystick(); // Adds joystick as a fallback
+        } else {
+            console.log("Desktop detected. Skipping mobile controls.");
+        }
+    
+        // Tap anywhere to attack (Mobile or Desktop)
+        this.input.on('pointerdown', (pointer) => {
+            if (!pointer.wasTouch) return; // Ensures it's not triggered by a mouse
+            this.fireProjectile();
+        });
+    
+        // Swipe up to jump
+        let startY = null;
+        this.input.on('pointerdown', (pointer) => {
+            startY = pointer.y;
+        });
+    
+        this.input.on('pointerup', (pointer) => {
+            if (startY !== null && pointer.y < startY - 50 && this.player.body.touching.down) {
+                this.player.setVelocityY(-500);
+                this.player.play('jump', true);
+            }
+            startY = null;
+        });
     }
     
-    
-    
-    
-
     
     spawnEnemy() {
         const { width, height } = this.scale;
