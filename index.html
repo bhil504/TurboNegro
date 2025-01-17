@@ -144,7 +144,8 @@
     <!-- Phaser Library -->
     <!-- Include Phaser and rex-plugins -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.55.2/phaser.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/phaser3-rex-plugins@1.1.0/dist/rexvirtualjoystickplugin.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/phaser3-rex-plugins/dist/rexvirtualjoystickplugin.min.js"></script>
+
 
 <script type="module">
     import StartMenu from './startMenu.js';
@@ -174,13 +175,11 @@
             },
         },
         plugins: {
-            scene: [
-                {
-                    key: 'rexVirtualJoystick',
-                    plugin: rexplugins.virtualjoystickplugin,
-                    mapping: 'add',
-                },
-            ],
+            global: [{
+                key: 'rexVirtualJoystick',
+                plugin: window.rexvirtualjoystickplugin,
+                start: true,
+            }],
         },
         scene: [StartMenu, Level1WithJoystick, Level2, Level3, Level4, Level5, BossFight],
     };
@@ -200,8 +199,8 @@
         }
 
         create() {
-            // Dynamic positioning for mobile devices
             if (isMobile) {
+                // Dynamic positioning for the joystick
                 const joystickX = this.cameras.main.width * 0.15;
                 const joystickY = this.cameras.main.height * 0.85;
 
@@ -253,6 +252,7 @@
 
     game.scene.add('Level1WithJoystick', Level1WithJoystick, true);
 </script>
+
 
 
 
