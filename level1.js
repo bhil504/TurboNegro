@@ -28,6 +28,7 @@ export default class Level1 extends Phaser.Scene {
         this.load.image('levelComplete', 'assets/UI/levelComplete.png');
         this.load.image('healthPack', 'assets/Characters/Pickups/HealthPack.png');
         this.load.audio('level1Music', 'assets/Audio/BlownMoneyAudubonPark.mp3');
+        this.load.plugin('rexvirtualjoystickplugin', 'https://raw.githubusercontent.com/rexrainbow/phaser3-rex-notes/master/dist/rexvirtualjoystickplugin.min.js', true);
         console.log("Assets preloaded successfully.");
     }
 
@@ -51,40 +52,32 @@ export default class Level1 extends Phaser.Scene {
         this.physics.add.collider(this.player, this.platforms);
 
         // Animations
-        this.anims.create({ key: 'idle', frames: [{ key: 'turboNegroStanding1' }, { key: 'turboNegroStanding2' }, { key: 'turboNegroStanding3' }, { key: 'turboNegroStanding4' }], frameRate: 4, repeat: -1 });
+        this.anims.create({ key: 'idle', frames: [{ key: 'turboNegroStanding1' }], frameRate: 4, repeat: -1 });
         this.anims.create({ key: 'walk', frames: [{ key: 'turboNegroWalking' }], frameRate: 8, repeat: -1 });
         this.anims.create({ key: 'jump', frames: [{ key: 'turboNegroJump' }], frameRate: 1 });
 
-        // Input setup
-        this.cursors = this.input.keyboard.createCursorKeys();
-        this.fireKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
-
-        // Mobile-specific inputs
-        if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-            this.setupMobileControls();
+        // Conditional controls: joystick for mobile, keyboard for desktop
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        if (isMobile) {
+            this.joystick = this.plugins.get('rexvirtualjoystickplugin').add(this, {
+                x: 100,
+                y: height - 100,
+                radius: 50,
+                base: this.add.circle(0, 0, 50, 0x888888),
+                thumb: this.add.circle(0, 0, 25, 0xcccccc),
+            }).on('update', this.updateJoystickState, this);
+            this.cursorKeys = this.joystick.createCursorKeys();
+        } else {
+            this.cursors = this.input.keyboard.createCursorKeys();
+            this.fireKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
         }
 
         // Health and enemy setup
         this.playerHealth = 10;
         this.maxHealth = 10;
-        this.totalEnemiesDefeated = 0;
         this.updateHealthUI();
+        this.totalEnemiesDefeated = 0;
         this.updateEnemyCountUI();
-
-        this.projectiles = this.physics.add.group({ defaultKey: 'projectileCD' });
-        this.enemies = this.physics.add.group();
-        this.enemySpawnTimer = this.time.addEvent({ delay: 1000, callback: this.spawnEnemy, callbackScope: this, loop: true });
-
-        this.healthPacks = this.physics.add.group();
-        this.physics.add.collider(this.healthPacks, this.platforms);
-        this.physics.add.overlap(this.player, this.healthPacks, this.handlePlayerHealthPackCollision, null, this);
-
-        this.physics.add.collider(this.player, this.enemies, this.handlePlayerEnemyCollision, null, this);
-        this.physics.add.collider(this.projectiles, this.enemies, this.handleProjectileEnemyCollision, null, this);
-        this.physics.add.collider(this.enemies, this.platforms);
-
-        // Setup on-screen button actions
-        this.setupOnScreenButtonActions();
     }
 
     setupOnScreenButtonActions() {
@@ -235,26 +228,34 @@ export default class Level1 extends Phaser.Scene {
     }
     
     update() {
-        if (this.cursors.left.isDown) {
-            this.player.setVelocityX(-160);
-            this.player.setFlipX(true);
-            this.player.play('walk', true);
-        } else if (this.cursors.right.isDown) {
-            this.player.setVelocityX(160);
-            this.player.setFlipX(false);
-            this.player.play('walk', true);
-        } else if (this.player.body.touching.down) {
-            this.player.setVelocityX(0);
-            this.player.play('idle', true);
-        }
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        if (isMobile) {
+            if (this.cursorKeys.up.isDown && this.player.body.touching.down) {
+                this.player.setVelocityY(-500);
+                this.player.play('jump', true);
+            }
+        } else {
+            if (this.cursors.left.isDown) {
+                this.player.setVelocityX(-160);
+                this.player.setFlipX(true);
+                this.player.play('walk', true);
+            } else if (this.cursors.right.isDown) {
+                this.player.setVelocityX(160);
+                this.player.setFlipX(false);
+                this.player.play('walk', true);
+            } else if (this.player.body.touching.down) {
+                this.player.setVelocityX(0);
+                this.player.play('idle', true);
+            }
 
-        if (this.cursors.up.isDown && this.player.body.touching.down) {
-            this.player.setVelocityY(-500);
-            this.player.play('jump', true);
-        }
+            if (this.cursors.up.isDown && this.player.body.touching.down) {
+                this.player.setVelocityY(-500);
+                this.player.play('jump', true);
+            }
 
-        if (Phaser.Input.Keyboard.JustDown(this.fireKey)) {
-            this.fireProjectile();
+            if (Phaser.Input.Keyboard.JustDown(this.fireKey)) {
+                this.fireProjectile();
+            }
         }
     }
 
@@ -333,5 +334,22 @@ export default class Level1 extends Phaser.Scene {
                 this.fireProjectile();
             }
         });
+    }
+
+    updateJoystickState() {
+        const forceX = this.joystick.forceX;
+
+        if (forceX < -0.5) {
+            this.player.setVelocityX(-160);
+            this.player.setFlipX(true);
+            this.player.play('walk', true);
+        } else if (forceX > 0.5) {
+            this.player.setVelocityX(160);
+            this.player.setFlipX(false);
+            this.player.play('walk', true);
+        } else {
+            this.player.setVelocityX(0);
+            this.player.play('idle', true);
+        }
     }
 }
