@@ -143,73 +143,82 @@
 
     <!-- Phaser Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.55.2/phaser.min.js"></script>
+<!-- Include Rex Virtual Joystick Plugin -->
+<script src="./assets/plugins/rexvirtualjoystickplugin.min.js"></script>
 
-    <script type="module">
-        import StartMenu from './startMenu.js';
-        import Level1 from './level1.js';
-        import Level2 from './level2.js';
-        import Level3 from './level3.js';
-        import Level4 from './level4.js';
-        import Level5 from './level5.js';
-        import BossFight from './bossFight.js';
+<script type="module">
+    import StartMenu from './startMenu.js';
+    import Level1 from './level1.js';
+    import Level2 from './level2.js';
+    import Level3 from './level3.js';
+    import Level4 from './level4.js';
+    import Level5 from './level5.js';
+    import BossFight from './bossFight.js';
 
-        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-        const controls = document.getElementById('controls');
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
-        const configDesktop = {
-            type: Phaser.AUTO,
-            parent: 'game-container',
-            scale: {
-                mode: Phaser.Scale.FIT,
-                autoCenter: Phaser.Scale.CENTER_BOTH,
+    const config = {
+        type: Phaser.AUTO,
+        parent: 'game-container',
+        scale: {
+            mode: Phaser.Scale.FIT,
+            autoCenter: Phaser.Scale.CENTER_BOTH,
+        },
+        width: 1100,
+        height: 500,
+        backgroundColor: '#000000',
+        physics: {
+            default: 'arcade',
+            arcade: {
+                gravity: { y: 300 },
+                debug: false,
             },
-            width: 1100,
-            height: 500,
-            backgroundColor: '#000000',
-            physics: {
-                default: 'arcade',
-                arcade: {
-                    gravity: { y: 300 },
-                    debug: false,
+        },
+        scene: [StartMenu, Level1, Level2, Level3, Level4, Level5, BossFight],
+        plugins: {
+            scene: [
+                {
+                    key: 'rexVirtualJoystick',
+                    plugin: rexvirtualjoystickplugin,
+                    mapping: 'rexVirtualJoystick',
                 },
-            },
-            scene: [StartMenu, Level1, Level2, Level3, Level4, Level5, BossFight],
-        };
+            ],
+        },
+    };
 
-        const configMobile = {
-            type: Phaser.AUTO,
-            parent: 'game-container',
-            scale: {
-                mode: Phaser.Scale.ENVELOP, // Ensure the game fills the screen
-                autoCenter: Phaser.Scale.CENTER_BOTH,
-            },
-            width: 1100,
-            height: 500,
-            backgroundColor: '#000000',
-            physics: {
-                default: 'arcade',
-                arcade: {
-                    gravity: { y: 200 }, // Adjust gravity for mobile performance
-                    debug: false,
-                },
-            },
-            scene: [StartMenu, Level1, Level2, Level3, Level4, Level5, BossFight],
-        };
+    const game = new Phaser.Game(config);
 
-        const game = new Phaser.Game(isMobile ? configMobile : configDesktop);
+    if (isMobile) {
+        game.scene.scenes.forEach((scene) => {
+            scene.sys.events.once('create', () => {
+                const joystick = scene.plugins.get('rexVirtualJoystick').add(scene, {
+                    x: 100,
+                    y: 400,
+                    radius: 50,
+                    base: scene.add.circle(0, 0, 50, 0x888888),
+                    thumb: scene.add.circle(0, 0, 25, 0xcccccc),
+                    dir: '8dir',
+                });
 
-        // Show controls on mobile
-        if (isMobile) {
-            controls.style.display = 'flex';
-        }
-
-        // Resize listener for mobile optimization
-        window.addEventListener('resize', () => {
-            const uiHeight = document.getElementById('ui-container').offsetHeight;
-            const width = window.innerWidth;
-            const height = window.innerHeight - uiHeight;
-            game.scale.resize(width, height);
+                joystick.on('update', () => {
+                    const cursorKeys = joystick.createCursorKeys();
+                    scene.input.keyboard.removeAllListeners(); // Disable desktop input temporarily
+                    scene.input.keyboard.addListener('keydown', (event) => {
+                        if (cursorKeys.up.isDown) {
+                            player.setVelocityY(-300); // Jump
+                        } else if (cursorKeys.left.isDown) {
+                            player.setVelocityX(-160); // Move left
+                        } else if (cursorKeys.right.isDown) {
+                            player.setVelocityX(160); // Move right
+                        } else {
+                            player.setVelocityX(0); // Stop
+                        }
+                    });
+                });
+            });
         });
-    </script>
+    }
+</script>
+
 </body>
 </html>
