@@ -61,7 +61,7 @@ export default class Level1 extends Phaser.Scene {
 
         // Mobile-specific inputs
         if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-            this.setupJoystick();
+            this.setupMobileControls();
         }
 
         // Health and enemy setup
@@ -82,34 +82,46 @@ export default class Level1 extends Phaser.Scene {
         this.physics.add.collider(this.player, this.enemies, this.handlePlayerEnemyCollision, null, this);
         this.physics.add.collider(this.projectiles, this.enemies, this.handleProjectileEnemyCollision, null, this);
         this.physics.add.collider(this.enemies, this.platforms);
+
+        // Setup on-screen button actions
+        this.setupOnScreenButtonActions();
     }
 
-    setupJoystick() {
-        const joystickConfig = {
-            zone: this.add.zone(100, this.scale.height - 100, 200, 200).setOrigin(0.5),
-            mode: 'static',
-            position: { left: '50px', bottom: '50px' },
-            size: 100,
-            color: 'blue',
-        };
+    setupOnScreenButtonActions() {
+        const leftButton = document.getElementById('left');
+        const rightButton = document.getElementById('right');
+        const jumpButton = document.getElementById('jump');
+        const attackButton = document.getElementById('attack');
 
-        const joystick = new VirtualJoystick(this, joystickConfig);
+        leftButton.addEventListener('mousedown', () => {
+            this.player.setVelocityX(-160);
+            this.player.setFlipX(true);
+            this.player.play('walk', true);
+        });
+        leftButton.addEventListener('mouseup', () => {
+            this.player.setVelocityX(0);
+            this.player.play('idle', true);
+        });
 
-        joystick.on('update', (data) => {
-            if (data.force > 0) {
-                if (data.angle.degree >= 45 && data.angle.degree < 135) {
-                    this.player.setVelocityX(160);
-                    this.player.setFlipX(false);
-                    this.player.play('walk', true);
-                } else if (data.angle.degree >= 225 && data.angle.degree < 315) {
-                    this.player.setVelocityX(-160);
-                    this.player.setFlipX(true);
-                    this.player.play('walk', true);
-                }
-            } else {
-                this.player.setVelocityX(0);
-                this.player.play('idle', true);
+        rightButton.addEventListener('mousedown', () => {
+            this.player.setVelocityX(160);
+            this.player.setFlipX(false);
+            this.player.play('walk', true);
+        });
+        rightButton.addEventListener('mouseup', () => {
+            this.player.setVelocityX(0);
+            this.player.play('idle', true);
+        });
+
+        jumpButton.addEventListener('click', () => {
+            if (this.player.body.touching.down) {
+                this.player.setVelocityY(-500);
+                this.player.play('jump', true);
             }
+        });
+
+        attackButton.addEventListener('click', () => {
+            this.fireProjectile();
         });
     }
 
@@ -280,5 +292,46 @@ export default class Level1 extends Phaser.Scene {
         // Update health bar
         this.updateHealthUI();
 
+    }
+
+    setupMobileControls() {
+        window.addEventListener('deviceorientation', (event) => {
+            const tilt = event.gamma;
+            if (tilt !== null) {
+                if (tilt > 10) {
+                    this.player.setVelocityX(160);
+                    this.player.setFlipX(false);
+                    this.player.play('walk', true);
+                } else if (tilt < -10) {
+                    this.player.setVelocityX(-160);
+                    this.player.setFlipX(true);
+                    this.player.play('walk', true);
+                } else {
+                    this.player.setVelocityX(0);
+                    this.player.play('idle', true);
+                }
+            }
+        });
+
+        let touchStartY = null;
+        window.addEventListener('touchstart', (event) => {
+            touchStartY = event.touches[0].clientY;
+        });
+        window.addEventListener('touchend', (event) => {
+            const touchEndY = event.changedTouches[0].clientY;
+            if (touchStartY !== null && touchEndY < touchStartY - 50) {
+                if (this.player.body.touching.down) {
+                    this.player.setVelocityY(-500);
+                    this.player.play('jump', true);
+                }
+            }
+            touchStartY = null;
+        });
+
+        window.addEventListener('touchstart', (event) => {
+            if (event.target.tagName !== 'BUTTON') {
+                this.fireProjectile();
+            }
+        });
     }
 }
