@@ -28,7 +28,7 @@ export default class Level1 extends Phaser.Scene {
         this.load.image('levelComplete', 'assets/UI/levelComplete.png');
         this.load.image('healthPack', 'assets/Characters/Pickups/HealthPack.png');
         this.load.audio('level1Music', 'assets/Audio/BlownMoneyAudubonPark.mp3');
-        this.load.plugin('rexvirtualjoystickplugin', 'assets/plugins/rexvirtualjoystickplugin.min.js', true);
+        
         console.log("Assets preloaded successfully.");
     }
 
@@ -56,20 +56,13 @@ export default class Level1 extends Phaser.Scene {
         this.anims.create({ key: 'walk', frames: [{ key: 'turboNegroWalking' }], frameRate: 8, repeat: -1 });
         this.anims.create({ key: 'jump', frames: [{ key: 'turboNegroJump' }], frameRate: 1 });
 
-        // Conditional controls: joystick for mobile, keyboard for desktop
-        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-        if (isMobile) {
-            this.joystick = this.plugins.get('rexvirtualjoystickplugin').add(this, {
-                x: 100,
-                y: height - 100,
-                radius: 50,
-                base: this.add.circle(0, 0, 50, 0x888888),
-                thumb: this.add.circle(0, 0, 25, 0xcccccc),
-            }).on('update', this.updateJoystickState, this);
-            this.cursorKeys = this.joystick.createCursorKeys();
-        } else {
-            this.cursors = this.input.keyboard.createCursorKeys();
-            this.fireKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+        // Input setup
+        this.cursors = this.input.keyboard.createCursorKeys();
+        this.fireKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+
+        // Mobile-specific inputs
+        if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+            this.setupMobileControls();
         }
 
         // Health and enemy setup
@@ -342,6 +335,4 @@ export default class Level1 extends Phaser.Scene {
             }
         });
     }
-
-    
 }
