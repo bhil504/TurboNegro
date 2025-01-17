@@ -157,6 +157,61 @@
 
     const isMobile = 'ontouchstart' in window;
 
+    class Level1WithJoystick extends Phaser.Scene {
+        constructor() {
+            super({ key: 'Level1WithJoystick' });
+        }
+
+        create() {
+            if (isMobile) {
+                const joystickX = this.cameras.main.width * 0.15;
+                const joystickY = this.cameras.main.height * 0.85;
+
+                // Add joystick
+                this.joystick = this.plugins.get('rexVirtualJoystick').add(this, {
+                    x: joystickX,
+                    y: joystickY,
+                    radius: 50,
+                    base: this.add.circle(0, 0, 50, 0x888888),
+                    thumb: this.add.circle(0, 0, 25, 0xcccccc),
+                    dir: '8dir',
+                    forceMin: 16,
+                    enable: true,
+                });
+
+                this.joystick.on('update', () => {
+                    const cursorKeys = this.joystick.createCursorKeys();
+                    if (cursorKeys.left.isDown) {
+                        console.log('Move left');
+                    }
+                    if (cursorKeys.right.isDown) {
+                        console.log('Move right');
+                    }
+                    if (cursorKeys.up.isDown) {
+                        console.log('Move up');
+                    }
+                    if (cursorKeys.down.isDown) {
+                        console.log('Move down');
+                    }
+                });
+
+                // Add attack button
+                const attackButtonX = joystickX + 150;
+                const attackButtonY = joystickY;
+                const attackButton = this.add.text(attackButtonX, attackButtonY, 'Attack', {
+                    font: '18px Arial',
+                    fill: '#ffffff',
+                    backgroundColor: '#555',
+                    padding: { x: 10, y: 5 },
+                });
+                attackButton.setInteractive();
+                attackButton.on('pointerdown', () => {
+                    console.log('Attack button pressed');
+                });
+            }
+        }
+    }
+
     const config = {
         type: Phaser.AUTO,
         parent: 'game-container',
@@ -192,65 +247,6 @@
         const height = window.innerHeight - uiHeight;
         game.scale.resize(width, height);
     });
-
-    class Level1WithJoystick extends Phaser.Scene {
-        constructor() {
-            super({ key: 'Level1WithJoystick' });
-        }
-
-        create() {
-            if (isMobile) {
-                // Dynamic positioning for the joystick
-                const joystickX = this.cameras.main.width * 0.15;
-                const joystickY = this.cameras.main.height * 0.85;
-
-                // Add joystick
-                this.joystick = this.plugins.get('rexVirtualJoystick').add(this, {
-                    x: joystickX,
-                    y: joystickY,
-                    radius: 50,
-                    base: this.add.circle(0, 0, 50, 0x888888),
-                    thumb: this.add.circle(0, 0, 25, 0xcccccc),
-                    dir: '8dir',
-                    forceMin: 16,
-                    enable: true,
-                });
-
-                // Handle joystick input
-                this.joystick.on('update', () => {
-                    const cursorKeys = this.joystick.createCursorKeys();
-                    if (cursorKeys.left.isDown) {
-                        console.log('Move left');
-                    }
-                    if (cursorKeys.right.isDown) {
-                        console.log('Move right');
-                    }
-                    if (cursorKeys.up.isDown) {
-                        console.log('Move up');
-                    }
-                    if (cursorKeys.down.isDown) {
-                        console.log('Move down');
-                    }
-                });
-
-                // Add attack button
-                const attackButtonX = joystickX + 150;
-                const attackButtonY = joystickY;
-                const attackButton = this.add.text(attackButtonX, attackButtonY, 'Attack', {
-                    font: '18px Arial',
-                    fill: '#ffffff',
-                    backgroundColor: '#555',
-                    padding: { x: 10, y: 5 },
-                });
-                attackButton.setInteractive();
-                attackButton.on('pointerdown', () => {
-                    console.log('Attack button pressed');
-                });
-            }
-        }
-    }
-
-    game.scene.add('Level1WithJoystick', Level1WithJoystick, true);
 </script>
 
 
