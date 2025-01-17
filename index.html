@@ -94,10 +94,11 @@
         }
 
         #joystick-container {
-            width: 120px;
-            height: 120px;
-            position: relative;
-        }
+        width: 120px;
+        height: 120px;
+        position: relative;
+        border: 1px solid red; /* Debugging: Add border to ensure visibility */
+    }
 
         .control-button {
             background: linear-gradient(180deg, #333, #555);
@@ -162,13 +163,14 @@
 
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
-// Show on-screen controls only on mobile devices
-if (isMobile) {
-    const onscreenControls = document.getElementById('onscreen-controls');
-    if (onscreenControls) {
-        onscreenControls.style.display = 'flex';
+    // Show on-screen controls only on mobile devices
+    if (isMobile) {
+        const onscreenControls = document.getElementById('onscreen-controls');
+        if (onscreenControls) {
+            onscreenControls.style.display = 'flex';
+            console.log("On-Screen Controls Display:", onscreenControls.style.display); // Debugging log
+        }
     }
-}
 
 
 // Phaser Game Configuration

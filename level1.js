@@ -60,10 +60,44 @@ export default class Level1 extends Phaser.Scene {
         this.cursors = this.input.keyboard.createCursorKeys();
         this.fireKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
 
-        // Mobile-specific inputs
-        if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-            this.setupMobileControls();
+
+        // Mobile-specific joystick setup
+    if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+        console.log("Mobile device detected. Initializing joystick...");
+        
+        this.joystick = this.plugins.get('rexVirtualJoystick').add(this, {
+            x: width * 0.1,
+            y: height * 0.85,
+            radius: 50,
+            base: this.add.circle(0, 0, 50, 0x888888),
+            thumb: this.add.circle(0, 0, 25, 0xcccccc),
+            dir: '8dir',
+            forceMin: 10,
+        });
+
+        if (this.joystick.base && this.joystick.thumb) {
+            console.log("Joystick base and thumb initialized successfully.");
+        } else {
+            console.error("Failed to initialize joystick base or thumb.");
         }
+
+        this.joystick.on('update', () => {
+            if (this.player) {
+                const force = this.joystick.force;
+                this.player.setVelocityX(force.x * 160);
+                if (force.x !== 0) {
+                    this.player.setFlipX(force.x < 0);
+                    this.player.anims.play('walk', true);
+                } else {
+                    this.player.anims.play('idle', true);
+                }
+
+                if (force.y < -0.5 && this.player.body.touching.down) {
+                    this.player.setVelocityY(-500); // Jump
+                }
+            }
+        });
+    }
 
         // Health and enemy setup
         this.playerHealth = 10;
