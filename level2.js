@@ -399,20 +399,19 @@ export default class Level2 extends Phaser.Scene {
     setupMobileControls() {
         if (window.DeviceOrientationEvent) {
             window.addEventListener('deviceorientation', (event) => {
-                const tilt = event.gamma; // Left-right tilt value (-90 to 90)
+                const tilt = event.gamma;
     
                 if (tilt !== null) {
-                    // Normalize tilt value and smoothen the movement
-                    const targetVelocity = Phaser.Math.Clamp(tilt * 2, -160, 160); // Adjust sensitivity with the multiplier (e.g., 2)
-                    
-                    // Use interpolation to gradually move towards the target velocity
-                    this.player.setVelocityX(Phaser.Math.Linear(this.player.body.velocity.x, targetVelocity, 0.1));
-                    
-                    // Update player animations
-                    if (Math.abs(this.player.body.velocity.x) > 5) {
-                        this.player.setFlipX(this.player.body.velocity.x < 0); // Flip if moving left
+                    if (tilt > 10) {
+                        this.player.setVelocityX(160);
+                        this.player.setFlipX(false);
+                        this.player.play('walk', true);
+                    } else if (tilt < -10) {
+                        this.player.setVelocityX(-160);
+                        this.player.setFlipX(true);
                         this.player.play('walk', true);
                     } else {
+                        this.player.setVelocityX(0);
                         this.player.play('idle', true);
                     }
                 }
@@ -421,8 +420,7 @@ export default class Level2 extends Phaser.Scene {
             console.warn("Tilt controls unavailable. Enabling joystick as fallback.");
             this.setupJoystick();
         }
-    }
-    
+    }    
 
     setupJoystick() {
         const joystickArea = document.getElementById('joystick-area');
