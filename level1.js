@@ -3,11 +3,6 @@ export default class Level1 extends Phaser.Scene {
         super({ key: 'Level1' });
     }
 
-    // iOS-specific adjustments for canvas size
-    isIOS() {
-        return /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-    }
-
     updateHealthUI() {
         const healthPercentage = (this.playerHealth / this.maxHealth) * 100;
         document.getElementById('health-bar-inner').style.width = `${healthPercentage}%`;
@@ -33,13 +28,12 @@ export default class Level1 extends Phaser.Scene {
         this.load.image('levelComplete', 'assets/UI/levelComplete.png');
         this.load.image('healthPack', 'assets/Characters/Pickups/HealthPack.png');
         this.load.audio('level1Music', 'assets/Audio/BlownMoneyAudubonPark.mp3');
+        
         console.log("Assets preloaded successfully.");
     }
 
     create() {
-        const isIOS = this.isIOS(); // Detect if the device is iOS
-        const width = isIOS ? window.innerWidth : this.scale.width;
-        const height = isIOS ? window.innerHeight : this.scale.height;
+        const { width, height } = this.scale;
     
         // Background and music
         this.add.image(width / 2, height / 2, 'level1Background').setDisplaySize(width, height);
@@ -58,17 +52,7 @@ export default class Level1 extends Phaser.Scene {
         this.physics.add.collider(this.player, this.platforms);
     
         // Animations
-        this.anims.create({
-            key: 'idle',
-            frames: [
-                { key: 'turboNegroStanding1' },
-                { key: 'turboNegroStanding2' },
-                { key: 'turboNegroStanding3' },
-                { key: 'turboNegroStanding4' },
-            ],
-            frameRate: 4,
-            repeat: -1,
-        });
+        this.anims.create({ key: 'idle', frames: [{ key: 'turboNegroStanding1' }, { key: 'turboNegroStanding2' }, { key: 'turboNegroStanding3' }, { key: 'turboNegroStanding4' }], frameRate: 4, repeat: -1 });
         this.anims.create({ key: 'walk', frames: [{ key: 'turboNegroWalking' }], frameRate: 8, repeat: -1 });
         this.anims.create({ key: 'jump', frames: [{ key: 'turboNegroJump' }], frameRate: 1 });
     
@@ -95,8 +79,26 @@ export default class Level1 extends Phaser.Scene {
         this.physics.add.collider(this.projectiles, this.enemies, this.handleProjectileEnemyCollision, null, this);
         this.physics.add.collider(this.enemies, this.platforms);
     
-        // Tap anywhere to attack
+        // Hook up the attack button to fireProjectile
+        const attackButton = document.getElementById('attack-button');
+        if (attackButton) {
+            attackButton.addEventListener('click', () => {
+                this.fireProjectile();
+            });
+        }
+    
+        // Mobile-specific controls
+        if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+            console.log("Mobile device detected. Initializing controls...");
+            this.setupMobileControls(); // Adds tilt, swipe, and tap
+            this.setupJoystick(); // Adds joystick as a fallback
+        } else {
+            console.log("Desktop detected. Skipping mobile controls.");
+        }
+    
+        // Tap anywhere to attack (Mobile or Desktop)
         this.input.on('pointerdown', (pointer) => {
+            if (!pointer.wasTouch) return; // Ensures it's not triggered by a mouse
             this.fireProjectile();
         });
     
@@ -113,36 +115,7 @@ export default class Level1 extends Phaser.Scene {
             }
             startY = null;
         });
-    
-        // Mobile-specific controls (Tilt to move)
-        if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-            console.log("Mobile device detected. Initializing tilt controls...");
-            if (window.DeviceOrientationEvent) {
-                window.addEventListener('deviceorientation', (event) => {
-                    const tilt = event.gamma;
-                    if (tilt !== null) {
-                        if (tilt > 10) {
-                            this.player.setVelocityX(160);
-                            this.player.setFlipX(false);
-                            this.player.play('walk', true);
-                        } else if (tilt < -10) {
-                            this.player.setVelocityX(-160);
-                            this.player.setFlipX(true);
-                            this.player.play('walk', true);
-                        } else {
-                            this.player.setVelocityX(0);
-                            this.player.play('idle', true);
-                        }
-                    }
-                });
-            } else {
-                console.warn("Device orientation unavailable. Skipping tilt controls.");
-            }
-        } else {
-            console.log("Desktop detected. Skipping mobile-specific controls.");
-        }
     }
-    
     
     spawnEnemy() {
         const { width, height } = this.scale;
