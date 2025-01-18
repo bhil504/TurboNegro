@@ -150,17 +150,8 @@ export default class Level3 extends Phaser.Scene {
             loop: true,
         });
     
-        // Initialize Mobile or Desktop Controls
-        if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-            console.log("Mobile device detected. Initializing mobile controls...");
-            this.setupMobileControls();
-            this.setupJoystick();
-        } else {
-            console.log("Desktop device detected. Initializing keyboard controls...");
-        }
-    
         console.log("Level 3 setup complete.");
-    }    
+    }
 
     update() {
         if (!this.player || !this.cursors) return;
@@ -256,28 +247,31 @@ export default class Level3 extends Phaser.Scene {
     }
 
     handleProjectileEnemyCollision(projectile, enemy) {
-        if (!projectile || !enemy) return;
-    
-        // Destroy both the projectile and the enemy
-        projectile.destroy();
-        enemy.destroy();
-    
-        console.log(`Enemy destroyed: ${enemy.texture.key}`);
-    
-        // Increment total enemies defeated
-        this.totalEnemiesDefeated++;
-        this.updateEnemyCountUI();
-    
-        // Spawn health pack after every 12 enemies defeated
-        if (this.totalEnemiesDefeated % 12 === 0) {
-            this.spawnHealthPack();
+        if (projectile && projectile.active) {
+            projectile.destroy();
+            console.log("Projectile destroyed!");
         }
-    
-        // Check if level is complete
-        if (this.totalEnemiesDefeated >= 40) {
-            this.levelComplete();
+
+        if (enemy && enemy.active) {
+            console.log(`Enemy destroyed: ${enemy.texture.key}`);
+            enemy.destroy();
+
+            this.totalEnemiesDefeated++;
+            console.log(`Total Enemies Defeated: ${this.totalEnemiesDefeated}`);
+
+            this.updateEnemyCountUI();
+
+            if (this.totalEnemiesDefeated % 12 === 0) {
+                this.spawnHealthPack();
+                console.log("Health pack spawned!");
+            }
+
+            if (this.totalEnemiesDefeated >= 40) {
+                console.log("Level Complete Triggered!");
+                this.levelComplete();
+            }
         }
-    }    
+    }
 
     spawnHealthPack() {
         const { width } = this.scale;
