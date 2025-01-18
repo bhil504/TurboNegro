@@ -84,16 +84,24 @@
             overflow: hidden;
         }
 
-        #joystick-area {
-            position: absolute;
-            bottom: 20px;
-            left: 20px;
-            width: 150px;
-            height: 150px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.1);
-            touch-action: none; /* Prevent default touch behavior */
-        }
+        #onscreen-controls {
+        position: absolute;
+        bottom: 20px;
+        width: 100%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0 20px;
+        box-sizing: border-box;
+    }
+
+    #joystick-area {
+        width: 150px;
+        height: 150px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.1);
+        touch-action: none;
+    }
 
         .control-button {
             background: linear-gradient(180deg, #333, #555);
@@ -119,6 +127,37 @@
             background: #999;
             transform: scale(1);
         }
+
+        #attack-button {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        background: linear-gradient(180deg, #333, #555);
+        color: white;
+        font-size: 14px;
+        font-weight: bold;
+        border: none;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.6);
+        cursor: pointer;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        transition: all 0.2s ease;
+    }
+
+        #attack-button:active {
+        background: #999;
+        transform: scale(1);
+    }
+
+    #attack-button:hover {
+        background: linear-gradient(180deg, #555, #777);
+        transform: scale(1.05);
+    }
+
+
     </style>
 </head>
 <body>
@@ -135,7 +174,7 @@
     
         <div id="onscreen-controls">
             <div id="joystick-area"></div>
-            <button id="attack-button" class="control-button">Attack</button>
+            <button id="attack-button">Attack</button>
         </div>
     </div>
 
