@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Turbo Negro - Game</title>
     <style>
         /* General Body Styling */
@@ -73,13 +73,7 @@
 
         #game-container {
             width: 100%;
-            max-width: 1100px;
-            aspect-ratio: 1100 / 500;
-            margin: 0 auto;
-            border-radius: 10px;
-            border: 2px solid #555;
-            background: linear-gradient(180deg, #111, #222);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.8);
+            height: calc(100% - 120px); /* Leave space for UI */
             position: relative;
             overflow: hidden;
         }
@@ -120,15 +114,11 @@
             transform: scale(1);
         }
 
-        /* iOS-Specific Styling */
-        @media screen and (max-width: 1024px) and (-webkit-min-device-pixel-ratio: 2) {
+        /* Responsive Design for Mobile */
+        @media screen and (max-width: 768px) {
             #game-container {
-                width: 100vw;
-                height: 70vh;
-                aspect-ratio: auto; /* Let iOS adjust dynamically */
-                border-radius: 0; /* Remove rounded borders */
-                box-shadow: none; /* Reduce shadows for better performance */
-                margin: 0;
+                width: 100%;
+                height: calc(100% - 120px);
             }
 
             #ui-container {
@@ -137,7 +127,7 @@
             }
 
             #health-bar {
-                width: 150px; /* Smaller width for smaller screens */
+                width: 150px;
             }
 
             .control-button {
@@ -184,23 +174,15 @@
         import Level5 from './level5.js';
         import BossFight from './bossFight.js';
     
-        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    
-        // Hide joystick and attack button on non-mobile devices
-        if (!isMobile) {
-            document.getElementById('joystick-area').style.display = 'none';
-            document.getElementById('attack-button').style.display = 'none';
-        }
-    
         const config = {
             type: Phaser.AUTO,
             parent: 'game-container',
             scale: {
                 mode: Phaser.Scale.FIT,
                 autoCenter: Phaser.Scale.CENTER_BOTH,
+                width: Math.min(window.innerWidth, 1100), // Ensure it fits properly
+                height: Math.min(window.innerHeight - 120, 500), // Adjust to available space
             },
-            width: isMobile ? (window.innerWidth < 768 ? 768 : 1100) : 1100,
-            height: isMobile ? (window.innerWidth < 768 ? 500 : 500) : 500,
             backgroundColor: '#000000',
             physics: {
                 default: 'arcade',
@@ -212,7 +194,14 @@
             scene: [StartMenu, Level1, Level2, Level3, Level4, Level5, BossFight],
         };
     
-        new Phaser.Game(config);
+        const game = new Phaser.Game(config);
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            const width = Math.min(window.innerWidth, 1100);
+            const height = Math.min(window.innerHeight - 120, 500);
+            game.scale.resize(width, height);
+        });
     </script>
 </body>
 </html>
