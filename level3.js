@@ -33,82 +33,62 @@ export default class Level3 extends Phaser.Scene {
 
     create() {
         const { width, height } = this.scale;
-        console.log("Creating Level 3...");
-    
+
         // Background setup
-        this.add.image(0, 0, 'level3Background')
-            .setOrigin(0, 0)
-            .setDisplaySize(1600, height);
-    
+        this.add.image(0, 0, 'level3Background').setOrigin(0, 0).setDisplaySize(1600, height);
+
         // Music setup
         this.levelMusic = this.sound.add('level3Music', { loop: true, volume: 0.2 });
         this.levelMusic.play();
-    
-        // Camera and world bounds
-        this.cameras.main.setBounds(0, 0, 1600, height);
-        this.physics.world.setBounds(0, 0, 1600, height);
-    
+
         // Platforms setup
         this.platforms = this.physics.add.staticGroup();
         this.platforms.create(800, height - 12, null).setDisplaySize(1600, 20).setVisible(false).refreshBody();
-    
+
         // Player setup
         this.player = this.physics.add.sprite(200, height - 100, 'turboNegroStanding1');
         this.player.setCollideWorldBounds(true);
         this.physics.add.collider(this.player, this.platforms);
-    
+
         // Animations
         this.anims.create({
             key: 'idle',
-            frames: [{ key: 'turboNegroStanding1' }, { key: 'turboNegroStanding2' }, { key: 'turboNegroStanding3' }, { key: 'turboNegroStanding4' }],
+            frames: [
+                { key: 'turboNegroStanding1' },
+                { key: 'turboNegroStanding2' },
+                { key: 'turboNegroStanding3' },
+                { key: 'turboNegroStanding4' },
+            ],
             frameRate: 4,
             repeat: -1,
         });
         this.anims.create({ key: 'walk', frames: [{ key: 'turboNegroWalking' }], frameRate: 8, repeat: -1 });
-    
+
         // Input setup
         this.cursors = this.input.keyboard.createCursorKeys();
         this.fireKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
-    
-        // Object groups
-        this.projectiles = this.physics.add.group({ defaultKey: 'projectileCD' });
-        this.enemies = this.physics.add.group();
-    
-        // Health and stats
+
+        // Health and projectiles
         this.playerHealth = 10;
         this.maxHealth = 10;
+        this.projectiles = this.physics.add.group({ defaultKey: 'projectileCD' });
+
         this.updateHealthUI();
-    
+
         // Setup mobile or desktop controls
         if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-            console.log("Mobile device detected. Initializing mobile controls...");
+            console.log("Mobile detected. Initializing mobile controls...");
             this.setupMobileControls();
             this.setupJoystick();
         } else {
-            console.log("Desktop device detected. Initializing keyboard controls...");
+            console.log("Desktop detected. Using keyboard controls...");
         }
-    
-        // Tap to attack
-        this.input.on('pointerdown', (pointer) => {
-            if (!pointer.wasTouch) return;
-            this.fireProjectile();
-        });
-    
-        // Swipe up to jump
-        let startY = null;
-        this.input.on('pointerdown', (pointer) => {
-            startY = pointer.y;
-        });
-    
-        this.input.on('pointerup', (pointer) => {
-            if (startY !== null && pointer.y < startY - 50 && this.player.body.touching.down) {
-                this.player.setVelocityY(-500);
-            }
-            startY = null;
-        });
-    
+
+        // Swipe and tap input for mobile
+        this.setupPointerControls();
+
         console.log("Level 3 setup complete.");
-    }       
+    }     
 
     update() {
         if (!this.player || !this.cursors) return;
@@ -118,18 +98,17 @@ export default class Level3 extends Phaser.Scene {
         if (this.cursors.left.isDown) {
             this.player.setVelocityX(-160);
             this.player.setFlipX(true);
-            if (this.player.body.touching.down) this.player.play('walk', true);
+            this.player.play('walk', true);
         } else if (this.cursors.right.isDown) {
             this.player.setVelocityX(160);
             this.player.setFlipX(false);
-            if (this.player.body.touching.down) this.player.play('walk', true);
-        } else if (this.player.body.touching.down) {
+            this.player.play('walk', true);
+        } else {
             this.player.play('idle', true);
         }
 
         if (this.cursors.up.isDown && this.player.body.touching.down) {
             this.player.setVelocityY(-500);
-            console.log("Player jumps!");
         }
 
         if (Phaser.Input.Keyboard.JustDown(this.fireKey)) {
@@ -518,20 +497,17 @@ export default class Level3 extends Phaser.Scene {
         if (window.DeviceOrientationEvent) {
             window.addEventListener('deviceorientation', (event) => {
                 const tilt = event.gamma;
-
-                if (tilt !== null) {
-                    if (tilt > 8) {
-                        this.player.setVelocityX(160);
-                        this.player.setFlipX(false);
-                        this.player.play('walk', true);
-                    } else if (tilt < -8) {
-                        this.player.setVelocityX(-160);
-                        this.player.setFlipX(true);
-                        this.player.play('walk', true);
-                    } else {
-                        this.player.setVelocityX(0);
-                        this.player.play('idle', true);
-                    }
+                if (tilt > 8) {
+                    this.player.setVelocityX(160);
+                    this.player.setFlipX(false);
+                    this.player.play('walk', true);
+                } else if (tilt < -8) {
+                    this.player.setVelocityX(-160);
+                    this.player.setFlipX(true);
+                    this.player.play('walk', true);
+                } else {
+                    this.player.setVelocityX(0);
+                    this.player.play('idle', true);
                 }
             });
         } else {
@@ -583,6 +559,27 @@ export default class Level3 extends Phaser.Scene {
                 this.player.play('idle', true);
             }
         });
-    }        
+    }    
+    
+    setupPointerControls() {
+        // Tap to attack
+        this.input.on('pointerdown', (pointer) => {
+            if (!pointer.wasTouch) return;
+            this.fireProjectile();
+        });
+
+        // Swipe up to jump
+        let startY = null;
+        this.input.on('pointerdown', (pointer) => {
+            startY = pointer.y;
+        });
+
+        this.input.on('pointerup', (pointer) => {
+            if (startY !== null && pointer.y < startY - 50 && this.player.body.touching.down) {
+                this.player.setVelocityY(-500);
+            }
+            startY = null;
+        });
+    }
     
 }
