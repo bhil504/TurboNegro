@@ -150,8 +150,37 @@ export default class Level3 extends Phaser.Scene {
             loop: true,
         });
     
+        // Mobile controls
+        if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+            console.log("Mobile device detected. Initializing controls...");
+            this.setupMobileControls();
+            this.setupJoystick();
+        } else {
+            console.log("Desktop detected. Skipping mobile controls.");
+        }
+    
+        // Tap anywhere to attack (Mobile or Desktop)
+        this.input.on('pointerdown', (pointer) => {
+            if (!pointer.wasTouch) return;
+            this.fireProjectile();
+        });
+    
+        // Swipe up to jump
+        let startY = null;
+        this.input.on('pointerdown', (pointer) => {
+            startY = pointer.y;
+        });
+    
+        this.input.on('pointerup', (pointer) => {
+            if (startY !== null && pointer.y < startY - 50 && this.player.body.touching.down) {
+                this.player.setVelocityY(-500);
+                this.player.play('jump', true);
+            }
+            startY = null;
+        });
+    
         console.log("Level 3 setup complete.");
-    }
+    }    
 
     update() {
         if (!this.player || !this.cursors) return;
