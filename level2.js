@@ -145,9 +145,8 @@ export default class Level2 extends Phaser.Scene {
              }
              startY = null;
          });
-     }
+    }
     
-
     update() {
         if (!this.player || !this.cursors) return;
 
