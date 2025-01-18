@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Turbo Negro - Game</title>
     <style>
         /* General Body Styling */
@@ -73,8 +73,7 @@
 
         #game-container {
             width: 100%;
-            max-width: 1100px;
-            aspect-ratio: 1100 / 500;
+            height: 100%;
             margin: 0 auto;
             border-radius: 10px;
             border: 2px solid #555;
@@ -92,7 +91,7 @@
             height: 150px;
             border-radius: 50%;
             background: rgba(255, 255, 255, 0.1);
-            touch-action: none; /* Prevent default touch behavior */
+            touch-action: none;
         }
 
         .control-button {
@@ -120,14 +119,12 @@
             transform: scale(1);
         }
 
-        /* iOS-Specific Styling */
-        @media screen and (max-width: 1024px) and (-webkit-min-device-pixel-ratio: 2) {
+        /* Responsive Design for Mobile */
+        @media screen and (max-width: 768px) {
             #game-container {
                 width: 100vw;
                 height: 70vh;
-                aspect-ratio: auto; /* Let iOS adjust dynamically */
-                border-radius: 0; /* Remove rounded borders */
-                box-shadow: none; /* Reduce shadows for better performance */
+                border-radius: 0;
                 margin: 0;
             }
 
@@ -137,7 +134,7 @@
             }
 
             #health-bar {
-                width: 150px; /* Smaller width for smaller screens */
+                width: 150px;
             }
 
             .control-button {
@@ -196,11 +193,11 @@
             type: Phaser.AUTO,
             parent: 'game-container',
             scale: {
-                mode: Phaser.Scale.FIT,
+                mode: Phaser.Scale.RESIZE,
                 autoCenter: Phaser.Scale.CENTER_BOTH,
+                width: window.innerWidth,
+                height: window.innerHeight,
             },
-            width: isMobile ? (window.innerWidth < 768 ? 768 : 1100) : 1100,
-            height: isMobile ? (window.innerWidth < 768 ? 500 : 500) : 500,
             backgroundColor: '#000000',
             physics: {
                 default: 'arcade',
@@ -212,7 +209,12 @@
             scene: [StartMenu, Level1, Level2, Level3, Level4, Level5, BossFight],
         };
     
-        new Phaser.Game(config);
+        const game = new Phaser.Game(config);
+
+        // Handle window resize
+        window.addEventListener('resize', () => {
+            game.scale.resize(window.innerWidth, window.innerHeight);
+        });
     </script>
 </body>
 </html>
