@@ -159,23 +159,28 @@ export default class Level1 extends Phaser.Scene {
     }
     
     handleProjectileEnemyCollision(projectile, enemy) {
+        if (!projectile || !enemy) return;
+    
+        // Destroy both the projectile and the enemy
         projectile.destroy();
         enemy.destroy();
+    
+        console.log(`Enemy destroyed: ${enemy.texture.key}`);
+    
+        // Increment total enemies defeated
         this.totalEnemiesDefeated++;
-        
-        // Spawn a health pack after 12 enemies are defeated
-        if (this.totalEnemiesDefeated === 12) {
+        this.updateEnemyCountUI();
+    
+        // Spawn health pack after every 12 enemies defeated
+        if (this.totalEnemiesDefeated % 12 === 0) {
             this.spawnHealthPack();
         }
-        
-        // Update enemy countdown
-        this.updateEnemyCountUI();
-        
-        
-        if (this.totalEnemiesDefeated >= 20) {
+    
+        // Check if level is complete
+        if (this.totalEnemiesDefeated >= 40) {
             this.levelComplete();
         }
-    }
+    }    
     
     gameOver() {
         // Stop background music
