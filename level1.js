@@ -181,41 +181,53 @@ export default class Level1 extends Phaser.Scene {
     gameOver() {
         // Stop background music
         if (this.levelMusic) this.levelMusic.stop();
-        
+    
         // Stop spawning enemies
         if (this.enemySpawnTimer) this.enemySpawnTimer.remove();
-        
+    
         // Safely clear enemies and projectiles
         this.enemies.clear(true, true); // Destroys all active enemies
         this.projectiles.clear(true, true); // Destroys all active projectiles
-        
+    
         // Display game over screen
         this.add.image(this.scale.width / 2, this.scale.height / 2, 'gameOver').setOrigin(0.5);
-        
-        // Restart the level after a tap on mobile
-        this.input.on('pointerdown', () => {
+    
+        // Add input event listeners for desktop and mobile
+        const restartLevel = () => {
             this.scene.restart();
-        });
+        };
+    
+        // For Desktop
+        this.input.keyboard.once('keydown-SPACE', restartLevel);
+    
+        // For Mobile (tap anywhere)
+        this.input.once('pointerdown', restartLevel);
     }
     
     levelComplete() {
         // Stop background music
         if (this.levelMusic) this.levelMusic.stop();
-        
+    
         // Stop spawning enemies
         if (this.enemySpawnTimer) this.enemySpawnTimer.remove();
-        
+    
         // Safely clear enemies and projectiles
         this.enemies.clear(true, true); // Destroys all active enemies
         this.projectiles.clear(true, true); // Destroys all active projectiles
     
         // Display level complete screen
         this.add.image(this.scale.width / 2, this.scale.height / 2, 'levelComplete').setOrigin(0.5);
-        
-        // Proceed to the next level after a tap on mobile
-        this.input.on('pointerdown', () => {
-            this.scene.start('Level2'); // Assuming 'Level2' is the next scene
-        });
+    
+        // Add input event listeners for desktop and mobile
+        const proceedToNextLevel = () => {
+            this.scene.start('Level2'); // Assuming 'Level2' is the next level
+        };
+    
+        // For Desktop
+        this.input.keyboard.once('keydown-SPACE', proceedToNextLevel);
+    
+        // For Mobile (tap anywhere)
+        this.input.once('pointerdown', proceedToNextLevel);
     }
     
     update() {

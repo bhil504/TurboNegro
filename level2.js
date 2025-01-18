@@ -233,37 +233,59 @@ export default class Level2 extends Phaser.Scene {
     }
 
     gameOver() {
+        // Stop background music
         if (this.levelMusic) this.levelMusic.stop();
-
+    
+        // Stop enemy and projectile spawns
         if (this.enemySpawnTimer) this.enemySpawnTimer.remove();
         if (this.trumpetSpawnTimer) this.trumpetSpawnTimer.remove();
-
+    
+        // Clear active game objects
         this.enemies.clear(true, true);
         this.trumpetEnemies.clear(true, true);
         this.projectiles.clear(true, true);
-
+    
+        // Display game over screen
         this.add.image(this.scale.width / 2, this.scale.height / 2, 'gameOver').setOrigin(0.5);
-
-        this.input.keyboard.once('keydown-SPACE', () => {
+    
+        // Restart the level on SPACE (desktop) or tap (mobile)
+        const restartLevel = () => {
             this.scene.restart();
-        });
+        };
+    
+        // Desktop: Listen for SPACE key
+        this.input.keyboard.once('keydown-SPACE', restartLevel);
+    
+        // Mobile: Listen for tap
+        this.input.once('pointerdown', restartLevel);
     }
 
     levelComplete() {
+        // Stop background music
         if (this.levelMusic) this.levelMusic.stop();
-
+    
+        // Stop enemy and projectile spawns
         if (this.enemySpawnTimer) this.enemySpawnTimer.remove();
         if (this.trumpetSpawnTimer) this.trumpetSpawnTimer.remove();
-
+    
+        // Clear active game objects
         this.enemies.clear(true, true);
         this.trumpetEnemies.clear(true, true);
         this.projectiles.clear(true, true);
-
+    
+        // Display level complete screen
         this.add.image(this.scale.width / 2, this.scale.height / 2, 'levelComplete').setOrigin(0.5);
-
-        this.input.keyboard.once('keydown-SPACE', () => {
-            this.scene.start('Level3');
-        });
+    
+        // Move to the next level on SPACE (desktop) or tap (mobile)
+        const proceedToNextLevel = () => {
+            this.scene.start('Level3'); // Proceed to Level 3
+        };
+    
+        // Desktop: Listen for SPACE key
+        this.input.keyboard.once('keydown-SPACE', proceedToNextLevel);
+    
+        // Mobile: Listen for tap
+        this.input.once('pointerdown', proceedToNextLevel);
     }
 
     spawnMardiGrasZombie() {
