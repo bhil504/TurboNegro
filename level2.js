@@ -108,7 +108,45 @@ export default class Level2 extends Phaser.Scene {
         this.physics.add.collider(this.projectiles, this.trumpetEnemies, this.handleProjectileEnemyCollision, null, this);
         this.physics.add.collider(this.enemies, this.platforms);
         this.physics.add.collider(this.trumpetEnemies, this.platforms);
-    }
+
+         // Hook up the attack button to fireProjectile
+         const attackButton = document.getElementById('attack-button');
+         if (attackButton) {
+             attackButton.addEventListener('click', () => {
+                 this.fireProjectile();
+             });
+         }
+ 
+         // Mobile-specific controls
+         if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+             console.log("Mobile device detected. Initializing controls...");
+             this.setupMobileControls();
+             this.setupJoystick();
+         } else {
+             console.log("Desktop detected. Skipping mobile controls.");
+         }
+ 
+         // Tap anywhere to attack (Mobile or Desktop)
+         this.input.on('pointerdown', (pointer) => {
+             if (!pointer.wasTouch) return;
+             this.fireProjectile();
+         });
+ 
+         // Swipe up to jump
+         let startY = null;
+         this.input.on('pointerdown', (pointer) => {
+             startY = pointer.y;
+         });
+ 
+         this.input.on('pointerup', (pointer) => {
+             if (startY !== null && pointer.y < startY - 50 && this.player.body.touching.down) {
+                 this.player.setVelocityY(-500);
+                 this.player.play('jump', true);
+             }
+             startY = null;
+         });
+     }
+    
 
     update() {
         if (!this.player || !this.cursors) return;
@@ -334,5 +372,71 @@ export default class Level2 extends Phaser.Scene {
         if (Phaser.Math.Between(0, 100) < 20 && enemy.body.touching.down && Math.abs(enemy.x - playerX) < 200) {
             enemy.setVelocityY(-300);
         }
+    }
+
+    setupMobileControls() {
+        if (window.DeviceOrientationEvent) {
+            window.addEventListener('deviceorientation', (event) => {
+                const tilt = event.gamma;
+                if (tilt !== null) {
+                    if (tilt > 10) {
+                        this.player.setVelocityX(160);
+                        this.player.setFlipX(false);
+                        this.player.play('walk', true);
+                    } else if (tilt < -10) {
+                        this.player.setVelocityX(-160);
+                        this.player.setFlipX(true);
+                        this.player.play('walk', true);
+                    } else {
+                        this.player.setVelocityX(0);
+                        this.player.play('idle', true);
+                    }
+                }
+            });
+        } else {
+            console.warn("Tilt controls unavailable. Enabling joystick as fallback.");
+            this.setupJoystick();
+        }
+    }
+
+    setupJoystick() {
+        const joystickArea = document.getElementById('joystick-area');
+        let joystickStartX = 0;
+        let joystickStartY = 0;
+
+        joystickArea.addEventListener('touchstart', (event) => {
+            const touch = event.touches[0];
+            joystickStartX = touch.clientX;
+            joystickStartY = touch.clientY;
+        });
+
+        joystickArea.addEventListener('touchmove', (event) => {
+            const touch = event.touches[0];
+            const deltaX = touch.clientX - joystickStartX;
+            const deltaY = touch.clientY - joystickStartY;
+
+            const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+            const maxDistance = 50;
+
+            const forceX = deltaX / Math.max(distance, maxDistance);
+            const forceY = deltaY / Math.max(distance, maxDistance);
+
+            if (this.player) {
+                this.player.setVelocityX(forceX * 160);
+                if (forceX > 0) this.player.setFlipX(false);
+                if (forceX < 0) this.player.setFlipX(true);
+
+                if (forceY < -0.5 && this.player.body.touching.down) {
+                    this.player.setVelocityY(-500); // Jump
+                }
+            }
+        });
+
+        joystickArea.addEventListener('touchend', () => {
+            if (this.player) {
+                this.player.setVelocityX(0);
+                this.player.anims.play('idle', true);
+            }
+        });
     }
 }
