@@ -188,11 +188,11 @@ export default class Level3 extends Phaser.Scene {
         this.player.setVelocityX(0);
 
         if (this.cursors.left.isDown) {
-            this.player.setVelocityX(-160);
+            this.player.setVelocityX(-165);
             this.player.setFlipX(true);
             if (this.player.body.touching.down) this.player.play('walk', true);
         } else if (this.cursors.right.isDown) {
-            this.player.setVelocityX(160);
+            this.player.setVelocityX(165);
             this.player.setFlipX(false);
             if (this.player.body.touching.down) this.player.play('walk', true);
         } else if (this.player.body.touching.down) {
