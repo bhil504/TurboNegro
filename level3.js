@@ -34,46 +34,40 @@ export default class Level3 extends Phaser.Scene {
     create() {
         const { width, height } = this.scale;
         console.log("Creating Level 3...");
-
-        this.add.image(800, height / 2, 'level3Background')
+    
+        // Background
+        this.add.image(width / 2, height / 2, 'level3Background')
             .setDisplaySize(1600, height)
             .setOrigin(0.5);
-
+    
+        // Background music
         this.levelMusic = this.sound.add('level3Music', { loop: true, volume: 0.2 });
         this.levelMusic.play();
-
+    
+        // Camera and world bounds
         this.cameras.main.setBounds(0, 0, 1600, height);
         this.physics.world.setBounds(0, 0, 1600, height);
-
+    
+        // Platforms
         this.platforms = this.physics.add.staticGroup();
-        this.platforms.create(800, height - 12, null)
-            .setDisplaySize(1600, 20)
-            .setVisible(false)
-            .refreshBody();
-
-        this.platforms.create(100, height - 230, null)
-            .setDisplaySize(200, 10)
-            .setVisible(false)
-            .refreshBody();
+        this.platforms.create(800, height - 12, null).setDisplaySize(1600, 20).setVisible(false).refreshBody();
+    
+        this.platforms.create(100, height - 230, null).setDisplaySize(200, 10).setVisible(false).refreshBody();
         this.add.image(100, height - 180, 'ledgeLeft').setOrigin(0.5, 1).setScale(0.8).setDepth(2);
-
-        this.platforms.create(1500, height - 230, null)
-            .setDisplaySize(200, 10)
-            .setVisible(false)
-            .refreshBody();
+    
+        this.platforms.create(1500, height - 230, null).setDisplaySize(200, 10).setVisible(false).refreshBody();
         this.add.image(1500, height - 180, 'ledgeRight').setOrigin(0.5, 1).setScale(0.8).setDepth(2);
-
-        this.platforms.create(800, height - 165, null)
-            .setDisplaySize(300, 10)
-            .setVisible(false)
-            .refreshBody();
+    
+        this.platforms.create(800, height - 165, null).setDisplaySize(300, 10).setVisible(false).refreshBody();
         this.add.image(800, height - 148, 'platform').setOrigin(0.5, 1).setDepth(2);
-
+    
+        // Player setup
         this.player = this.physics.add.sprite(200, height - 100, 'turboNegroStanding1');
         this.player.setCollideWorldBounds(true);
         this.physics.add.collider(this.player, this.platforms);
         this.player.setDepth(1);
-
+    
+        // Player animations
         this.anims.create({
             key: 'idle',
             frames: [
@@ -86,31 +80,33 @@ export default class Level3 extends Phaser.Scene {
             repeat: -1,
         });
         this.anims.create({ key: 'walk', frames: [{ key: 'turboNegroWalking' }], frameRate: 8, repeat: -1 });
-
+    
+        // Input setup
         this.cursors = this.input.keyboard.createCursorKeys();
         this.fireKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
-
-        this.projectiles = this.physics.add.group({ 
-            defaultKey: 'projectileCD', 
-            collideWorldBounds: false,
-            runChildUpdate: true, 
-        });
+    
+        // Groups for objects
+        this.projectiles = this.physics.add.group({ defaultKey: 'projectileCD', collideWorldBounds: false, runChildUpdate: true });
         this.enemyProjectiles = this.physics.add.group();
         this.enemies = this.physics.add.group();
         this.trumpetEnemies = this.physics.add.group();
         this.healthPacks = this.physics.add.group();
-
+    
+        // UI and stats setup
         this.playerHealth = 10;
         this.maxHealth = 10;
         this.updateHealthUI();
-
+    
         this.totalEnemiesDefeated = 0;
         this.updateEnemyCountUI();
-
+    
+        // Camera follows player
         this.cameras.main.startFollow(this.player);
-
+    
+        // Create and manage Blimp
         this.createBlimpPath();
-
+    
+        // Physics and collision
         this.physics.add.overlap(this.projectiles, this.mardiGrasBlimp, this.destroyBlimp, null, this);
         this.physics.add.overlap(this.enemyProjectiles, this.player, this.handleBeadCollision, null, this);
         this.physics.add.collider(this.enemies, this.platforms);
@@ -121,42 +117,53 @@ export default class Level3 extends Phaser.Scene {
         this.physics.add.collider(this.projectiles, this.trumpetEnemies, this.handleProjectileEnemyCollision, null, this);
         this.physics.add.collider(this.healthPacks, this.platforms);
         this.physics.add.overlap(this.player, this.healthPacks, this.handlePlayerHealthPackCollision, null, this);
-
+    
+        // Enemy spawn timers
         this.enemySpawnTimer = this.time.addEvent({
             delay: 2000,
             callback: this.spawnMardiGrasZombie,
             callbackScope: this,
             loop: true,
         });
-
+    
         this.trumpetSpawnTimer = this.time.addEvent({
-            delay: 3000, 
+            delay: 3000,
             callback: this.spawnTrumpetSkeleton,
             callbackScope: this,
             loop: true,
         });
-
-        // Collision for Mardi Gras Zombie
-        this.physics.add.collider(
-            this.player,
-            this.enemies,
-            this.handlePlayerEnemyCollision,
-            null,
-            this
-        );
-
-        // Collision for Trumpet Skeleton
-        this.physics.add.collider(
-            this.player,
-            this.trumpetEnemies,
-            this.handleTrumpetSkeletonCollision,
-            null,
-            this
-        );
-
-
+    
+        // Mobile and desktop controls
+        if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+            console.log("Mobile device detected. Initializing controls...");
+            this.setupMobileControls();
+            this.setupJoystick();
+        } else {
+            console.log("Desktop detected. Skipping mobile controls.");
+        }
+    
+        // Tap anywhere to attack (Mobile or Desktop)
+        this.input.on('pointerdown', (pointer) => {
+            if (!pointer.wasTouch) return;
+            this.fireProjectile();
+        });
+    
+        // Swipe up to jump
+        let startY = null;
+        this.input.on('pointerdown', (pointer) => {
+            startY = pointer.y;
+        });
+    
+        this.input.on('pointerup', (pointer) => {
+            if (startY !== null && pointer.y < startY - 50 && this.player.body.touching.down) {
+                this.player.setVelocityY(-500);
+                this.player.play('jump', true);
+            }
+            startY = null;
+        });
+    
         console.log("Level 3 setup complete.");
-    }
+    }    
 
     update() {
         if (!this.player || !this.cursors) return;
@@ -297,42 +304,44 @@ export default class Level3 extends Phaser.Scene {
     levelComplete() {
         console.log("Level Complete!");
         if (this.levelMusic) this.levelMusic.stop();
-        if (this.enemySpawnTimer) this.enemySpawnTimer.remove();
-        if (this.trumpetSpawnTimer) this.trumpetSpawnTimer.remove();
-        if (this.fireBeadsTimer) this.fireBeadsTimer.remove();
+
+        // Clear timers and objects
         this.enemies.clear(true, true);
         this.trumpetEnemies.clear(true, true);
         this.projectiles.clear(true, true);
-        if (this.mardiGrasBlimp) {
-            this.mardiGrasBlimp.destroy();
-            this.mardiGrasBlimp = null;
-        }
+
+        // Display Level Complete screen
         this.add.image(this.scale.width / 2, this.scale.height / 2, 'levelComplete').setOrigin(0.5);
-    
-        this.input.keyboard.once('keydown-SPACE', () => {
-            this.scene.start('Level4');
-        });
-    }   
+
+        // Move to next level on SPACE (desktop) or tap (mobile)
+        const nextLevel = () => {
+            this.scene.start('Level4'); // Adjust to the next scene key
+        };
+
+        this.input.keyboard.once('keydown-SPACE', nextLevel);
+        this.input.once('pointerdown', nextLevel);
+    }  
     
     gameOver() {
         console.log("Game Over!");
         if (this.levelMusic) this.levelMusic.stop();
-        if (this.enemySpawnTimer) this.enemySpawnTimer.remove();
-        if (this.trumpetSpawnTimer) this.trumpetSpawnTimer.remove();
-        if (this.fireBeadsTimer) this.fireBeadsTimer.remove();
+
+        // Clear timers and objects
         this.enemies.clear(true, true);
         this.trumpetEnemies.clear(true, true);
         this.projectiles.clear(true, true);
-        if (this.mardiGrasBlimp) {
-            this.mardiGrasBlimp.destroy();
-            this.mardiGrasBlimp = null;
-        }
+
+        // Display Game Over screen
         this.add.image(this.scale.width / 2, this.scale.height / 2, 'gameOver').setOrigin(0.5);
-    
-        this.input.keyboard.once('keydown-SPACE', () => {
+
+        // Restart level on SPACE (desktop) or tap (mobile)
+        const restartLevel = () => {
             this.scene.restart();
-        });
-    }       
+        };
+
+        this.input.keyboard.once('keydown-SPACE', restartLevel);
+        this.input.once('pointerdown', restartLevel);
+    }     
 
     updateHealthBar() {
         if (!this.healthBar) return;
@@ -541,6 +550,73 @@ export default class Level3 extends Phaser.Scene {
         if (this.playerHealth <= 0) {
             this.gameOver();
         }
+    }
+
+    setupMobileControls() {
+        if (window.DeviceOrientationEvent) {
+            window.addEventListener('deviceorientation', (event) => {
+                const tilt = event.gamma;
+
+                if (tilt !== null) {
+                    if (tilt > 10) {
+                        this.player.setVelocityX(160);
+                        this.player.setFlipX(false);
+                        this.player.play('walk', true);
+                    } else if (tilt < -10) {
+                        this.player.setVelocityX(-160);
+                        this.player.setFlipX(true);
+                        this.player.play('walk', true);
+                    } else {
+                        this.player.setVelocityX(0);
+                        this.player.play('idle', true);
+                    }
+                }
+            });
+        } else {
+            console.warn("Tilt controls unavailable. Enabling joystick as fallback.");
+            this.setupJoystick();
+        }
+    }
+
+    setupJoystick() {
+        const joystickArea = document.getElementById('joystick-area');
+        let joystickStartX = 0;
+        let joystickStartY = 0;
+
+        joystickArea.addEventListener('touchstart', (event) => {
+            const touch = event.touches[0];
+            joystickStartX = touch.clientX;
+            joystickStartY = touch.clientY;
+        });
+
+        joystickArea.addEventListener('touchmove', (event) => {
+            const touch = event.touches[0];
+            const deltaX = touch.clientX - joystickStartX;
+            const deltaY = touch.clientY - joystickStartY;
+
+            const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+            const maxDistance = 50;
+
+            const forceX = deltaX / Math.max(distance, maxDistance);
+            const forceY = deltaY / Math.max(distance, maxDistance);
+
+            if (this.player) {
+                this.player.setVelocityX(forceX * 160);
+                if (forceX > 0) this.player.setFlipX(false);
+                if (forceX < 0) this.player.setFlipX(true);
+
+                if (forceY < -0.5 && this.player.body.touching.down) {
+                    this.player.setVelocityY(-500); // Jump
+                }
+            }
+        });
+
+        joystickArea.addEventListener('touchend', () => {
+            if (this.player) {
+                this.player.setVelocityX(0);
+                this.player.anims.play('idle', true);
+            }
+        });
     }
     
 }
