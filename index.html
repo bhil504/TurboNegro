@@ -119,6 +119,39 @@
             background: #999;
             transform: scale(1);
         }
+
+        /* iOS-Specific Styling */
+        @media screen and (max-width: 1024px) and (-webkit-min-device-pixel-ratio: 2) {
+            #game-container {
+                width: 100vw;
+                height: 70vh;
+                aspect-ratio: auto; /* Let iOS adjust dynamically */
+                border-radius: 0; /* Remove rounded borders */
+                box-shadow: none; /* Reduce shadows for better performance */
+                margin: 0;
+            }
+
+            #ui-container {
+                width: 95%;
+                margin: 10px auto;
+            }
+
+            #health-bar {
+                width: 150px; /* Smaller width for smaller screens */
+            }
+
+            .control-button {
+                padding: 8px 12px;
+                font-size: 12px;
+            }
+
+            #joystick-area {
+                width: 120px;
+                height: 120px;
+                bottom: 15px;
+                left: 15px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -166,8 +199,8 @@
                 mode: Phaser.Scale.FIT,
                 autoCenter: Phaser.Scale.CENTER_BOTH,
             },
-            width: 1100,
-            height: 500,
+            width: isMobile ? (window.innerWidth < 768 ? 768 : 1100) : 1100,
+            height: isMobile ? (window.innerWidth < 768 ? 500 : 500) : 500,
             backgroundColor: '#000000',
             physics: {
                 default: 'arcade',
