@@ -3,7 +3,6 @@ export default class Level1 extends Phaser.Scene {
         super({ key: 'Level1' });
     }
 
-    
     preload() {
         console.log("Preloading assets...");
         this.load.image('level1Background', 'assets/Levels/BackGrounds/Level1.png');

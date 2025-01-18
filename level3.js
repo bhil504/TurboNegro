@@ -35,12 +35,12 @@ export default class Level3 extends Phaser.Scene {
         const { width, height } = this.scale;
         console.log("Creating Level 3...");
     
-        // Background
-        this.add.image(width / 2, height / 2, 'level3Background')
-            .setDisplaySize(1600, height)
-            .setOrigin(0.5);
+        // Background setup (adjusted origin and positioning for full coverage)
+        this.add.image(0, 0, 'level3Background')
+            .setOrigin(0, 0)
+            .setDisplaySize(1600, height);
     
-        // Background music
+        // Music setup
         this.levelMusic = this.sound.add('level3Music', { loop: true, volume: 0.2 });
         this.levelMusic.play();
     
@@ -48,17 +48,34 @@ export default class Level3 extends Phaser.Scene {
         this.cameras.main.setBounds(0, 0, 1600, height);
         this.physics.world.setBounds(0, 0, 1600, height);
     
-        // Platforms
+        // Platforms setup
         this.platforms = this.physics.add.staticGroup();
-        this.platforms.create(800, height - 12, null).setDisplaySize(1600, 20).setVisible(false).refreshBody();
     
-        this.platforms.create(100, height - 230, null).setDisplaySize(200, 10).setVisible(false).refreshBody();
+        // Ground platform
+        this.platforms.create(800, height - 12, null)
+            .setDisplaySize(1600, 20)
+            .setVisible(false)
+            .refreshBody();
+    
+        // Left ledge
+        this.platforms.create(100, height - 230, null)
+            .setDisplaySize(200, 10)
+            .setVisible(false)
+            .refreshBody();
         this.add.image(100, height - 180, 'ledgeLeft').setOrigin(0.5, 1).setScale(0.8).setDepth(2);
     
-        this.platforms.create(1500, height - 230, null).setDisplaySize(200, 10).setVisible(false).refreshBody();
+        // Right ledge
+        this.platforms.create(1500, height - 230, null)
+            .setDisplaySize(200, 10)
+            .setVisible(false)
+            .refreshBody();
         this.add.image(1500, height - 180, 'ledgeRight').setOrigin(0.5, 1).setScale(0.8).setDepth(2);
     
-        this.platforms.create(800, height - 165, null).setDisplaySize(300, 10).setVisible(false).refreshBody();
+        // Middle platform
+        this.platforms.create(800, height - 165, null)
+            .setDisplaySize(300, 10)
+            .setVisible(false)
+            .refreshBody();
         this.add.image(800, height - 148, 'platform').setOrigin(0.5, 1).setDepth(2);
     
         // Player setup
@@ -85,7 +102,7 @@ export default class Level3 extends Phaser.Scene {
         this.cursors = this.input.keyboard.createCursorKeys();
         this.fireKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
     
-        // Groups for objects
+        // Object groups
         this.projectiles = this.physics.add.group({ defaultKey: 'projectileCD', collideWorldBounds: false, runChildUpdate: true });
         this.enemyProjectiles = this.physics.add.group();
         this.enemies = this.physics.add.group();
@@ -133,37 +150,8 @@ export default class Level3 extends Phaser.Scene {
             loop: true,
         });
     
-        // Mobile and desktop controls
-        if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-            console.log("Mobile device detected. Initializing controls...");
-            this.setupMobileControls();
-            this.setupJoystick();
-        } else {
-            console.log("Desktop detected. Skipping mobile controls.");
-        }
-    
-        // Tap anywhere to attack (Mobile or Desktop)
-        this.input.on('pointerdown', (pointer) => {
-            if (!pointer.wasTouch) return;
-            this.fireProjectile();
-        });
-    
-        // Swipe up to jump
-        let startY = null;
-        this.input.on('pointerdown', (pointer) => {
-            startY = pointer.y;
-        });
-    
-        this.input.on('pointerup', (pointer) => {
-            if (startY !== null && pointer.y < startY - 50 && this.player.body.touching.down) {
-                this.player.setVelocityY(-500);
-                this.player.play('jump', true);
-            }
-            startY = null;
-        });
-    
         console.log("Level 3 setup complete.");
-    }    
+    }
 
     update() {
         if (!this.player || !this.cursors) return;
@@ -303,45 +291,65 @@ export default class Level3 extends Phaser.Scene {
 
     levelComplete() {
         console.log("Level Complete!");
+    
+        // Stop music and clear timers
         if (this.levelMusic) this.levelMusic.stop();
-
-        // Clear timers and objects
+        if (this.enemySpawnTimer) this.enemySpawnTimer.remove();
+        if (this.trumpetSpawnTimer) this.trumpetSpawnTimer.remove();
+        if (this.fireBeadsTimer) this.fireBeadsTimer.remove();
+    
+        // Clear objects
         this.enemies.clear(true, true);
         this.trumpetEnemies.clear(true, true);
         this.projectiles.clear(true, true);
-
+        if (this.mardiGrasBlimp) {
+            this.mardiGrasBlimp.destroy();
+            this.mardiGrasBlimp = null;
+        }
+    
         // Display Level Complete screen
         this.add.image(this.scale.width / 2, this.scale.height / 2, 'levelComplete').setOrigin(0.5);
-
-        // Move to next level on SPACE (desktop) or tap (mobile)
+    
+        // Proceed to the next level
         const nextLevel = () => {
-            this.scene.start('Level4'); // Adjust to the next scene key
+            this.scene.start('Level4'); // Adjust to the actual next level key
         };
-
+    
+        // Add input handlers for both desktop and mobile
         this.input.keyboard.once('keydown-SPACE', nextLevel);
         this.input.once('pointerdown', nextLevel);
-    }  
+    }
     
     gameOver() {
         console.log("Game Over!");
+    
+        // Stop music and clear timers
         if (this.levelMusic) this.levelMusic.stop();
-
-        // Clear timers and objects
+        if (this.enemySpawnTimer) this.enemySpawnTimer.remove();
+        if (this.trumpetSpawnTimer) this.trumpetSpawnTimer.remove();
+        if (this.fireBeadsTimer) this.fireBeadsTimer.remove();
+    
+        // Clear objects
         this.enemies.clear(true, true);
         this.trumpetEnemies.clear(true, true);
         this.projectiles.clear(true, true);
-
+        if (this.mardiGrasBlimp) {
+            this.mardiGrasBlimp.destroy();
+            this.mardiGrasBlimp = null;
+        }
+    
         // Display Game Over screen
         this.add.image(this.scale.width / 2, this.scale.height / 2, 'gameOver').setOrigin(0.5);
-
-        // Restart level on SPACE (desktop) or tap (mobile)
+    
+        // Restart the level
         const restartLevel = () => {
             this.scene.restart();
         };
-
+    
+        // Add input handlers for both desktop and mobile
         this.input.keyboard.once('keydown-SPACE', restartLevel);
         this.input.once('pointerdown', restartLevel);
-    }     
+    }         
 
     updateHealthBar() {
         if (!this.healthBar) return;
@@ -558,11 +566,11 @@ export default class Level3 extends Phaser.Scene {
                 const tilt = event.gamma;
 
                 if (tilt !== null) {
-                    if (tilt > 10) {
+                    if (tilt > 8) {
                         this.player.setVelocityX(160);
                         this.player.setFlipX(false);
                         this.player.play('walk', true);
-                    } else if (tilt < -10) {
+                    } else if (tilt < -8) {
                         this.player.setVelocityX(-160);
                         this.player.setFlipX(true);
                         this.player.play('walk', true);
