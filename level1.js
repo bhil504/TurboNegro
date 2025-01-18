@@ -295,11 +295,11 @@ export default class Level1 extends Phaser.Scene {
             window.addEventListener('deviceorientation', (event) => {
                 const tilt = event.gamma;
                 if (tilt !== null) {
-                    if (tilt > 10) {
+                    if (tilt > 8) {
                         this.player.setVelocityX(160);
                         this.player.setFlipX(false);
                         this.player.play('walk', true);
-                    } else if (tilt < -10) {
+                    } else if (tilt < -8) {
                         this.player.setVelocityX(-160);
                         this.player.setFlipX(true);
                         this.player.play('walk', true);
