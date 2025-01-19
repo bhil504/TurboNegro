@@ -179,6 +179,16 @@ export default class Level3 extends Phaser.Scene {
             startY = null;
         });
     
+        // Bind attack button to fireProjectile
+        const attackButton = document.getElementById('attack-button');
+        if (attackButton) {
+            attackButton.addEventListener('click', () => {
+                this.fireProjectile();
+            });
+        } else {
+            console.warn("Attack button not found!");
+        }
+
         console.log("Level 3 setup complete.");
     }    
 
