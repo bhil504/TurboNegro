@@ -25,14 +25,16 @@ export default class BossFight extends Phaser.Scene {
 
         // Create ground
         this.ground = this.physics.add.staticGroup();
-        this.ground.create(width / 2, height - 50, 'ground').setDisplaySize(3072, 100).refreshBody();
+        this.ground.create(1536, height - 50, 'ground') // Positioned in the middle of the scene
+            .setDisplaySize(3072, 50) // Full width of the background
+            .refreshBody();
 
         // Add player character
-        this.player = this.physics.add.sprite(150, height - 150, 'turboNegroStanding1');
+        this.player = this.physics.add.sprite(200, height - 100, 'turboNegroStanding1');
         this.player.setCollideWorldBounds(true);
 
         // Add Beignet Boss
-        this.boss = this.physics.add.sprite(width - 200, height - 150, 'beignetBoss');
+        this.boss = this.physics.add.sprite(width - 200, height - 100, 'beignetBoss');
         this.boss.setCollideWorldBounds(true);
 
         // Enable collisions with the ground
