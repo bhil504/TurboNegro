@@ -12,17 +12,17 @@
             align-items: center;
         }
         body {
-            font-family: 'Arial', sans-serif;
-            margin: 0;
-            background-color: #121212;
-            color: #fff;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100vh;
-            overflow: hidden;
-        }
+    font-family: 'Arial', sans-serif;
+    margin: 0;
+    background-color: #121212;
+    color: #fff;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-start; /* Change from center to flex-start */
+    height: auto; /* Allow the content to define height */
+    overflow: auto; /* Enable scrolling */
+}
 
         /* Main Container */
         #main-container {
@@ -175,19 +175,26 @@
     <div id="main-container">
         <!-- UI and Game Container -->
         <div id="ui-container">
-            <div id="title"><h1>Turbo Negro!</h1></div>
+            <div id="title">
+                <h1>Turbo Negro!</h1>
+            </div>
             <div>
                 <div id="health-bar-container">
-                    Health: <div id="health-bar"><div id="health-bar-inner"></div></div>
+                    Health: 
+                    <div id="health-bar">
+                        <div id="health-bar-inner"></div>
+                    </div>
                     <div id="enemy-count">Enemies Left: 0</div>
                 </div>
             </div>
             <div>
                 <div id="game-container"></div>
+                <!-- On-Screen Controls -->
                 <div id="onscreen-controls">
                     <div id="joystick-area"></div>
                     <button id="attack-button">Attack</button>
                 </div>
+                <!-- Game Instructions -->
                 <div> 
                     <h2>Game Instructions:</h2>
                     <h3>Mobile Controls:</h3>
@@ -209,7 +216,6 @@
                         <li>Master your timing for attacks and jumps to avoid taking damage.</li>
                     </ul>
                 </div>
-                
             </div>
         </div>
     </div>
