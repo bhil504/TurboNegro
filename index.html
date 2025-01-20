@@ -91,7 +91,6 @@
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.8);
             position: relative;
             overflow: hidden;
-            margin-bottom: 100px; /* Add margin to prevent overlap with controls */
         }
 
         /* Onscreen Controls */
@@ -144,24 +143,6 @@
             background: #999;
             transform: scale(1);
         }
-
-        #joystick-area, #attack-button {
-        flex-shrink: 0;
-    }
-
-        @media (orientation: landscape) {
-    #onscreen-controls {
-        bottom: 5%; /* Ensure it's positioned above the edge */
-        left: 50%;
-        transform: translateX(-50%);
-        flex-direction: row; /* Keep the controls in a horizontal layout */
-        justify-content: space-around;
-        width: 90%;
-        height: auto;
-        padding: 10px;
-    }
-        }
-
     </style>
 </head>
 <body>
