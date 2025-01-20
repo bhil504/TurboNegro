@@ -167,6 +167,22 @@
         background: linear-gradient(180deg, #555, #777);
         transform: scale(1.05);
     }
+    .enemy-info {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    margin: 20px 0;
+    border: 1px solid #555;
+    padding: 10px;
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.5);
+}
+
+.enemy-image {
+    max-width: 100px;
+    margin-bottom: 10px;
+}
 
 
     </style>
@@ -201,13 +217,17 @@
                     <ul>
                         <li>Tilt your device left or right to move in that direction.</li>
                         <li>Swipe up anywhere on the screen to jump.</li>
-                        <li>Tap the attack button to defeat enemies.</li>
+                        <li>Tap the attack button or Tap anywhere on the game screen to attack and defeat enemies.</li>
+                        <li>Tap Game Screen to Move to next level upon Level Completion</li>
+                        <li>Tap Game Screen to restart level upon Game Over</li>
                     </ul>
                     <h3>Desktop Controls:</h3>
                     <ul>
                         <li>Use the <strong>Arrow Keys</strong> to move left or right.</li>
-                        <li>Press <strong>Spacebar</strong> to jump.</li>
-                        <li>Press the <strong>A Key</strong> to attack enemies.</li>
+                        <li>Press <strong>SPACEBAR</strong> to jump.</li>
+                        <li>Press the <strong>SPACEBAR</strong> to attack enemies.</li>
+                        <li>Press <strong>SPACEBAR</strong> to Move to next level upon Level Completion</li>
+                        <li>Press <strong>SPACEBAR</strong> to restart current level upon Game Over</li>
                     </ul>
                     <p>Tips:</p>
                     <ul>
@@ -216,6 +236,46 @@
                         <li>Master your timing for attacks and jumps to avoid taking damage.</li>
                     </ul>
                 </div>
+                <div>
+                    <h2>Enemy Descriptions and Attack Patterns:</h2>
+                    <div class="enemy-info">
+                        <img src="assets/Characters/Enemies/Beignet_Minion.png" alt="Beignet Minion" class="enemy-image">
+                        <h3>Beignet Minion</h3>
+                        <p>Description: Small and fast enemy that shoots projectiles at the player.</p>
+                        <p>Attack Pattern: Shoots projectiles in the player's direction.</p>
+                        <p>Behavior: Moves horizontally and actively targets the player.</p>
+                    </div>
+                    <div class="enemy-info">
+                        <img src="assets/Characters/Enemies/Beignet_Monster.png" alt="Beignet Monster" class="enemy-image">
+                        <h3>Beignet Monster</h3>
+                        <p>Description: A larger enemy with more health that patrols an area.</p>
+                        <p>Attack Pattern: Causes damage on contact with increased resistance.</p>
+                        <p>Behavior: Patrols specific areas and withstands multiple hits.</p>
+                    </div>
+                    <div class="enemy-info">
+                        <img src="assets/Characters/Enemies/Beignet_Boss.png" alt="Beignet Boss" class="enemy-image">
+                        <h3>Beignet Boss</h3>
+                        <p>Description: The final boss with various attack phases.</p>
+                        <p>Attack Pattern: Shoots projectiles, summons minions, and has phase-based changes.</p>
+                        <p>Behavior: Adjusts attack patterns as its health decreases.</p>
+                    </div>
+                    <div class="enemy-info">
+                        <img src="assets/Characters/Enemies/MardiGrasZombie.png" alt="Mardi Gras Zombie" class="enemy-image">
+                        <h3>Mardi Gras Zombie</h3>
+                        <p>Description: A colorful zombie that walks towards the player to attack.</p>
+                        <p>Attack Pattern: Melee attack upon contact.</p>
+                        <p>Behavior: Slowly approaches the player and attacks directly.</p>
+                    </div>
+                    <div class="enemy-info">
+                        <img src="assets/Characters/Enemies/TrumpetSkeleton.png" alt="Trumpet Skeleton" class="enemy-image">
+                        <h3>Trumpet Skeleton</h3>
+                        <p>Description: A skeleton with a trumpet that summons hazards or sound attacks.</p>
+                        <p>Attack Pattern: Produces sound-based indirect attacks.</p>
+                        <p>Behavior: Summons hazards or deals damage from a distance using sound.</p>
+                    </div>
+                </div>
+                
+                
             </div>
         </div>
     </div>
