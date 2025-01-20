@@ -103,13 +103,13 @@ export default class BossFight extends Phaser.Scene {
         this.physics.add.overlap(this.player, this.hazards, this.handleHazardCollision, null, this);
 
         // Boss actions with phases
-        this.time.addEvent({ delay: 2000, callback: this.shootProjectiles, callbackScope: this, loop: true });
-        this.time.addEvent({ delay: 5000, callback: this.spawnMinions, callbackScope: this, loop: true });
-        this.time.addEvent({ delay: 15000, callback: this.spawnHealthPack, callbackScope: this, loop: true });
-        this.time.addEvent({ delay: 3000, callback: this.spawnHazard, callbackScope: this, loop: true });
+        this.time.addEvent({ delay: 2000, callback: this.shootProjectiles, callbackScope: this, callbackScope: this, loop: true });
+        this.time.addEvent({ delay: 5000, callback: this.spawnMinions, callbackScope: this, callbackScope: this, loop: true });
+        this.time.addEvent({ delay: 15000, callback: this.spawnHealthPack, callbackScope: this, callbackScope: this, loop: true });
+        this.time.addEvent({ delay: 3000, callback: this.spawnHazard, callbackScope: this, callbackScope: this, loop: true });
 
         // Boss phase change
-        this.time.addEvent({ delay: 10000, callback: this.changeBossPhase, callbackScope: this, loop: true });
+        this.time.addEvent({ delay: 10000, callback: this.changeBossPhase, callbackScope: this, callbackScope: this, loop: true });
     }
 
     update() {
@@ -303,7 +303,7 @@ export default class BossFight extends Phaser.Scene {
         // Example of changing boss behavior, could be expanded
         if (this.boss.health <= 15) {
             this.time.removeEvent(this.shootProjectiles);
-            this.time.addEvent({ delay: 1000, callback: this.shootProjectiles, callbackScope: this, loop: true });
+            this.time.addEvent({ delay: 1000, callback: this.shootProjectiles, callbackScope: this, callbackScope: this, loop: true });
         }
     }
 
