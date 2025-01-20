@@ -19,18 +19,20 @@ export default class BossFight extends Phaser.Scene {
         const { width, height } = this.scale;
 
         // Add background
-        this.add.image(width / 2, height / 2, 'finalFightBackground').setDisplaySize(width, height);
+        this.background = this.add.tileSprite(0, 0, 3072, 1024, 'finalFightBackground')
+            .setOrigin(0, 0)
+            .setScrollFactor(0);
 
         // Create ground
         this.ground = this.physics.add.staticGroup();
-        this.ground.create(width / 2, height - 50, 'ground').setDisplaySize(width, 100).refreshBody();
+        this.ground.create(width / 2, height - 50, 'ground').setDisplaySize(3072, 100).refreshBody();
 
         // Add player character
-        this.player = this.physics.add.sprite(100, height - 150, 'turboNegroStanding1');
+        this.player = this.physics.add.sprite(150, height - 150, 'turboNegroStanding1');
         this.player.setCollideWorldBounds(true);
 
         // Add Beignet Boss
-        this.boss = this.physics.add.sprite(width - 100, height - 150, 'beignetBoss');
+        this.boss = this.physics.add.sprite(width - 200, height - 150, 'beignetBoss');
         this.boss.setCollideWorldBounds(true);
 
         // Enable collisions with the ground
@@ -57,9 +59,19 @@ export default class BossFight extends Phaser.Scene {
         // Boss movement setup
         this.bossDirection = -1; // Boss starts moving left
         this.bossSpeed = 100; // Adjust speed as needed
+
+        // Camera setup for parallax
+        this.cameras.main.setBounds(0, 0, 3072, height);
+        this.cameras.main.startFollow(this.player);
+
+        // Set world bounds
+        this.physics.world.setBounds(0, 0, 3072, height);
     }
 
     update() {
+        // Scroll the background for parallax effect
+        this.background.tilePositionX = this.cameras.main.scrollX * 0.5;
+
         // Player movement
         this.player.setVelocityX(0);
 
