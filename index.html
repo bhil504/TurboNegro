@@ -129,6 +129,7 @@
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         let controlMode = 'joystick'; // Default to joystick
 
+        // Hide joystick and attack button on non-mobile devices
         if (!isMobile) {
             document.getElementById('joystick-area').style.display = 'none';
             document.getElementById('attack-button').style.display = 'none';
