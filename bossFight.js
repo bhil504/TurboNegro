@@ -147,7 +147,7 @@ export default class BossFight extends Phaser.Scene {
         const pattern = Phaser.Math.Between(0, 1);
         if (pattern === 0) {
             for (let angle = -30; angle <= 30; angle += 15) {
-                let projectile = this.bossProjectiles.get(this.boss.x, this.boss.y, 'beignetProjectile');
+                let projectile = this.bossProjectiles.create(this.boss.x, this.boss.y, 'beignetProjectile');
                 if (projectile) {
                     projectile.setActive(true).setVisible(true);
                     projectile.body.setAllowGravity(false);
@@ -156,7 +156,7 @@ export default class BossFight extends Phaser.Scene {
                 }
             }
         } else {
-            let projectile = this.bossProjectiles.get(this.boss.x, this.boss.y, 'beignetProjectile');
+            let projectile = this.bossProjectiles.create(this.boss.x, this.boss.y, 'beignetProjectile');
             if (projectile) {
                 projectile.setActive(true).setVisible(true);
                 projectile.body.setAllowGravity(false);
@@ -165,6 +165,7 @@ export default class BossFight extends Phaser.Scene {
             }
         }
     }
+    
 
     spawnMinions() {
         let minion = this.minions.get(this.boss.x - 100, this.boss.y, 'beignetMonster');
