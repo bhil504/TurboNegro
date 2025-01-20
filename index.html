@@ -106,13 +106,17 @@
         }
 
 
-    #joystick-area {
-        width: 100px;
-        height: 100px;
-        border-radius: 50%;
-        background: rgba(255, 255, 255, 0.1);
-        touch-action: none;
-    }
+        #joystick-area {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    position: relative; /* Ensures child elements align correctly */
+    touch-action: none; /* Prevents default browser behaviors */
+    display: flex; /* For centering the bulb */
+    justify-content: center;
+    align-items: center;
+}
 
         .control-button {
             background: linear-gradient(180deg, #333, #555);
@@ -185,13 +189,13 @@
 }
 
 #joystick-bulb {
-    width: 60px;
-    height: 60px;
+    width: 50px; /* Adjust for a better fit */
+    height: 50px;
     position: absolute;
-    top: 50%; /* Center vertically */
-    left: 50%; /* Center horizontally */
-    transform: translate(-50%, -50%); /* Offset by half its size to truly center */
-    pointer-events: none; /* Prevent interfering with touch events */
+    transform: translate(-50%, -50%);
+    top: 50%;
+    left: 50%;
+    pointer-events: none; /* Prevent interference with touch events */
 }
 
 
@@ -441,6 +445,7 @@
     
         const game = new Phaser.Game(config);
     </script>
+    
     
     
 </body>
