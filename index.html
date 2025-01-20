@@ -22,9 +22,9 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: flex-start;
-            width: 100%;
-            height: 100%;
+            justify-content: center;
+            width: 100vw;
+            height: 100vh;
         }
 
         #ui-container {
@@ -32,12 +32,13 @@
             justify-content: space-between;
             align-items: center;
             width: 90%;
-            max-width: 1100px;
             padding: 10px;
             box-sizing: border-box;
             background: linear-gradient(90deg, #222, #333);
-            border-bottom: 2px solid #555;
+            border: 2px solid #555;
+            border-radius: 8px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.6);
+            z-index: 1;
         }
 
         #health-bar-container, #enemy-count {
@@ -46,8 +47,6 @@
             padding: 8px 15px;
             background: rgba(50, 50, 50, 0.8);
             border-radius: 8px;
-            color: #fff;
-            text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.8);
         }
 
         #health-bar {
@@ -67,55 +66,56 @@
         }
 
         #game-container {
-            width: 90vw;
-            height: 50vh;
-            aspect-ratio: 16 / 9;
+            width: 100%;
+            height: 70%;
             max-width: 1100px;
             margin: 0 auto;
             border: 2px solid #555;
             border-radius: 10px;
             background: linear-gradient(180deg, #111, #222);
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.8);
+            position: relative;
+            overflow: hidden;
         }
 
-        #onscreen-controls-container {
-            width: 90%;
+        #onscreen-controls {
+            width: 100%;
             max-width: 1100px;
-            height: 100px;
-            border-top: 2px solid #555;
-            background: linear-gradient(180deg, #222, #333);
+            height: 20%;
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 0 20px;
+            padding: 10px;
+            box-sizing: border-box;
+            background: linear-gradient(180deg, #222, #333);
         }
 
         #joystick-area {
-            width: 100px;
-            height: 100px;
+            width: 80px;
+            height: 80px;
             border-radius: 50%;
             background: rgba(255, 255, 255, 0.1);
-            touch-action: none;
         }
 
         #attack-button {
-            width: 100px;
-            height: 100px;
+            width: 80px;
+            height: 80px;
             border-radius: 50%;
             background: linear-gradient(180deg, #333, #555);
-            color: white;
-            font-size: 14px;
-            font-weight: bold;
             display: flex;
             justify-content: center;
             align-items: center;
-            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.6);
             cursor: pointer;
-            transition: all 0.2s ease;
         }
 
-        #attack-button:hover {
-            transform: scale(1.05);
+        @media (orientation: portrait) {
+            #game-container {
+                height: 60%;
+                width: 90%;
+            }
+
+            #onscreen-controls {
+                height: 25%;
+            }
         }
     </style>
 </head>
@@ -131,7 +131,7 @@
 
         <div id="game-container"></div>
 
-        <div id="onscreen-controls-container">
+        <div id="onscreen-controls">
             <div id="joystick-area"></div>
             <button id="attack-button">Attack</button>
         </div>
@@ -156,7 +156,6 @@
             },
             width: 1100,
             height: 500,
-            backgroundColor: '#000000',
             physics: {
                 default: 'arcade',
                 arcade: {
@@ -168,6 +167,13 @@
         };
 
         new Phaser.Game(config);
+
+        // Adjust layout on window resize
+        window.addEventListener('resize', () => {
+            const container = document.getElementById('game-container');
+            const isPortrait = window.innerHeight > window.innerWidth;
+            container.style.height = isPortrait ? '60%' : '70%';
+        });
     </script>
 </body>
 </html>
