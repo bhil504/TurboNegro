@@ -12,17 +12,17 @@
             align-items: center;
         }
         body {
-    font-family: 'Arial', sans-serif;
-    margin: 0;
-    background-color: #121212;
-    color: #fff;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-start; /* Change from center to flex-start */
-    height: auto; /* Allow the content to define height */
-    overflow: auto; /* Enable scrolling */
-}
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            background-color: #121212;
+            color: #fff;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: flex-start; /* Change from center to flex-start */
+            height: auto; /* Allow the content to define height */
+            overflow: auto; /* Enable scrolling */
+        }
 
         /* Main Container */
         #main-container {
@@ -33,7 +33,6 @@
             width: 100%;
             height: 100%;
         }
-
 
         /* UI Container Styling */
         #ui-container {
@@ -93,18 +92,19 @@
         }
 
         #onscreen-controls {
-        position: absolute;
-        bottom: 20px;
-        left: 12.5%; /* Centers the container */
-        width: 75%; /* Scales to 75% of the game screen */
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 0 10px;
-        box-sizing: border-box;
-        border: 2px solid #555;
-        border-style: solid;
-    }
+            position: relative; /* Ensure it stays within the flow of the layout */
+            width: 75%; /* 75% of the game screen width */
+            margin: 10px auto; /* Center it horizontally */
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            box-sizing: border-box;
+            background: rgba(0, 0, 0, 0.6); /* Semi-transparent background */
+            border-radius: 12px;
+            border: 2px solid #555;
+        }
+
 
     #joystick-area {
         width: 100px;
