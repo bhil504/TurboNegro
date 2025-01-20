@@ -18,9 +18,9 @@ export default class BossFight extends Phaser.Scene {
         this.load.image('healthPack', 'assets/Items/HealthPack.png');
         this.load.image('fallingHazard', 'assets/Levels/Platforms/fallingHazard.png');
         this.load.audio('bossMusic', 'assets/Audio/SmoothDaggers.mp3');
-        this.load.audio('bossHit', 'assets/Audio/BossHit.mp3');
-        this.load.audio('playerHit', 'assets/Audio/PlayerHit.mp3');
-        this.load.spritesheet('bossAnimation', 'assets/Characters/Enemies/Beignet_Boss_Animation.png', { frameWidth: 100, frameHeight: 100 });
+        
+        
+        
     }
 
     create() {
@@ -62,20 +62,14 @@ export default class BossFight extends Phaser.Scene {
         this.hazards = this.physics.add.group();
 
         // Boss setup with animations
-        this.boss = this.physics.add.sprite(width * 1.5, height - 200, 'bossAnimation');
+        this.boss = this.physics.add.sprite(width * 1.5, height - 200, 'beignetBoss');
         this.boss.setCollideWorldBounds(true);
-        this.boss.setScale(1);
+        this.boss.setScale(1.5);
         this.boss.setVisible(true);
         this.boss.setAlpha(1);
         this.boss.body.setAllowGravity(true);
         this.boss.health = 20;
-        this.anims.create({
-            key: 'bossIdle',
-            frames: this.anims.generateFrameNumbers('bossAnimation', { start: 0, end: 3 }),
-            frameRate: 5,
-            repeat: -1
-        });
-        this.boss.play('bossIdle');
+    
 
         this.totalEnemiesDefeated = 0;
         this.remainingEnemies = 20;
@@ -216,7 +210,7 @@ export default class BossFight extends Phaser.Scene {
     }
 
     handlePlayerHit(player, projectile) {
-        this.sound.play('playerHit');
+        
         projectile.destroy();
         this.playerHealth -= 1;
         this.updateHealthUI();
@@ -244,7 +238,7 @@ export default class BossFight extends Phaser.Scene {
     }
 
     handleBossHit(projectile, boss) {
-        this.sound.play('bossHit');
+        
         projectile.destroy();
         boss.health -= 1;
 
@@ -339,63 +333,3 @@ export default class BossFight extends Phaser.Scene {
         });
     }
 }
-// Beignet projectiles as boss lasers
-this.time.addEvent({
-    delay: 2000, // Fire every 2 seconds
-    callback: () => {
-        let laser = this.physics.add.sprite(this.boss.x, this.boss.y, 'beignetProjectile');
-        laser.setVelocityX(-300); // Move toward the player
-        this.physics.add.collider(laser, this.player, this.handlePlayerHit, null, this);
-    },
-    loop: true
-});
-
-// Spawn beignet minions at 10 health
-this.boss.on('healthChange', (health) => {
-    if (health === 10 && !this.minionSpawned) {
-        this.minionSpawned = true;
-        this.time.addEvent({
-            delay: 1500, // Spawn every 1.5 seconds
-            callback: () => {
-                let minion = this.physics.add.sprite(Phaser.Math.Between(100, 700), 0, 'beignetMinion');
-                minion.setVelocityY(200); // Fall from the sky
-                this.physics.add.collider(minion, this.player, this.handlePlayerHit, null, this);
-            },
-            repeat: 4 // Spawn 5 minions total
-        });
-    }
-});
-
-// Random falling hazards
-this.time.addEvent({
-    delay: 3000, // Fall every 3 seconds
-    callback: () => {
-        let hazard = this.physics.add.sprite(Phaser.Math.Between(100, 700), 0, 'fallingHazard');
-        hazard.setVelocityY(400); // Drop speed
-        this.physics.add.collider(hazard, this.player, this.handlePlayerHit, null, this);
-    },
-    loop: true
-});
-
-// Moving platforms
-this.platform1 = this.physics.add.image(400, 300, 'platform').setImmovable(true).setVelocityY(50);
-this.platform2 = this.physics.add.image(200, 300, 'platform').setImmovable(true).setVelocityY(-50);
-this.platform1.body.allowGravity = false;
-this.platform2.body.allowGravity = false;
-
-this.time.addEvent({
-    delay: 5000, // Change direction every 5 seconds
-    callback: () => {
-        this.platform1.setVelocityY(this.platform1.body.velocity.y * -1);
-        this.platform2.setVelocityY(this.platform2.body.velocity.y * -1);
-    },
-    loop: true
-});
-
-// Boss health display
-this.bossHealthText = this.add.text(16, 16, 'Boss Health: 20', { fontSize: '24px', fill: '#fff' });
-this.boss.on('healthChange', (health) => {
-    this.bossHealthText.setText(`Boss Health: ${health}`);
-    let tintIntensity = Math.floor(255 - (health / 20) * 255); // Calculate red tint
-    this.boss.setTint(Phaser.Display.Color.GetColor(tintIntensity, 0, 0));
-});
