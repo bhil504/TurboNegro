@@ -188,10 +188,12 @@
     width: 60px;
     height: 60px;
     position: absolute;
-    top: 20px;
-    left: 20px;
+    top: 50%; /* Center vertically */
+    left: 50%; /* Center horizontally */
+    transform: translate(-50%, -50%); /* Offset by half its size to truly center */
     pointer-events: none; /* Prevent interfering with touch events */
 }
+
 
 
     </style>
@@ -309,7 +311,10 @@
         document.addEventListener('DOMContentLoaded', () => {
             const joystickArea = document.getElementById('joystick-area');
             const joystickBulb = document.getElementById('joystick-bulb');
-            const joystickCenter = { x: 50, y: 50 }; // Center of the joystick area (in percent)
+    
+            // Calculate joystick center dynamically
+            const rect = joystickArea.getBoundingClientRect();
+            const joystickCenter = { x: rect.width / 2, y: rect.height / 2 };
     
             // Check if tilt controls can be enabled
             if (isMobile && /iPhone/i.test(navigator.userAgent)) {
@@ -359,27 +364,28 @@
                 const maxDistance = rect.width / 2;
     
                 // Limit movement to joystick bounds
-                if (distance < maxDistance) {
-                    joystickBulb.style.left = `${x - 30}px`;
-                    joystickBulb.style.top = `${y - 30}px`;
+                if (distance <= maxDistance) {
+                    joystickBulb.style.left = `${x}px`;
+                    joystickBulb.style.top = `${y}px`;
                 } else {
                     const angle = Math.atan2(dy, dx);
                     const limitedX = joystickCenter.x + Math.cos(angle) * maxDistance;
                     const limitedY = joystickCenter.y + Math.sin(angle) * maxDistance;
     
-                    joystickBulb.style.left = `${limitedX - 30}px`;
-                    joystickBulb.style.top = `${limitedY - 30}px`;
+                    joystickBulb.style.left = `${limitedX}px`;
+                    joystickBulb.style.top = `${limitedY}px`;
                 }
     
-                // Pass movement to the player
+                // Map joystick input to player movement
                 if (typeof player !== 'undefined' && player.setVelocityX) {
                     player.setVelocityX(dx * 2); // Adjust speed multiplier as needed
                 }
             }
     
             function resetJoystick() {
-                joystickBulb.style.left = '20px'; // Reset to center
-                joystickBulb.style.top = '20px';
+                joystickBulb.style.left = '50%';
+                joystickBulb.style.top = '50%';
+                joystickBulb.style.transform = 'translate(-50%, -50%)'; // Keep centered
     
                 // Stop player movement
                 if (typeof player !== 'undefined' && player.setVelocityX) {
@@ -435,6 +441,7 @@
     
         const game = new Phaser.Game(config);
     </script>
+    
     
 </body>
 </html>
