@@ -296,12 +296,13 @@ export default class Level1 extends Phaser.Scene {
                     if (response === 'granted') {
                         this.enableTiltControls();
                     } else {
-                        console.warn("Tilt controls permission denied. Falling back to joystick.");
+                        alert("Tilt controls require Motion & Orientation Access to be enabled in Safari settings.");
                         this.setupJoystick();
                     }
                 })
                 .catch(err => {
                     console.error("Error requesting DeviceMotionEvent permission:", err);
+                    alert("Tilt controls require Motion & Orientation Access to be enabled in Safari settings.");
                     this.setupJoystick();
                 });
         } else if (window.DeviceOrientationEvent) {
@@ -311,48 +312,52 @@ export default class Level1 extends Phaser.Scene {
             console.warn("Device orientation not supported. Falling back to joystick.");
             this.setupJoystick();
         }
-    }
+    }    
     
     setupJoystick() {
         const joystickArea = document.getElementById('joystick-area');
+        joystickArea.replaceWith(joystickArea.cloneNode(true)); // Reset event listeners
+    
+        const newJoystickArea = document.getElementById('joystick-area');
         let joystickStartX = 0;
         let joystickStartY = 0;
-        
-        joystickArea.addEventListener('touchstart', (event) => {
+    
+        newJoystickArea.addEventListener('touchstart', (event) => {
             const touch = event.touches[0];
             joystickStartX = touch.clientX;
             joystickStartY = touch.clientY;
         });
-        
-        joystickArea.addEventListener('touchmove', (event) => {
+    
+        newJoystickArea.addEventListener('touchmove', (event) => {
             const touch = event.touches[0];
             const deltaX = touch.clientX - joystickStartX;
             const deltaY = touch.clientY - joystickStartY;
-            
+    
             const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
             const maxDistance = 50;
-            
+    
             const forceX = deltaX / Math.max(distance, maxDistance);
             const forceY = deltaY / Math.max(distance, maxDistance);
-            
+    
             if (this.player) {
                 this.player.setVelocityX(forceX * 160);
                 if (forceX > 0) this.player.setFlipX(false);
                 if (forceX < 0) this.player.setFlipX(true);
-                
+    
                 if (forceY < -0.5 && this.player.body.touching.down) {
                     this.player.setVelocityY(-500); // Jump
                 }
             }
         });
-        
-        joystickArea.addEventListener('touchend', () => {
+    
+        newJoystickArea.addEventListener('touchend', () => {
             if (this.player) {
                 this.player.setVelocityX(0);
                 this.player.anims.play('idle', true);
             }
         });
     }
+    
     
     updateHealthUI() {
         const healthPercentage = (this.playerHealth / this.maxHealth) * 100;
@@ -364,6 +369,9 @@ export default class Level1 extends Phaser.Scene {
     }
 
     enableTiltControls() {
+        if (this.tiltListenerAdded) return; // Prevent multiple listeners
+        this.tiltListenerAdded = true;
+    
         window.addEventListener('deviceorientation', (event) => {
             const tilt = event.gamma;
             if (tilt !== null) {
@@ -381,6 +389,6 @@ export default class Level1 extends Phaser.Scene {
                 }
             }
         });
+    }
     
-}
 }
