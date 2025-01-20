@@ -24,25 +24,25 @@
             display: flex;
             flex-direction: column;
             align-items: center;
-            justify-content: center;
+            justify-content: flex-start;
             width: 100%;
             height: 100%;
         }
 
-        /* UI Container Styling */
+        /* UI Container Styling (Health and Enemy Count) */
         #ui-container {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            width: 90%;
+            width: 100%;
             max-width: 1100px;
             padding: 10px;
             box-sizing: border-box;
             background: linear-gradient(90deg, #222, #333);
-            border: 2px solid #555;
-            border-radius: 8px;
+            border-bottom: 2px solid #555;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.6);
-            margin-bottom: 10px;
+            position: relative;
+            z-index: 2;
         }
 
         #health-bar-container, #enemy-count {
@@ -71,99 +71,66 @@
             transition: width 0.3s ease-in-out;
         }
 
+        /* Game Screen */
         #game-container {
             width: 100%;
             max-width: 1100px;
             aspect-ratio: 1100 / 500;
             margin: 0 auto;
-            border-radius: 10px;
             border: 2px solid #555;
+            border-radius: 10px;
             background: linear-gradient(180deg, #111, #222);
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.8);
             position: relative;
-            overflow: hidden;
+            z-index: 1;
         }
 
-        #onscreen-controls {
-        position: absolute;
-        bottom: 20px;
-        left: 12.5%; /* Centers the container */
-        width: 75%; /* Scales to 75% of the game screen */
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 0 10px;
-        box-sizing: border-box;
-    }
+        /* Onscreen Controls Container */
+        #onscreen-controls-container {
+            width: 100%;
+            max-width: 1100px;
+            height: 100px;
+            border-top: 2px solid #555;
+            background: linear-gradient(180deg, #222, #333);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+            box-sizing: border-box;
+        }
 
-    #joystick-area {
-        width: 100px;
-        height: 100px;
-        border-radius: 50%;
-        background: rgba(255, 255, 255, 0.1);
-        touch-action: none;
-    }
+        #joystick-area {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            touch-action: none;
+        }
 
-        .control-button {
+        #attack-button {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
             background: linear-gradient(180deg, #333, #555);
             color: white;
             font-size: 14px;
             font-weight: bold;
-            padding: 10px 15px;
-            border: none;
-            border-radius: 8px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
             box-shadow: 0 4px 6px rgba(0, 0, 0, 0.6);
             cursor: pointer;
-            text-transform: uppercase;
-            letter-spacing: 1px;
             transition: all 0.2s ease;
         }
 
-        .control-button:hover {
-            background: linear-gradient(180deg, #555, #777);
+        #attack-button:hover {
             transform: scale(1.05);
         }
-
-        .control-button:active {
-            background: #999;
-            transform: scale(1);
-        }
-
-        #attack-button {
-        width: 100px;
-        height: 100px;
-        border-radius: 50%;
-        background: linear-gradient(180deg, #333, #555);
-        color: white;
-        font-size: 14px;
-        font-weight: bold;
-        border: none;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.6);
-        cursor: pointer;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        transition: all 0.2s ease;
-    }
-
-        #attack-button:active {
-        background: #999;
-        transform: scale(1);
-    }
-
-    #attack-button:hover {
-        background: linear-gradient(180deg, #555, #777);
-        transform: scale(1.05);
-    }
-
-
     </style>
 </head>
 <body>
     <div id="main-container">
-        <!-- UI and Game Container -->
+        <!-- UI (Health and Enemy Count) -->
         <div id="ui-container">
             <div id="health-bar-container">
                 Health: <div id="health-bar"><div id="health-bar-inner"></div></div>
@@ -171,9 +138,12 @@
             <div><h1>Turbo Negro!</h1></div>
             <div id="enemy-count">Enemies Left: 0</div>
         </div>
+
+        <!-- Game Screen -->
         <div id="game-container"></div>
-    
-        <div id="onscreen-controls">
+
+        <!-- Onscreen Controls -->
+        <div id="onscreen-controls-container">
             <div id="joystick-area"></div>
             <button id="attack-button">Attack</button>
         </div>
@@ -181,7 +151,6 @@
 
     <!-- Phaser Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.55.2/phaser.min.js"></script>
-
     <script type="module">
         import StartMenu from './startMenu.js';
         import Level1 from './level1.js';
@@ -190,15 +159,15 @@
         import Level4 from './level4.js';
         import Level5 from './level5.js';
         import BossFight from './bossFight.js';
-    
+
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    
+
         // Hide joystick and attack button on non-mobile devices
         if (!isMobile) {
             document.getElementById('joystick-area').style.display = 'none';
             document.getElementById('attack-button').style.display = 'none';
         }
-    
+
         const config = {
             type: Phaser.AUTO,
             parent: 'game-container',
@@ -218,7 +187,7 @@
             },
             scene: [StartMenu, Level1, Level2, Level3, Level4, Level5, BossFight],
         };
-    
+
         new Phaser.Game(config);
     </script>
 </body>
