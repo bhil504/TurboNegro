@@ -290,26 +290,25 @@ export default class Level1 extends Phaser.Scene {
     }
     
     setupMobileControls() {
-        if (window.DeviceOrientationEvent) {
-            window.addEventListener('deviceorientation', (event) => {
-                const tilt = event.gamma;
-                if (tilt !== null) {
-                    if (tilt > 8) {
-                        this.player.setVelocityX(160);
-                        this.player.setFlipX(false);
-                        this.player.play('walk', true);
-                    } else if (tilt < -8) {
-                        this.player.setVelocityX(-160);
-                        this.player.setFlipX(true);
-                        this.player.play('walk', true);
+        if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
+            DeviceMotionEvent.requestPermission()
+                .then(response => {
+                    if (response === 'granted') {
+                        this.enableTiltControls();
                     } else {
-                        this.player.setVelocityX(0);
-                        this.player.play('idle', true);
+                        console.warn("Tilt controls permission denied. Falling back to joystick.");
+                        this.setupJoystick();
                     }
-                }
-            });
+                })
+                .catch(err => {
+                    console.error("Error requesting DeviceMotionEvent permission:", err);
+                    this.setupJoystick();
+                });
+        } else if (window.DeviceOrientationEvent) {
+            console.log("Device orientation supported. Enabling tilt controls.");
+            this.enableTiltControls();
         } else {
-            console.warn("Tilt controls unavailable. Enabling joystick as fallback.");
+            console.warn("Device orientation not supported. Falling back to joystick.");
             this.setupJoystick();
         }
     }
@@ -363,5 +362,25 @@ export default class Level1 extends Phaser.Scene {
     updateEnemyCountUI() {
         document.getElementById('enemy-count').innerText = `Enemies Left: ${20 - this.totalEnemiesDefeated}`;
     }
+
+    enableTiltControls() {
+        window.addEventListener('deviceorientation', (event) => {
+            const tilt = event.gamma;
+            if (tilt !== null) {
+                if (tilt > 8) {
+                    this.player.setVelocityX(160);
+                    this.player.setFlipX(false);
+                    this.player.play('walk', true);
+                } else if (tilt < -8) {
+                    this.player.setVelocityX(-160);
+                    this.player.setFlipX(true);
+                    this.player.play('walk', true);
+                } else {
+                    this.player.setVelocityX(0);
+                    this.player.play('idle', true);
+                }
+            }
+        });
     
+}
 }
