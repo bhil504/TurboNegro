@@ -143,6 +143,20 @@
             background: #999;
             transform: scale(1);
         }
+
+        /* Adjustments for Landscape Mode */
+        @media (orientation: landscape) {
+            #onscreen-controls {
+                bottom: 5%;
+                left: 90%;
+                transform: translateX(-90%);
+                flex-direction: column;
+                justify-content: space-evenly;
+                width: auto;
+                height: 80%;
+                padding: 10px 5px;
+            }
+        }
     </style>
 </head>
 <body>
@@ -156,10 +170,13 @@
                     <div id="enemy-count">Enemies Left: 0</div>
                 </div>
             </div>
+            <div>
                 <div id="game-container"></div>
             <div id="onscreen-controls">
                 <div id="joystick-area"></div>
                 <button id="attack-button">Attack</button>
+            </div>
+
             </div>
         </div>
     </div>
