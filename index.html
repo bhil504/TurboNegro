@@ -6,6 +6,11 @@
     <title>Turbo Negro - Game</title>
     <style>
         /* General Body Styling */
+        #title {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
         body {
             font-family: 'Arial', sans-serif;
             margin: 0;
@@ -29,27 +34,21 @@
             height: 100%;
         }
 
+
         /* UI Container Styling */
         #ui-container {
-            display: flex;
-            flex-direction: column;
+            display: inline-block;
+            justify-content: space-between;
             align-items: center;
-            justify-content: center;
             width: 90%;
             max-width: 1100px;
-            padding: 15px;
+            padding: 10px;
             box-sizing: border-box;
             background: linear-gradient(90deg, #222, #333);
             border: 2px solid #555;
             border-radius: 8px;
             box-shadow: 0 4px 8px rgba(0, 0, 0, 0.6);
-            margin-bottom: 15px;
-        }
-
-        #title {
-            display: flex;
-            justify-content: center;
-            align-items: center;
+            margin-bottom: 10px;
         }
 
         #health-bar-container, #enemy-count {
@@ -93,33 +92,29 @@
             overflow: hidden;
         }
 
-        /* Onscreen Controls */
         #onscreen-controls {
-            position: absolute;
-            bottom: 20px;
-            left: 50%;
-            transform: translateX(-50%);
-            width: 90%;
-            max-width: 900px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 10px;
-            box-sizing: border-box;
-            background: rgba(20, 20, 20, 0.9);
-            border-radius: 10px;
-            border: 2px solid #555;
-        }
+        position: absolute;
+        bottom: 20px;
+        left: 12.5%; /* Centers the container */
+        width: 75%; /* Scales to 75% of the game screen */
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0 10px;
+        box-sizing: border-box;
+        border: 2px solid #555;
+        border-style: solid;
+    }
 
-        #joystick-area {
-            width: 100px;
-            height: 100px;
-            border-radius: 50%;
-            background: rgba(255, 255, 255, 0.1);
-            touch-action: none;
-        }
+    #joystick-area {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.1);
+        touch-action: none;
+    }
 
-        .control-button, #attack-button {
+        .control-button {
             background: linear-gradient(180deg, #333, #555);
             color: white;
             font-size: 14px;
@@ -134,15 +129,46 @@
             transition: all 0.2s ease;
         }
 
-        .control-button:hover, #attack-button:hover {
+        .control-button:hover {
             background: linear-gradient(180deg, #555, #777);
             transform: scale(1.05);
         }
 
-        .control-button:active, #attack-button:active {
+        .control-button:active {
             background: #999;
             transform: scale(1);
         }
+
+        #attack-button {
+        width: 100px;
+        height: 100px;
+        border-radius: 50%;
+        background: linear-gradient(180deg, #333, #555);
+        color: white;
+        font-size: 14px;
+        font-weight: bold;
+        border: none;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.6);
+        cursor: pointer;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        transition: all 0.2s ease;
+    }
+
+        #attack-button:active {
+        background: #999;
+        transform: scale(1);
+    }
+
+    #attack-button:hover {
+        background: linear-gradient(180deg, #555, #777);
+        transform: scale(1.05);
+    }
+
+
     </style>
 </head>
 <body>
@@ -156,13 +182,10 @@
                     <div id="enemy-count">Enemies Left: 0</div>
                 </div>
             </div>
-            <div>
-
                 <div id="game-container"></div>
             <div id="onscreen-controls">
                 <div id="joystick-area"></div>
                 <button id="attack-button">Attack</button>
-            </div>
             </div>
         </div>
     </div>
