@@ -106,13 +106,20 @@
         }
 
 
-    #joystick-area {
+        #joystick-area {
         width: 100px;
         height: 100px;
         border-radius: 50%;
         background: rgba(255, 255, 255, 0.1);
         touch-action: none;
+        display: flex; /* Added */
+        justify-content: center; /* Added */
+        align-items: center; /* Added */
+        color: white; /* Optional: to ensure text is visible */
+        font-weight: bold; /* Optional: for better emphasis */
+        font-size: 14px; /* Optional: match the attack button text size */
     }
+
 
         .control-button {
             background: linear-gradient(180deg, #333, #555);
