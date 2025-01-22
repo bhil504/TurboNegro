@@ -358,27 +358,26 @@ export default class Level1 extends Phaser.Scene {
     
     setupJoystick() {
         const joystickArea = document.getElementById('joystick-area');
-        const bounds = joystickArea.getBoundingClientRect(); // Get position and dimensions
+        const bounds = joystickArea.getBoundingClientRect(); // Get the correct position on the page
     
-        // Adjust Phaser joystick to match the custom joystick area
         this.joystick = this.plugins.get('rexVirtualJoystick').add(this, {
-            x: bounds.left + bounds.width / 2, // Center within joystick-area
-            y: bounds.top + bounds.height / 2,
-            radius: bounds.width / 2, // Match radius to element size
+            x: bounds.left + bounds.width / 2, // Correct positioning within joystick area
+            y: this.scale.height - bounds.height - 20, // Adjust Y based on the viewport
+            radius: bounds.width / 2,
             base: this.add.circle(0, 0, bounds.width / 2, 0x888888),
             thumb: this.add.circle(0, 0, bounds.width / 4, 0xcccccc),
-            dir: '8dir', // 8 directional input
+            dir: '8dir', // Allow full direction control
             forceMin: 10,
             enable: true,
         });
     
-        // Hook joystick movement to the player
+        // Hook joystick to player movement
         this.joystick.on('update', () => {
             const forceX = this.joystick.forceX;
             const forceY = this.joystick.forceY;
     
             if (this.player) {
-                this.player.setVelocityX(forceX * 200); // Adjust speed
+                this.player.setVelocityX(forceX * 200); // Adjust movement
                 if (forceX > 0) this.player.setFlipX(false);
                 if (forceX < 0) this.player.setFlipX(true);
     
@@ -387,7 +386,7 @@ export default class Level1 extends Phaser.Scene {
                 }
             }
         });
-    }      
+    }         
     
     updateHealthUI() {
         const healthPercentage = (this.playerHealth / this.maxHealth) * 100;
