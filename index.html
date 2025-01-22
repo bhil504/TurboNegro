@@ -105,14 +105,13 @@
             border: 2px solid #555;
         }
 
-
-    #joystick-area {
-        width: 100px;
-        height: 100px;
-        border-radius: 50%;
-        background: rgba(255, 255, 255, 0.1);
-        touch-action: none;
-    }
+        #joystick-area {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            touch-action: none;
+        }
 
         .control-button {
             background: linear-gradient(180deg, #333, #555);
@@ -140,35 +139,33 @@
         }
 
         #attack-button {
-        width: 100px;
-        height: 100px;
-        border-radius: 50%;
-        background: linear-gradient(180deg, #333, #555);
-        color: white;
-        font-size: 14px;
-        font-weight: bold;
-        border: none;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.6);
-        cursor: pointer;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        transition: all 0.2s ease;
-    }
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: linear-gradient(180deg, #333, #555);
+            color: white;
+            font-size: 14px;
+            font-weight: bold;
+            border: none;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.6);
+            cursor: pointer;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            transition: all 0.2s ease;
+        }
 
         #attack-button:active {
-        background: #999;
-        transform: scale(1);
-    }
+            background: #999;
+            transform: scale(1);
+        }
 
-    #attack-button:hover {
-        background: linear-gradient(180deg, #555, #777);
-        transform: scale(1.05);
-    }
-
-
+        #attack-button:hover {
+            background: linear-gradient(180deg, #555, #777);
+            transform: scale(1.05);
+        }
     </style>
 </head>
 <body>
@@ -224,9 +221,10 @@
         </div>
     </div>
 
-    <!-- Phaser Library -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.55.2/phaser.min.js"></script>
-
+     <!-- Phaser Library -->
+     <script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.55.2/phaser.min.js"></script>
+     <script src="https://cdn.jsdelivr.net/npm/phaser3-rex-plugins/dist/rexvirtualjoystickplugin.min.js"></script>
+ 
     <script type="module">
         import StartMenu from './startMenu.js';
         import Level1 from './level1.js';

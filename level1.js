@@ -144,7 +144,7 @@ export default class Level1 extends Phaser.Scene {
             enemy.setVelocityY(-300);
         }
     }
-    
+
     handlePlayerEnemyCollision(player, enemy) {
         enemy.destroy();
         this.playerHealth--;
@@ -369,20 +369,26 @@ export default class Level1 extends Phaser.Scene {
         this.load.image('joystickLogo', 'assets/Logo/NewBhillionLogo.png'); // Joystick logo preload
     }
     
-    // Adding Joystick logic
     createJoystick() {
-        this.joystick = this.plugins.get('rexVirtualJoystick').add(this, {
-            x: 100,
-            y: this.scale.height - 100,
-            radius: 50,
-            base: this.add.circle(0, 0, 50, 0x888888),
-            thumb: this.add.image(0, 0, 'joystickLogo').setDisplaySize(40, 40),
-            forceMin: 10,
-            enable: true,
-        });
-    
-        this.joystick.on('update', this.updateJoystick, this);
-    }
+            this.joystick = this.plugins.get('rexVirtualJoystick').add(this, {
+                x: 100,
+                y: this.scale.height - 100,
+                radius: 50,
+                base: this.add.circle(0, 0, 50, 0x888888),
+                thumb: this.add.image(0, 0, 'joystickLogo').setDisplaySize(40, 40),
+            });
+
+            this.joystick.on('update', this.updateJoystick, this);
+        }
+        
+        updateJoystick() {
+            const { force, angle } = this.joystick;
+            if (force > 0) {
+                this.player.setVelocityX(force * Math.cos(angle) * 200);
+            } else {
+                this.player.setVelocityX(0);
+            }
+        }
     
     updateJoystick() {
         const { force, angle } = this.joystick;
