@@ -93,16 +93,14 @@ export default class Level1 extends Phaser.Scene {
             });
         }
     
-        // Control configuration
-        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-        if (isMobile) {
-            console.log("Mobile device detected. Checking for tilt controls...");
+        // Mobile-specific controls
+        if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+            console.log("Mobile device detected. Initializing controls...");
             if (window.DeviceOrientationEvent) {
-                console.log("Tilt controls available. Setting up tilt controls...");
-                this.setupMobileControls(); // Set up tilt, swipe, and tap controls
+                this.setupMobileControls(); // Set up tilt and swipe controls
             } else {
                 console.warn("Tilt controls unavailable. Setting up joystick as fallback...");
-                this.setupJoystick(); // Set up the joystick as a fallback
+                this.setupJoystick();
             }
         } else {
             console.log("Desktop detected. Enabling keyboard controls...");
@@ -110,7 +108,7 @@ export default class Level1 extends Phaser.Scene {
     
         // Tap anywhere to attack (Mobile or Desktop)
         this.input.on('pointerdown', (pointer) => {
-            if (!pointer.wasTouch) return; // Ensure it’s not triggered by a mouse
+            if (!pointer.wasTouch) return; // Ensures it's not triggered by a mouse
             this.fireProjectile();
         });
     
@@ -128,6 +126,7 @@ export default class Level1 extends Phaser.Scene {
             startY = null;
         });
     }
+    
     
     spawnEnemy() {
         const { width, height } = this.scale;
@@ -270,6 +269,11 @@ export default class Level1 extends Phaser.Scene {
             this.player.play('jump', true);
         }
     
+        // Desktop attack
+        if (Phaser.Input.Keyboard.JustDown(this.fireKey)) {
+            this.fireProjectile();
+        }
+    
         // Joystick fallback
         if (this.joystick) {
             const forceX = this.joystick.forceX;
@@ -285,7 +289,7 @@ export default class Level1 extends Phaser.Scene {
             }
     
             if (forceY < -0.5 && this.player.body.touching.down) {
-                this.player.setVelocityY(-500); // Jump
+                this.player.setVelocityY(-500);
                 this.player.play('jump', true);
             }
         }
