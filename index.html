@@ -184,6 +184,18 @@
     pointer-events: none; /* Prevent interfering with touch events */
 }
 
+#joystick-area {
+    width: 100px;
+    height: 100px;
+    position: absolute;
+    bottom: 20px;
+    left: 20px;
+    background: rgba(255, 255, 255, 0.1); /* Light background for visibility */
+    border: 2px solid #888; /* Optional border for debugging */
+    z-index: 10; /* Ensure it’s above other elements */
+}
+
+
 
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.55.2/phaser.min.js"></script>
@@ -209,7 +221,8 @@
                 <div id="game-container"></div>
                 <!-- On-Screen Controls -->
                 <div id="onscreen-controls">
-                    <div id="joystick-area" style="width: 100px; height: 100px; position: relative;"></div>
+                    <div id="joystick-area" style="width: 100px; height: 100px; position: absolute; bottom: 20px; left: 20px;"></div>
+
                     <button id="attack-button">Attack</button>
                 </div>
                 <!-- Game Instructions -->
