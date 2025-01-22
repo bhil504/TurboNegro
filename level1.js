@@ -317,44 +317,50 @@ export default class Level1 extends Phaser.Scene {
     
     setupJoystick() {
         const joystickArea = document.getElementById('joystick-area');
+        
+        if (!joystickArea) {
+            console.warn("Joystick area not found! Skipping joystick setup.");
+            return;
+        }
+    
         let joystickStartX = 0;
         let joystickStartY = 0;
-        
+    
         joystickArea.addEventListener('touchstart', (event) => {
             const touch = event.touches[0];
             joystickStartX = touch.clientX;
             joystickStartY = touch.clientY;
         });
-        
+    
         joystickArea.addEventListener('touchmove', (event) => {
             const touch = event.touches[0];
             const deltaX = touch.clientX - joystickStartX;
             const deltaY = touch.clientY - joystickStartY;
-            
+    
             const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
             const maxDistance = 50;
-            
+    
             const forceX = deltaX / Math.max(distance, maxDistance);
             const forceY = deltaY / Math.max(distance, maxDistance);
-            
+    
             if (this.player) {
                 this.player.setVelocityX(forceX * 160);
                 if (forceX > 0) this.player.setFlipX(false);
                 if (forceX < 0) this.player.setFlipX(true);
-                
+    
                 if (forceY < -0.5 && this.player.body.touching.down) {
                     this.player.setVelocityY(-500); // Jump
                 }
             }
         });
-        
+    
         joystickArea.addEventListener('touchend', () => {
             if (this.player) {
                 this.player.setVelocityX(0);
-                this.player.anims.play('idle', true);
+                this.player.play('idle', true);
             }
         });
-    }
+    }    
     
     updateHealthUI() {
         const healthPercentage = (this.playerHealth / this.maxHealth) * 100;
