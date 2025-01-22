@@ -18,6 +18,7 @@ export default class Level5 extends Phaser.Scene {
         this.load.image('turboNegroWalking', 'assets/Characters/Character1/TurboNegroWalking.png');
         this.load.image('turboNegroJump', 'assets/Characters/Character1/TurboNegroJump.png');
         this.load.audio('level5Music', 'assets/Audio/Explosion of Ignorance.mp3');
+        this.load.image('joystickLogo', 'assets/Logo/NewBhillionLogo.png'); 
         this.load.image('healthPack', 'assets/Items/HealthPack.png'); // Health pack asset
     }
 
@@ -314,6 +315,37 @@ export default class Level5 extends Phaser.Scene {
             this.levelComplete();
         }
     }
+
+    preload() {
+        // Existing preloads...
+        this.load.image('joystickLogo', 'assets/Logo/NewBhillionLogo.png'); // Joystick logo preload
+    }
+    
+    // Adding Joystick logic
+    createJoystick() {
+        this.joystick = this.plugins.get('rexVirtualJoystick').add(this, {
+            x: 100,
+            y: this.scale.height - 100,
+            radius: 50,
+            base: this.add.circle(0, 0, 50, 0x888888),
+            thumb: this.add.image(0, 0, 'joystickLogo').setDisplaySize(40, 40),
+            forceMin: 10,
+            enable: true,
+        });
+    
+        this.joystick.on('update', this.updateJoystick, this);
+    }
+    
+    updateJoystick() {
+        const { force, angle } = this.joystick;
+        if (force > 0) {
+            this.player.setVelocityX(force * Math.cos(angle) * 200);
+            this.player.setVelocityY(force * Math.sin(angle) * 200);
+        } else {
+            this.player.setVelocity(0);
+        }
+    }
+    
     
     levelComplete() {
         console.log("Level Complete!");

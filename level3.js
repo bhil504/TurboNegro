@@ -28,6 +28,7 @@ export default class Level3 extends Phaser.Scene {
         this.load.image('Beads', 'assets/Characters/Projectiles/Beads/Beads.png');
         this.load.image('skeleton', 'assets/Characters/Enemies/MardiGrasZombie.png');
         this.load.image('trumpetSkeleton', 'assets/Characters/Enemies/TrumpetSkeleton.png');
+        this.load.image('joystickLogo', 'assets/Logo/NewBhillionLogo.png'); 
         this.load.audio('level3Music', 'assets/Audio/BhillionDollarAutoBots.mp3');
     }
 
@@ -668,6 +669,37 @@ export default class Level3 extends Phaser.Scene {
                 this.player.anims.play('idle', true);
             }
         });
-    }    
+    }  
+    
+    preload() {
+        // Existing preloads...
+        this.load.image('joystickLogo', 'assets/Logo/NewBhillionLogo.png'); // Joystick logo preload
+    }
+    
+    // Adding Joystick logic
+    createJoystick() {
+        this.joystick = this.plugins.get('rexVirtualJoystick').add(this, {
+            x: 100,
+            y: this.scale.height - 100,
+            radius: 50,
+            base: this.add.circle(0, 0, 50, 0x888888),
+            thumb: this.add.image(0, 0, 'joystickLogo').setDisplaySize(40, 40),
+            forceMin: 10,
+            enable: true,
+        });
+    
+        this.joystick.on('update', this.updateJoystick, this);
+    }
+    
+    updateJoystick() {
+        const { force, angle } = this.joystick;
+        if (force > 0) {
+            this.player.setVelocityX(force * Math.cos(angle) * 200);
+            this.player.setVelocityY(force * Math.sin(angle) * 200);
+        } else {
+            this.player.setVelocity(0);
+        }
+    }
+    
     
 }
