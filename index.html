@@ -131,23 +131,17 @@
         }
 
         #attack-button {
-        width: 100px;
-        height: 100px;
-        border-radius: 50%;
-        background: linear-gradient(180deg, #333, #555);
-        color: white;
-        font-size: 14px;
-        font-weight: bold;
-        border: none;
-        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.6);
-        cursor: pointer;
-        display: flex;
-        justify-content: center;
-        align-items: center;
-        text-transform: uppercase;
-        letter-spacing: 1px;
-        transition: all 0.2s ease;
-    }
+    position: absolute;
+    bottom: 20px;
+    right: 20px; /* Align attack button to bottom-right */
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    background: linear-gradient(180deg, #333, #555);
+    z-index: 1000; /* Ensure it's above other elements */
+}
+
+
 
         #attack-button:active {
         background: #999;
@@ -188,14 +182,12 @@
     width: 100px;
     height: 100px;
     position: absolute;
-    bottom: 20px;
+    bottom: 150px; /* Adjusted to avoid overlapping with the attack button */
     left: 20px;
-    background: rgba(255, 255, 255, 0.1); /* Light background for visibility */
-    border: 2px solid #888; /* Optional border for debugging */
-    z-index: 2000; /* Ensure it’s above other elements */
+    background: rgba(255, 255, 255, 0.1);
+    border: 2px solid #888;
+    z-index: 1000; /* Ensure joystick is above other elements */
 }
-
-
 
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.55.2/phaser.min.js"></script>
