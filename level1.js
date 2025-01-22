@@ -292,17 +292,16 @@ export default class Level1 extends Phaser.Scene {
     setupMobileControls() {
         if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
             DeviceMotionEvent.requestPermission()
-                .then(response => {
+                .then((response) => {
                     if (response === 'granted') {
                         this.enableTiltControls();
                     } else {
-                        alert("Tilt controls require Motion & Orientation Access to be enabled in Safari settings.");
+                        console.warn("Motion & Orientation Access denied. Falling back to joystick.");
                         this.setupJoystick();
                     }
                 })
-                .catch(err => {
-                    console.error("Error requesting DeviceMotionEvent permission:", err);
-                    alert("Tilt controls require Motion & Orientation Access to be enabled in Safari settings.");
+                .catch((err) => {
+                    console.error("Error requesting motion access:", err);
                     this.setupJoystick();
                 });
         } else if (window.DeviceOrientationEvent) {
@@ -312,7 +311,8 @@ export default class Level1 extends Phaser.Scene {
             console.warn("Device orientation not supported. Falling back to joystick.");
             this.setupJoystick();
         }
-    }    
+    }
+        
     
     setupJoystick() {
         const joystickArea = document.getElementById('joystick-area');
@@ -373,14 +373,18 @@ export default class Level1 extends Phaser.Scene {
         this.tiltListenerAdded = true;
     
         window.addEventListener('deviceorientation', (event) => {
-            const tilt = event.gamma;
+            const tilt = event.gamma; // Use gamma for left-right tilt
             if (tilt !== null) {
-                if (tilt > 8) {
-                    this.player.setVelocityX(160);
+                const sensitivity = 2; // Adjust for smoother or more responsive movement
+                const maxTilt = 30; // Clamp the maximum tilt angle
+                const clampedTilt = Phaser.Math.Clamp(tilt, -maxTilt, maxTilt);
+    
+                if (clampedTilt > 8) {
+                    this.player.setVelocityX(clampedTilt * sensitivity);
                     this.player.setFlipX(false);
                     this.player.play('walk', true);
-                } else if (tilt < -8) {
-                    this.player.setVelocityX(-160);
+                } else if (clampedTilt < -8) {
+                    this.player.setVelocityX(clampedTilt * sensitivity);
                     this.player.setFlipX(true);
                     this.player.play('walk', true);
                 } else {
@@ -390,5 +394,6 @@ export default class Level1 extends Phaser.Scene {
             }
         });
     }
+    
     
 }
