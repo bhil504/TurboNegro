@@ -78,15 +78,21 @@ export default class Level1 extends Phaser.Scene {
             });
         }
         
-        // Mobile-specific controls
-        if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-            console.log("Mobile device detected. Initializing controls...");
-            this.setupMobileControls(); // Adds tilt, swipe, and tap
-            this.setupJoystick(); // Adds joystick as a fallback
-        } else {
-            console.log("Desktop detected. Skipping mobile controls.");
-        }
-        
+        // Initialize Virtual Joystick (Phaser Plugin)
+        this.joystick = this.plugins.get('rexVirtualJoystick').add(this, {
+            x: 100, // Adjust joystick position
+            y: height - 100,
+            radius: 50,
+            base: this.add.circle(0, 0, 50, 0x888888), // Base appearance
+            thumb: this.add.circle(0, 0, 25, 0xcccccc), // Thumb appearance
+            dir: '8dir', // Allow 8-directional movement
+            forceMin: 10,
+            enable: true,
+        });
+    
+        // Joystick Input Handling
+        this.joystick.on('update', this.handleJoystickInput, this);
+    
         // Tap anywhere to attack (Mobile or Desktop)
         this.input.on('pointerdown', (pointer) => {
             if (!pointer.wasTouch) return; // Ensures it's not triggered by a mouse
@@ -107,6 +113,7 @@ export default class Level1 extends Phaser.Scene {
             startY = null;
         });
     }
+    
     
     spawnEnemy() {
         const { width, height } = this.scale;
@@ -314,50 +321,26 @@ export default class Level1 extends Phaser.Scene {
     }
         
     
-    setupJoystick() {
-        const joystickArea = document.getElementById('joystick-area');
-        joystickArea.replaceWith(joystickArea.cloneNode(true)); // Reset event listeners
+    handleJoystickInput() {
+        const forceX = this.joystick.forceX;
+        const forceY = this.joystick.forceY;
     
-        const newJoystickArea = document.getElementById('joystick-area');
-        let joystickStartX = 0;
-        let joystickStartY = 0;
+        // Horizontal movement
+        if (forceX !== 0) {
+            this.player.setVelocityX(forceX * 200); // Adjust speed as needed
+            this.player.setFlipX(forceX < 0);
+            this.player.play('walk', true);
+        } else {
+            this.player.setVelocityX(0);
+            this.player.play('idle', true);
+        }
     
-        newJoystickArea.addEventListener('touchstart', (event) => {
-            const touch = event.touches[0];
-            joystickStartX = touch.clientX;
-            joystickStartY = touch.clientY;
-        });
-    
-        newJoystickArea.addEventListener('touchmove', (event) => {
-            const touch = event.touches[0];
-            const deltaX = touch.clientX - joystickStartX;
-            const deltaY = touch.clientY - joystickStartY;
-    
-            const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-            const maxDistance = 50;
-    
-            const forceX = deltaX / Math.max(distance, maxDistance);
-            const forceY = deltaY / Math.max(distance, maxDistance);
-    
-            if (this.player) {
-                this.player.setVelocityX(forceX * 160);
-                if (forceX > 0) this.player.setFlipX(false);
-                if (forceX < 0) this.player.setFlipX(true);
-    
-                if (forceY < -0.5 && this.player.body.touching.down) {
-                    this.player.setVelocityY(-500); // Jump
-                }
-            }
-        });
-    
-        newJoystickArea.addEventListener('touchend', () => {
-            if (this.player) {
-                this.player.setVelocityX(0);
-                this.player.anims.play('idle', true);
-            }
-        });
+        // Jumping (optional, depending on joystick settings)
+        if (forceY < -0.5 && this.player.body.touching.down) {
+            this.player.setVelocityY(-500); // Adjust jump height as needed
+            this.player.play('jump', true);
+        }
     }
-    
     
     updateHealthUI() {
         const healthPercentage = (this.playerHealth / this.maxHealth) * 100;

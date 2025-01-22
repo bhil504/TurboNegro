@@ -293,6 +293,8 @@
 
     <!-- Phaser Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.55.2/phaser.min.js"></script>
+    <script src="assets/Plugins/rexvirtualjoystickplugin.min.js"></script>
+
 
     <script type="module">
         import StartMenu from './startMenu.js';
@@ -375,24 +377,34 @@
 
         // Phaser Game Configuration
         const config = {
-            type: Phaser.AUTO,
-            parent: 'game-container',
-            scale: {
-                mode: Phaser.Scale.FIT,
-                autoCenter: Phaser.Scale.CENTER_BOTH,
+    type: Phaser.AUTO,
+    parent: 'game-container',
+    scale: {
+        mode: Phaser.Scale.FIT,
+        autoCenter: Phaser.Scale.CENTER_BOTH,
+    },
+    width: 1100,
+    height: 500,
+    backgroundColor: '#000000',
+    physics: {
+        default: 'arcade',
+        arcade: {
+            gravity: { y: 300 },
+            debug: false,
+        },
+    },
+    plugins: {
+        scene: [
+            {
+                key: 'rexVirtualJoystick',
+                plugin: rexvirtualjoystickplugin,
+                mapping: 'rexVirtualJoystick',
             },
-            width: 1100,
-            height: 500,
-            backgroundColor: '#000000',
-            physics: {
-                default: 'arcade',
-                arcade: {
-                    gravity: { y: 300 },
-                    debug: false,
-                },
-            },
-            scene: [StartMenu, Level1, Level2, Level3, Level4, Level5, BossFight],
-        };
+        ],
+    },
+    scene: [StartMenu, Level1, Level2, Level3, Level4, Level5, BossFight],
+};
+
 
         const game = new Phaser.Game(config);
 
