@@ -357,27 +357,26 @@ export default class Level1 extends Phaser.Scene {
     }
     
     setupJoystick() {
-        const joystickArea = document.getElementById('joystick-area');
-        const bounds = joystickArea.getBoundingClientRect(); // Get the correct position on the page
+        const gameWidth = this.scale.width;
+        const gameHeight = this.scale.height;
     
         this.joystick = this.plugins.get('rexVirtualJoystick').add(this, {
-            x: bounds.left + bounds.width / 2, // Correct positioning within joystick area
-            y: this.scale.height - bounds.height - 20, // Adjust Y based on the viewport
-            radius: bounds.width / 2,
-            base: this.add.circle(0, 0, bounds.width / 2, 0x888888),
-            thumb: this.add.circle(0, 0, bounds.width / 4, 0xcccccc),
-            dir: '8dir', // Allow full direction control
-            forceMin: 10,
+            x: gameWidth * 0.2, // Position joystick at 20% width from the left
+            y: gameHeight - 100, // Position joystick 100px above the bottom
+            radius: 50, // Radius of the joystick
+            base: this.add.circle(0, 0, 50, 0x888888), // Base circle of the joystick
+            thumb: this.add.circle(0, 0, 25, 0xcccccc), // Thumb circle of the joystick
+            dir: '8dir', // Allow full directional input
+            forceMin: 10, // Minimum force required to register input
             enable: true,
         });
     
-        // Hook joystick to player movement
         this.joystick.on('update', () => {
             const forceX = this.joystick.forceX;
             const forceY = this.joystick.forceY;
     
             if (this.player) {
-                this.player.setVelocityX(forceX * 200); // Adjust movement
+                this.player.setVelocityX(forceX * 200); // Adjust player speed based on joystick force
                 if (forceX > 0) this.player.setFlipX(false);
                 if (forceX < 0) this.player.setFlipX(true);
     
@@ -386,7 +385,8 @@ export default class Level1 extends Phaser.Scene {
                 }
             }
         });
-    }         
+    }
+          
     
     updateHealthUI() {
         const healthPercentage = (this.playerHealth / this.maxHealth) * 100;
