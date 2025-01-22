@@ -19,7 +19,7 @@ export default class Level1 extends Phaser.Scene {
         this.load.image('levelComplete', 'assets/UI/levelComplete.png');
         this.load.image('healthPack', 'assets/Characters/Pickups/HealthPack.png');
         this.load.audio('level1Music', 'assets/Audio/BlownMoneyAudubonPark.mp3');
-        this.load.image('joystickLogo', 'assets/Logo/NewBhillionLogo.png'); 
+        
         console.log("Assets preloaded successfully.");
     }
     
@@ -144,7 +144,7 @@ export default class Level1 extends Phaser.Scene {
             enemy.setVelocityY(-300);
         }
     }
-
+    
     handlePlayerEnemyCollision(player, enemy) {
         enemy.destroy();
         this.playerHealth--;
@@ -363,42 +363,5 @@ export default class Level1 extends Phaser.Scene {
     updateEnemyCountUI() {
         document.getElementById('enemy-count').innerText = `Enemies Left: ${20 - this.totalEnemiesDefeated}`;
     }
-
-    preload() {
-        // Existing preloads...
-        this.load.image('joystickLogo', 'assets/Logo/NewBhillionLogo.png'); // Joystick logo preload
-    }
-    
-    createJoystick() {
-            this.joystick = this.plugins.get('rexVirtualJoystick').add(this, {
-                x: 100,
-                y: this.scale.height - 100,
-                radius: 50,
-                base: this.add.circle(0, 0, 50, 0x888888),
-                thumb: this.add.image(0, 0, 'joystickLogo').setDisplaySize(40, 40),
-            });
-
-            this.joystick.on('update', this.updateJoystick, this);
-        }
-        
-        updateJoystick() {
-            const { force, angle } = this.joystick;
-            if (force > 0) {
-                this.player.setVelocityX(force * Math.cos(angle) * 200);
-            } else {
-                this.player.setVelocityX(0);
-            }
-        }
-    
-    updateJoystick() {
-        const { force, angle } = this.joystick;
-        if (force > 0) {
-            this.player.setVelocityX(force * Math.cos(angle) * 200);
-            this.player.setVelocityY(force * Math.sin(angle) * 200);
-        } else {
-            this.player.setVelocity(0);
-        }
-    }
-    
     
 }
