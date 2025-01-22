@@ -25,51 +25,66 @@ export default class Level1 extends Phaser.Scene {
     
     create() {
         const { width, height } = this.scale;
-        
+    
         // Background and music
         this.add.image(width / 2, height / 2, 'level1Background').setDisplaySize(width, height);
         this.levelMusic = this.sound.add('level1Music', { loop: true, volume: 0.5 });
         this.levelMusic.play();
-        
+    
         // Platforms
         this.platforms = this.physics.add.staticGroup();
         this.platforms.create(width / 2, height - 20, null).setDisplaySize(width, 20).setVisible(false).refreshBody();
         const balcony = this.platforms.create(width / 2, height - 350, 'balcony').setScale(1).refreshBody();
         balcony.body.setSize(280, 10).setOffset((balcony.displayWidth - 280) / 2, balcony.displayHeight - 75);
-        
+    
         // Player setup
         this.player = this.physics.add.sprite(100, height - 100, 'turboNegroStanding1');
         this.player.setCollideWorldBounds(true);
         this.physics.add.collider(this.player, this.platforms);
-        
+    
         // Animations
-        this.anims.create({ key: 'idle', frames: [{ key: 'turboNegroStanding1' }, { key: 'turboNegroStanding2' }, { key: 'turboNegroStanding3' }, { key: 'turboNegroStanding4' }], frameRate: 4, repeat: -1 });
+        this.anims.create({
+            key: 'idle',
+            frames: [
+                { key: 'turboNegroStanding1' },
+                { key: 'turboNegroStanding2' },
+                { key: 'turboNegroStanding3' },
+                { key: 'turboNegroStanding4' },
+            ],
+            frameRate: 4,
+            repeat: -1,
+        });
         this.anims.create({ key: 'walk', frames: [{ key: 'turboNegroWalking' }], frameRate: 8, repeat: -1 });
         this.anims.create({ key: 'jump', frames: [{ key: 'turboNegroJump' }], frameRate: 1 });
-        
+    
         // Input setup
         this.cursors = this.input.keyboard.createCursorKeys();
         this.fireKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
-        
+    
         // Health and enemy setup
         this.playerHealth = 10;
         this.maxHealth = 10;
         this.totalEnemiesDefeated = 0;
         this.updateHealthUI();
         this.updateEnemyCountUI();
-        
+    
         this.projectiles = this.physics.add.group({ defaultKey: 'projectileCD' });
         this.enemies = this.physics.add.group();
-        this.enemySpawnTimer = this.time.addEvent({ delay: 1000, callback: this.spawnEnemy, callbackScope: this, loop: true });
-        
+        this.enemySpawnTimer = this.time.addEvent({
+            delay: 1000,
+            callback: this.spawnEnemy,
+            callbackScope: this,
+            loop: true,
+        });
+    
         this.healthPacks = this.physics.add.group();
         this.physics.add.collider(this.healthPacks, this.platforms);
         this.physics.add.overlap(this.player, this.healthPacks, this.handlePlayerHealthPackCollision, null, this);
-        
+    
         this.physics.add.collider(this.player, this.enemies, this.handlePlayerEnemyCollision, null, this);
         this.physics.add.collider(this.projectiles, this.enemies, this.handleProjectileEnemyCollision, null, this);
         this.physics.add.collider(this.enemies, this.platforms);
-        
+    
         // Hook up the attack button to fireProjectile
         const attackButton = document.getElementById('attack-button');
         if (attackButton) {
@@ -77,28 +92,34 @@ export default class Level1 extends Phaser.Scene {
                 this.fireProjectile();
             });
         }
-        
-        // Mobile-specific controls
-        if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-            console.log("Mobile device detected. Initializing controls...");
-            this.setupMobileControls(); // Adds tilt, swipe, and tap
-            this.setupJoystick(); // Adds joystick as a fallback
+    
+        // Control configuration
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        if (isMobile) {
+            console.log("Mobile device detected. Checking for tilt controls...");
+            if (window.DeviceOrientationEvent) {
+                console.log("Tilt controls available. Setting up tilt controls...");
+                this.setupMobileControls(); // Set up tilt, swipe, and tap controls
+            } else {
+                console.warn("Tilt controls unavailable. Setting up joystick as fallback...");
+                this.setupJoystick(); // Set up the joystick as a fallback
+            }
         } else {
-            console.log("Desktop detected. Skipping mobile controls.");
+            console.log("Desktop detected. Enabling keyboard controls...");
         }
-        
+    
         // Tap anywhere to attack (Mobile or Desktop)
         this.input.on('pointerdown', (pointer) => {
-            if (!pointer.wasTouch) return; // Ensures it's not triggered by a mouse
+            if (!pointer.wasTouch) return; // Ensure it’s not triggered by a mouse
             this.fireProjectile();
         });
-        
+    
         // Swipe up to jump
         let startY = null;
         this.input.on('pointerdown', (pointer) => {
             startY = pointer.y;
         });
-        
+    
         this.input.on('pointerup', (pointer) => {
             if (startY !== null && pointer.y < startY - 50 && this.player.body.touching.down) {
                 this.player.setVelocityY(-500);
@@ -107,7 +128,6 @@ export default class Level1 extends Phaser.Scene {
             startY = null;
         });
     }
-
     
     spawnEnemy() {
         const { width, height } = this.scale;
@@ -231,6 +251,7 @@ export default class Level1 extends Phaser.Scene {
     }
     
     update() {
+        // Desktop controls
         if (this.cursors.left.isDown) {
             this.player.setVelocityX(-165);
             this.player.setFlipX(true);
@@ -243,16 +264,32 @@ export default class Level1 extends Phaser.Scene {
             this.player.setVelocityX(0);
             this.player.play('idle', true);
         }
-        
+    
         if (this.cursors.up.isDown && this.player.body.touching.down) {
             this.player.setVelocityY(-500);
             this.player.play('jump', true);
         }
-        
-        if (Phaser.Input.Keyboard.JustDown(this.fireKey)) {
-            this.fireProjectile();
+    
+        // Joystick fallback
+        if (this.joystick) {
+            const forceX = this.joystick.forceX;
+            const forceY = this.joystick.forceY;
+    
+            if (forceX !== 0) {
+                this.player.setVelocityX(forceX * 200); // Adjust speed multiplier as needed
+                this.player.setFlipX(forceX < 0);
+                this.player.play('walk', true);
+            } else if (this.player.body.touching.down) {
+                this.player.setVelocityX(0);
+                this.player.play('idle', true);
+            }
+    
+            if (forceY < -0.5 && this.player.body.touching.down) {
+                this.player.setVelocityY(-500); // Jump
+                this.player.play('jump', true);
+            }
         }
-    }
+    }    
     
     fireProjectile() {
         const projectile = this.projectiles.create(this.player.x, this.player.y, 'projectileCD');
@@ -317,34 +354,27 @@ export default class Level1 extends Phaser.Scene {
     
     setupJoystick() {
         const joystickArea = document.getElementById('joystick-area');
-        
-        if (!joystickArea) {
-            console.warn("Joystick area not found! Skipping joystick setup.");
-            return;
-        }
+        const bounds = joystickArea.getBoundingClientRect(); // Get position and dimensions
     
-        let joystickStartX = 0;
-        let joystickStartY = 0;
-    
-        joystickArea.addEventListener('touchstart', (event) => {
-            const touch = event.touches[0];
-            joystickStartX = touch.clientX;
-            joystickStartY = touch.clientY;
+        // Adjust Phaser joystick to match the custom joystick area
+        this.joystick = this.plugins.get('rexVirtualJoystick').add(this, {
+            x: bounds.left + bounds.width / 2, // Center within joystick-area
+            y: bounds.top + bounds.height / 2,
+            radius: bounds.width / 2, // Match radius to element size
+            base: this.add.circle(0, 0, bounds.width / 2, 0x888888),
+            thumb: this.add.circle(0, 0, bounds.width / 4, 0xcccccc),
+            dir: '8dir', // 8 directional input
+            forceMin: 10,
+            enable: true,
         });
     
-        joystickArea.addEventListener('touchmove', (event) => {
-            const touch = event.touches[0];
-            const deltaX = touch.clientX - joystickStartX;
-            const deltaY = touch.clientY - joystickStartY;
-    
-            const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-            const maxDistance = 50;
-    
-            const forceX = deltaX / Math.max(distance, maxDistance);
-            const forceY = deltaY / Math.max(distance, maxDistance);
+        // Hook joystick movement to the player
+        this.joystick.on('update', () => {
+            const forceX = this.joystick.forceX;
+            const forceY = this.joystick.forceY;
     
             if (this.player) {
-                this.player.setVelocityX(forceX * 160);
+                this.player.setVelocityX(forceX * 200); // Adjust speed
                 if (forceX > 0) this.player.setFlipX(false);
                 if (forceX < 0) this.player.setFlipX(true);
     
@@ -353,14 +383,7 @@ export default class Level1 extends Phaser.Scene {
                 }
             }
         });
-    
-        joystickArea.addEventListener('touchend', () => {
-            if (this.player) {
-                this.player.setVelocityX(0);
-                this.player.play('idle', true);
-            }
-        });
-    }    
+    }      
     
     updateHealthUI() {
         const healthPercentage = (this.playerHealth / this.maxHealth) * 100;
