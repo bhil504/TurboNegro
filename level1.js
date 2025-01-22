@@ -78,21 +78,15 @@ export default class Level1 extends Phaser.Scene {
             });
         }
         
-        // Initialize Virtual Joystick (Phaser Plugin)
-        this.joystick = this.plugins.get('rexVirtualJoystick').add(this, {
-            x: 100, // Adjust joystick position
-            y: height - 100,
-            radius: 50,
-            base: this.add.circle(0, 0, 50, 0x888888), // Base appearance
-            thumb: this.add.circle(0, 0, 25, 0xcccccc), // Thumb appearance
-            dir: '8dir', // Allow 8-directional movement
-            forceMin: 10,
-            enable: true,
-        });
-    
-        // Joystick Input Handling
-        this.joystick.on('update', this.handleJoystickInput, this);
-    
+        // Mobile-specific controls
+        if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+            console.log("Mobile device detected. Initializing controls...");
+            this.setupMobileControls(); // Adds tilt, swipe, and tap
+            this.setupJoystick(); // Adds joystick as a fallback
+        } else {
+            console.log("Desktop detected. Skipping mobile controls.");
+        }
+        
         // Tap anywhere to attack (Mobile or Desktop)
         this.input.on('pointerdown', (pointer) => {
             if (!pointer.wasTouch) return; // Ensures it's not triggered by a mouse
@@ -113,7 +107,7 @@ export default class Level1 extends Phaser.Scene {
             startY = null;
         });
     }
-    
+
     
     spawnEnemy() {
         const { width, height } = this.scale;
@@ -297,49 +291,69 @@ export default class Level1 extends Phaser.Scene {
     }
     
     setupMobileControls() {
-        if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
-            DeviceMotionEvent.requestPermission()
-                .then((response) => {
-                    if (response === 'granted') {
-                        this.enableTiltControls();
+        if (window.DeviceOrientationEvent) {
+            window.addEventListener('deviceorientation', (event) => {
+                const tilt = event.gamma;
+                if (tilt !== null) {
+                    if (tilt > 8) {
+                        this.player.setVelocityX(160);
+                        this.player.setFlipX(false);
+                        this.player.play('walk', true);
+                    } else if (tilt < -8) {
+                        this.player.setVelocityX(-160);
+                        this.player.setFlipX(true);
+                        this.player.play('walk', true);
                     } else {
-                        console.warn("Motion & Orientation Access denied. Falling back to joystick.");
-                        this.setupJoystick();
+                        this.player.setVelocityX(0);
+                        this.player.play('idle', true);
                     }
-                })
-                .catch((err) => {
-                    console.error("Error requesting motion access:", err);
-                    this.setupJoystick();
-                });
-        } else if (window.DeviceOrientationEvent) {
-            console.log("Device orientation supported. Enabling tilt controls.");
-            this.enableTiltControls();
+                }
+            });
         } else {
-            console.warn("Device orientation not supported. Falling back to joystick.");
+            console.warn("Tilt controls unavailable. Enabling joystick as fallback.");
             this.setupJoystick();
         }
     }
+    
+    setupJoystick() {
+        const joystickArea = document.getElementById('joystick-area');
+        let joystickStartX = 0;
+        let joystickStartY = 0;
         
-    
-    handleJoystickInput() {
-        const forceX = this.joystick.forceX;
-        const forceY = this.joystick.forceY;
-    
-        // Horizontal movement
-        if (forceX !== 0) {
-            this.player.setVelocityX(forceX * 200); // Adjust speed as needed
-            this.player.setFlipX(forceX < 0);
-            this.player.play('walk', true);
-        } else {
-            this.player.setVelocityX(0);
-            this.player.play('idle', true);
-        }
-    
-        // Jumping (optional, depending on joystick settings)
-        if (forceY < -0.5 && this.player.body.touching.down) {
-            this.player.setVelocityY(-500); // Adjust jump height as needed
-            this.player.play('jump', true);
-        }
+        joystickArea.addEventListener('touchstart', (event) => {
+            const touch = event.touches[0];
+            joystickStartX = touch.clientX;
+            joystickStartY = touch.clientY;
+        });
+        
+        joystickArea.addEventListener('touchmove', (event) => {
+            const touch = event.touches[0];
+            const deltaX = touch.clientX - joystickStartX;
+            const deltaY = touch.clientY - joystickStartY;
+            
+            const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+            const maxDistance = 50;
+            
+            const forceX = deltaX / Math.max(distance, maxDistance);
+            const forceY = deltaY / Math.max(distance, maxDistance);
+            
+            if (this.player) {
+                this.player.setVelocityX(forceX * 160);
+                if (forceX > 0) this.player.setFlipX(false);
+                if (forceX < 0) this.player.setFlipX(true);
+                
+                if (forceY < -0.5 && this.player.body.touching.down) {
+                    this.player.setVelocityY(-500); // Jump
+                }
+            }
+        });
+        
+        joystickArea.addEventListener('touchend', () => {
+            if (this.player) {
+                this.player.setVelocityX(0);
+                this.player.anims.play('idle', true);
+            }
+        });
     }
     
     updateHealthUI() {
@@ -350,34 +364,5 @@ export default class Level1 extends Phaser.Scene {
     updateEnemyCountUI() {
         document.getElementById('enemy-count').innerText = `Enemies Left: ${20 - this.totalEnemiesDefeated}`;
     }
-
-    enableTiltControls() {
-        if (this.tiltListenerAdded) return; // Prevent multiple listeners
-        this.tiltListenerAdded = true;
-    
-        window.addEventListener('deviceorientation', (event) => {
-            const tilt = event.gamma; // Use gamma for left-right tilt
-            if (tilt !== null) {
-                const sensitivity = 5; // Adjusted for smoother movement
-                const maxTilt = 30; // Clamp the maximum tilt angle
-                const clampedTilt = Phaser.Math.Clamp(tilt, -maxTilt, maxTilt);
-    
-                if (clampedTilt > 8) {
-                    this.player.setVelocityX(clampedTilt * sensitivity);
-                    this.player.setFlipX(false);
-                    this.player.play('walk', true);
-                } else if (clampedTilt < -8) {
-                    this.player.setVelocityX(clampedTilt * sensitivity);
-                    this.player.setFlipX(true);
-                    this.player.play('walk', true);
-                } else {
-                    this.player.setVelocityX(0);
-                    this.player.play('idle', true);
-                }
-            }
-        });
-    }
-    
-    
     
 }
