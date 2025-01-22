@@ -20,7 +20,6 @@ export default class BossFight extends Phaser.Scene {
         this.load.audio('bossMusic', 'assets/Audio/SmoothDaggers.mp3');
         this.load.audio('bossHit', 'assets/Audio/BossHit.mp3');
         this.load.audio('playerHit', 'assets/Audio/PlayerHit.mp3');
-        this.load.image('joystickLogo', 'assets/Logo/NewBhillionLogo.png'); // Joystick logo preload
         this.load.spritesheet('bossAnimation', 'assets/Characters/Enemies/Beignet_Boss_Animation.png', { frameWidth: 100, frameHeight: 100 });
     }
 
@@ -147,30 +146,6 @@ export default class BossFight extends Phaser.Scene {
             projectile.setActive(true).setVisible(true);
             projectile.body.setAllowGravity(false);
             projectile.setVelocityX(this.player.flipX ? -500 : 500);
-        }
-    }
-
-    createJoystick() {
-        this.joystick = this.plugins.get('rexVirtualJoystick').add(this, {
-            x: 100,
-            y: this.scale.height - 100,
-            radius: 50,
-            base: this.add.circle(0, 0, 50, 0x888888),
-            thumb: this.add.image(0, 0, 'joystickLogo').setDisplaySize(40, 40),
-            forceMin: 10,
-            enable: true,
-        });
-    
-        this.joystick.on('update', this.updateJoystick, this);
-    }
-
-    updateJoystick() {
-        const { force, angle } = this.joystick;
-        if (force > 0) {
-            this.player.setVelocityX(force * Math.cos(angle) * 200);
-            this.player.setVelocityY(force * Math.sin(angle) * 200);
-        } else {
-            this.player.setVelocity(0);
         }
     }
 
