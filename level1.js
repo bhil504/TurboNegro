@@ -375,7 +375,7 @@ export default class Level1 extends Phaser.Scene {
         window.addEventListener('deviceorientation', (event) => {
             const tilt = event.gamma; // Use gamma for left-right tilt
             if (tilt !== null) {
-                const sensitivity = 2; // Adjust for smoother or more responsive movement
+                const sensitivity = 5; // Adjusted for smoother movement
                 const maxTilt = 30; // Clamp the maximum tilt angle
                 const clampedTilt = Phaser.Math.Clamp(tilt, -maxTilt, maxTilt);
     
@@ -394,6 +394,7 @@ export default class Level1 extends Phaser.Scene {
             }
         });
     }
+    
     
     
 }
