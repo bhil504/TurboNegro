@@ -22,8 +22,8 @@
             justify-content: flex-start; /* Change from center to flex-start */
             height: auto; /* Allow the content to define height */
             overflow: auto; /* Enable scrolling */
-            touch-action: none; /* Disable all touch gestures */
-            overscroll-behavior: none; /* Prevent overscrolling on mobile */
+            touch-action: pan-y; /* Allow vertical scrolling but prevent horizontal */
+            overscroll-behavior: none; /* Prevent overscrolling (e.g., bouncing on iOS) */
         }
 
         /* Main Container */
