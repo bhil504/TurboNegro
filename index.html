@@ -27,6 +27,21 @@
             overscroll-behavior: none; /* Prevent overscrolling (e.g., bouncing on iOS) */
         }
 
+        #warning {
+            color: red; /* Makes the text red */
+            font-family: 'Courier New', Courier, monospace; /* Sets a unique, monospaced font */
+            font-size: 18px; /* Adjust the font size as needed */
+            font-weight: bold; /* Makes the text bold */
+            text-align: center; /* Centers the text horizontally */
+            margin: 20px auto; /* Adds space around the text and centers it */
+            padding: 10px; /* Adds padding for better readability */
+            background-color: rgba(255, 0, 0, 0.1); /* Adds a light red background */
+            border: 2px solid red; /* Adds a red border for emphasis */
+            border-radius: 8px; /* Rounds the corners of the background */
+            max-width: 80%; /* Limits the width of the text block */
+        }
+
+
         /* Main Container */
         #main-container {
             display: flex;
@@ -288,6 +303,7 @@
                         <li>Master your timing for attacks and jumps to avoid taking damage.</li>
                     </ul>
                 </div>
+                <div id="warning">Warning! IOS users may not have the proper permissions for tilt to move function to work. In that case, please, use joystick for movement.</div>
                 <div>
                     <h2>Enemy Descriptions and Attack Patterns:</h2>
                     <div class="enemy-info">
