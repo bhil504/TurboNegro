@@ -25,51 +25,51 @@ export default class Level1 extends Phaser.Scene {
     
     create() {
         const { width, height } = this.scale;
-        
+    
         // Background and music
         this.add.image(width / 2, height / 2, 'level1Background').setDisplaySize(width, height);
         this.levelMusic = this.sound.add('level1Music', { loop: true, volume: 0.5 });
         this.levelMusic.play();
-        
+    
         // Platforms
         this.platforms = this.physics.add.staticGroup();
         this.platforms.create(width / 2, height - 20, null).setDisplaySize(width, 20).setVisible(false).refreshBody();
         const balcony = this.platforms.create(width / 2, height - 350, 'balcony').setScale(1).refreshBody();
         balcony.body.setSize(280, 10).setOffset((balcony.displayWidth - 280) / 2, balcony.displayHeight - 75);
-        
+    
         // Player setup
         this.player = this.physics.add.sprite(100, height - 100, 'turboNegroStanding1');
         this.player.setCollideWorldBounds(true);
         this.physics.add.collider(this.player, this.platforms);
-        
+    
         // Animations
         this.anims.create({ key: 'idle', frames: [{ key: 'turboNegroStanding1' }, { key: 'turboNegroStanding2' }, { key: 'turboNegroStanding3' }, { key: 'turboNegroStanding4' }], frameRate: 4, repeat: -1 });
         this.anims.create({ key: 'walk', frames: [{ key: 'turboNegroWalking' }], frameRate: 8, repeat: -1 });
         this.anims.create({ key: 'jump', frames: [{ key: 'turboNegroJump' }], frameRate: 1 });
-        
+    
         // Input setup
         this.cursors = this.input.keyboard.createCursorKeys();
         this.fireKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
-        
+    
         // Health and enemy setup
         this.playerHealth = 10;
         this.maxHealth = 10;
         this.totalEnemiesDefeated = 0;
         this.updateHealthUI();
         this.updateEnemyCountUI();
-        
+    
         this.projectiles = this.physics.add.group({ defaultKey: 'projectileCD' });
         this.enemies = this.physics.add.group();
         this.enemySpawnTimer = this.time.addEvent({ delay: 1000, callback: this.spawnEnemy, callbackScope: this, loop: true });
-        
+    
         this.healthPacks = this.physics.add.group();
         this.physics.add.collider(this.healthPacks, this.platforms);
         this.physics.add.overlap(this.player, this.healthPacks, this.handlePlayerHealthPackCollision, null, this);
-        
+    
         this.physics.add.collider(this.player, this.enemies, this.handlePlayerEnemyCollision, null, this);
         this.physics.add.collider(this.projectiles, this.enemies, this.handleProjectileEnemyCollision, null, this);
         this.physics.add.collider(this.enemies, this.platforms);
-        
+    
         // Hook up the attack button to fireProjectile
         const attackButton = document.getElementById('attack-button');
         if (attackButton) {
@@ -77,28 +77,45 @@ export default class Level1 extends Phaser.Scene {
                 this.fireProjectile();
             });
         }
-        
+    
         // Mobile-specific controls
         if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
             console.log("Mobile device detected. Initializing controls...");
-            this.setupMobileControls(); // Adds tilt, swipe, and tap
-            this.setupJoystick(); // Adds joystick as a fallback
+            if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+                // Request motion permission for iOS
+                DeviceOrientationEvent.requestPermission()
+                    .then(permissionState => {
+                        if (permissionState === 'granted') {
+                            this.setupMobileControls();
+                        } else {
+                            console.warn("Motion access denied. Enabling joystick as fallback.");
+                            this.setupJoystick();
+                        }
+                    })
+                    .catch(error => {
+                        console.error("Error requesting motion permission:", error);
+                        this.setupJoystick(); // Fallback to joystick
+                    });
+            } else {
+                // Enable controls directly for non-iOS or older versions
+                this.setupMobileControls();
+            }
         } else {
             console.log("Desktop detected. Skipping mobile controls.");
         }
-        
+    
         // Tap anywhere to attack (Mobile or Desktop)
         this.input.on('pointerdown', (pointer) => {
             if (!pointer.wasTouch) return; // Ensures it's not triggered by a mouse
             this.fireProjectile();
         });
-        
+    
         // Swipe up to jump
         let startY = null;
         this.input.on('pointerdown', (pointer) => {
             startY = pointer.y;
         });
-        
+    
         this.input.on('pointerup', (pointer) => {
             if (startY !== null && pointer.y < startY - 50 && this.player.body.touching.down) {
                 this.player.setVelocityY(-500);
@@ -106,7 +123,7 @@ export default class Level1 extends Phaser.Scene {
             }
             startY = null;
         });
-    }    
+    }
     
     spawnEnemy() {
         const { width, height } = this.scale;
@@ -291,23 +308,25 @@ export default class Level1 extends Phaser.Scene {
     
     setupMobileControls() {
         if (window.DeviceOrientationEvent) {
-            window.addEventListener('deviceorientation', (event) => {
-                const tilt = event.gamma;
-                if (tilt !== null) {
-                    if (tilt > 8) {
-                        this.player.setVelocityX(160);
-                        this.player.setFlipX(false);
-                        this.player.play('walk', true);
-                    } else if (tilt < -8) {
-                        this.player.setVelocityX(-160);
-                        this.player.setFlipX(true);
-                        this.player.play('walk', true);
-                    } else {
-                        this.player.setVelocityX(0);
-                        this.player.play('idle', true);
-                    }
-                }
-            });
+            if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+                // Request permission for iOS devices
+                DeviceOrientationEvent.requestPermission()
+                    .then(permissionState => {
+                        if (permissionState === 'granted') {
+                            this.enableTiltControls();
+                        } else {
+                            console.warn("Motion access denied. Enabling joystick as fallback.");
+                            this.setupJoystick(); // Fallback to joystick
+                        }
+                    })
+                    .catch(error => {
+                        console.error("Error requesting motion permission:", error);
+                        this.setupJoystick(); // Fallback to joystick
+                    });
+            } else {
+                // Non-iOS or older versions
+                this.enableTiltControls();
+            }
         } else {
             console.warn("Tilt controls unavailable. Enabling joystick as fallback.");
             this.setupJoystick();
@@ -363,5 +382,25 @@ export default class Level1 extends Phaser.Scene {
     updateEnemyCountUI() {
         document.getElementById('enemy-count').innerText = `Enemies Left: ${20 - this.totalEnemiesDefeated}`;
     }
-    
+
+    enableTiltControls() {
+        window.addEventListener('deviceorientation', (event) => {
+            const tilt = event.gamma; // Side-to-side tilt
+            if (tilt !== null) {
+                if (tilt > 8) {
+                    this.player.setVelocityX(160);
+                    this.player.setFlipX(false);
+                    this.player.play('walk', true);
+                } else if (tilt < -8) {
+                    this.player.setVelocityX(-160);
+                    this.player.setFlipX(true);
+                    this.player.play('walk', true);
+                } else {
+                    this.player.setVelocityX(0);
+                    this.player.play('idle', true);
+                }
+            }
+        });
+    }
+
 }
