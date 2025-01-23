@@ -128,7 +128,20 @@
     transition: transform 0.1s ease;
 }
 
+#joystick {
+    display: none;
+}
 
+/* Show the joystick label only on mobile devices */
+@media screen and (max-width: 768px) {
+    #joystick {
+        display: block;
+        text-align: center;
+        color: white;
+        font-size: 14px;
+        margin-top: 5px;
+    }
+}
 
 
 #joystick-area:hover {
