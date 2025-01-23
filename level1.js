@@ -346,12 +346,16 @@ export default class Level1 extends Phaser.Scene {
     
         let joystickStartX = 0;
         let joystickStartY = 0;
+        let activeInterval;
     
         joystickArea.addEventListener('touchstart', (event) => {
             const touch = event.touches[0];
             joystickStartX = touch.clientX;
             joystickStartY = touch.clientY;
             joystickKnob.style.transform = `translate(-50%, -50%)`; // Reset to center
+    
+            // Start a continuous movement interval
+            activeInterval = setInterval(() => this.applyJoystickForce(), 16); // Run every ~16ms (60 FPS)
         });
     
         joystickArea.addEventListener('touchmove', (event) => {
@@ -366,32 +370,54 @@ export default class Level1 extends Phaser.Scene {
             const clampedX = (deltaX / distance) * Math.min(distance, maxDistance);
             const clampedY = (deltaY / distance) * Math.min(distance, maxDistance);
     
-            // Move the knob
+            // Move the knob visually
             joystickKnob.style.transform = `translate(calc(${clampedX}px - 50%), calc(${clampedY}px - 50%))`;
     
-            // Translate joystick input to player movement
-            const forceX = clampedX / maxDistance;
-            const forceY = clampedY / maxDistance;
-    
-            if (this.player) {
-                this.player.setVelocityX(forceX * 160);
-                if (forceX > 0) this.player.setFlipX(false);
-                if (forceX < 0) this.player.setFlipX(true);
-    
-                if (forceY < -0.5 && this.player.body.touching.down) {
-                    this.player.setVelocityY(-500); // Jump
-                }
-            }
+            // Store the clamped values for force application
+            this.joystickForceX = clampedX / maxDistance;
+            this.joystickForceY = clampedY / maxDistance;
         });
     
         joystickArea.addEventListener('touchend', () => {
-            joystickKnob.style.transform = `translate(-50%, -50%)`; // Reset to center
+            joystickKnob.style.transform = `translate(-50%, -50%)`; // Reset knob position
+            this.joystickForceX = 0; // Reset forces
+            this.joystickForceY = 0;
+    
             if (this.player) {
-                this.player.setVelocityX(0);
+                this.player.setVelocityX(0); // Stop horizontal movement
                 this.player.anims.play('idle', true);
             }
+    
+            clearInterval(activeInterval); // Stop continuous movement
         });
-    }        
+    
+        // Initialize joystick force values
+        this.joystickForceX = 0;
+        this.joystickForceY = 0;
+    }
+    
+    // Apply joystick force continuously to the player
+    applyJoystickForce() {
+        if (this.player) {
+            // Apply X-axis movement
+            this.player.setVelocityX(this.joystickForceX * 160); // Adjust multiplier for sensitivity
+    
+            if (this.joystickForceX > 0) this.player.setFlipX(false);
+            if (this.joystickForceX < 0) this.player.setFlipX(true);
+    
+            // Jump if joystick is pushed upwards
+            if (this.joystickForceY < -0.5 && this.player.body.touching.down) {
+                this.player.setVelocityY(-500); // Jump
+            }
+    
+            // Change animation based on movement
+            if (Math.abs(this.joystickForceX) > 0.1 && this.player.body.touching.down) {
+                this.player.play('walk', true);
+            } else if (this.player.body.touching.down) {
+                this.player.play('idle', true);
+            }
+        }
+    }           
     
     updateHealthUI() {
         const healthPercentage = (this.playerHealth / this.maxHealth) * 100;
