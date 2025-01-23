@@ -371,21 +371,21 @@
 
         // Initialize tilt controls for mobile devices
         if (isMobile) {
-            if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
-                DeviceMotionEvent.requestPermission()
-                    .then(response => {
-                        if (response === 'granted') {
-                            console.log('Device motion access granted.');
-                            initTiltControl();
-                        } else {
-                            alert('Tilt controls require device motion access.');
-                        }
-                    })
-                    .catch(console.error);
-            } else {
-                initTiltControl();
-            }
-        }
+    if (typeof DeviceMotionEvent !== 'undefined' && typeof DeviceMotionEvent.requestPermission === 'function') {
+        DeviceMotionEvent.requestPermission()
+            .then(response => {
+                if (response === 'granted') {
+                    console.log('Device motion access granted.');
+                    initTiltControl();
+                } else {
+                    alert('Tilt controls require device motion access.');
+                }
+            })
+            .catch(console.error);
+    } else {
+        initTiltControl();
+    }
+}
     </script>
 </body>
 </html>
