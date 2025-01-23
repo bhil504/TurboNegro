@@ -396,7 +396,6 @@ export default class Level1 extends Phaser.Scene {
         this.joystickForceY = 0;
     }
     
-    // Apply joystick force continuously to the player
     applyJoystickForce() {
         if (this.player) {
             // Apply X-axis movement

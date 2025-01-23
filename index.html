@@ -22,6 +22,8 @@
             justify-content: flex-start; /* Change from center to flex-start */
             height: auto; /* Allow the content to define height */
             overflow: auto; /* Enable scrolling */
+            touch-action: none; /* Disable all touch gestures */
+            overscroll-behavior: none; /* Prevent overscrolling on mobile */
         }
 
         /* Main Container */
@@ -105,14 +107,14 @@
             border: 2px solid #555;
         }
 
-
         #joystick-area {
-    position: relative;
-    width: 100px;
-    height: 100px;
-    border-radius: 50%;
-    background: radial-gradient(circle, #555 50%, #333 100%);
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.8);
+            position: relative;
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            background: radial-gradient(circle, #555 50%, #333 100%);
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.8);
+            touch-action: none;
 }
 
 #joystick-knob {
