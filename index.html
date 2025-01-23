@@ -121,12 +121,13 @@
     border-radius: 50%;
     background: linear-gradient(180deg, #777, #444);
     position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
+    top: 50%; /* Centers the knob vertically */
+    left: 50%; /* Centers the knob horizontally */
+    transform: translate(-50%, -50%); /* Offsets by half the width/height */
     box-shadow: inset 0 2px 5px rgba(0, 0, 0, 0.6);
     transition: transform 0.1s ease;
 }
+
 
 
 
@@ -228,7 +229,7 @@
                 <div id="game-container"></div>
                 <!-- On-Screen Controls -->
                 <div id="onscreen-controls">
-                    <div id="joystick-area">Rub Here<br> To Move</div>
+                    <div id="joystick-area">Joystick</div>
                     <button id="attack-button">Attack</button>
                 </div>
                 <!-- Game Instructions -->
