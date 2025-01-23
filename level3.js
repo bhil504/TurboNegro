@@ -2,16 +2,7 @@ export default class Level3 extends Phaser.Scene {
     constructor() {
         super({ key: 'Level3' });
     }
-
-    updateHealthUI() {
-        const healthPercentage = (this.playerHealth / this.maxHealth) * 100;
-        document.getElementById('health-bar-inner').style.width = `${healthPercentage}%`;
-    }
-
-    updateEnemyCountUI() {
-        document.getElementById('enemy-count').innerText = `Enemies Left: ${40 - this.totalEnemiesDefeated}`;
-    }
-
+    
     preload() {
         console.log("Preloading assets for Level 3...");
         this.load.image('level3Background', 'assets/Levels/BackGrounds/Level3.png');
@@ -153,8 +144,7 @@ export default class Level3 extends Phaser.Scene {
         // Mobile controls
         if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
             console.log("Mobile device detected. Initializing controls...");
-            this.setupMobileControls();
-            this.setupJoystick();
+            this.setupJoystick(); // Updated joystick functionality
         } else {
             console.log("Desktop detected. Skipping mobile controls.");
         }
@@ -188,9 +178,18 @@ export default class Level3 extends Phaser.Scene {
         } else {
             console.warn("Attack button not found!");
         }
-
+    
         console.log("Level 3 setup complete.");
-    }    
+    }       
+
+    updateHealthUI() {
+        const healthPercentage = (this.playerHealth / this.maxHealth) * 100;
+        document.getElementById('health-bar-inner').style.width = `${healthPercentage}%`;
+    }
+
+    updateEnemyCountUI() {
+        document.getElementById('enemy-count').innerText = `Enemies Left: ${40 - this.totalEnemiesDefeated}`;
+    }
 
     update() {
         if (!this.player || !this.cursors) return;
@@ -627,17 +626,27 @@ export default class Level3 extends Phaser.Scene {
 
     setupJoystick() {
         const joystickArea = document.getElementById('joystick-area');
-        if (!joystickArea) {
-            console.warn("Joystick area not found!");
-            return;
+        let joystickKnob = document.getElementById('joystick-knob');
+    
+        // Add the knob dynamically if it doesn't exist
+        if (!joystickKnob) {
+            joystickKnob = document.createElement('div');
+            joystickKnob.id = 'joystick-knob';
+            joystickArea.appendChild(joystickKnob);
         }
+    
         let joystickStartX = 0;
         let joystickStartY = 0;
+        let activeInterval;
     
         joystickArea.addEventListener('touchstart', (event) => {
             const touch = event.touches[0];
             joystickStartX = touch.clientX;
             joystickStartY = touch.clientY;
+            joystickKnob.style.transform = `translate(-50%, -50%)`; // Reset to center
+    
+            // Start a continuous movement interval
+            activeInterval = setInterval(() => this.applyJoystickForce(), 16); // Run every ~16ms (60 FPS)
         });
     
         joystickArea.addEventListener('touchmove', (event) => {
@@ -645,29 +654,61 @@ export default class Level3 extends Phaser.Scene {
             const deltaX = touch.clientX - joystickStartX;
             const deltaY = touch.clientY - joystickStartY;
     
-            const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-            const maxDistance = 50;
+            const distance = Math.sqrt(deltaX ** 2 + deltaY ** 2);
+            const maxDistance = 50; // Joystick radius limit
     
-            const forceX = deltaX / Math.max(distance, maxDistance);
-            const forceY = deltaY / Math.max(distance, maxDistance);
+            // Clamp the knob's movement to the max distance
+            const clampedX = (deltaX / distance) * Math.min(distance, maxDistance);
+            const clampedY = (deltaY / distance) * Math.min(distance, maxDistance);
     
-            if (this.player) {
-                this.player.setVelocityX(forceX * 160);
-                if (forceX > 0) this.player.setFlipX(false);
-                if (forceX < 0) this.player.setFlipX(true);
+            // Move the knob visually
+            joystickKnob.style.transform = `translate(calc(${clampedX}px - 50%), calc(${clampedY}px - 50%))`;
     
-                if (forceY < -0.5 && this.player.body.touching.down) {
-                    this.player.setVelocityY(-500); // Jump
-                }
-            }
+            // Store the clamped values for force application
+            this.joystickForceX = clampedX / maxDistance;
+            this.joystickForceY = clampedY / maxDistance;
         });
     
         joystickArea.addEventListener('touchend', () => {
+            joystickKnob.style.transform = `translate(-50%, -50%)`; // Reset knob position
+            this.joystickForceX = 0; // Reset forces
+            this.joystickForceY = 0;
+    
             if (this.player) {
-                this.player.setVelocityX(0);
+                this.player.setVelocityX(0); // Stop horizontal movement
                 this.player.anims.play('idle', true);
             }
+    
+            clearInterval(activeInterval); // Stop continuous movement
         });
-    }    
+    
+        // Initialize joystick force values
+        this.joystickForceX = 0;
+        this.joystickForceY = 0;
+    }
+    
+    applyJoystickForce() {
+        if (this.player) {
+            // Apply X-axis movement
+            this.player.setVelocityX(this.joystickForceX * 160); // Adjust multiplier for sensitivity
+    
+            if (this.joystickForceX > 0) this.player.setFlipX(false);
+            if (this.joystickForceX < 0) this.player.setFlipX(true);
+    
+            // Jump if joystick is pushed upwards
+            if (this.joystickForceY < -0.5 && this.player.body.touching.down) {
+                this.player.setVelocityY(-500); // Jump
+            }
+    
+            // Change animation based on movement
+            if (Math.abs(this.joystickForceX) > 0.1 && this.player.body.touching.down) {
+                this.player.play('walk', true);
+            } else if (this.player.body.touching.down) {
+                this.player.play('idle', true);
+            }
+        }
+    }
+    
+
     
 }

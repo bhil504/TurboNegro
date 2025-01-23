@@ -32,17 +32,17 @@ export default class Level4 extends Phaser.Scene {
     
     create() {
         const { width, height } = this.scale;
-
+    
         // Background and Music
         this.add.image(width / 2, height / 2, 'level4Background').setDisplaySize(width, height);
         this.levelMusic = this.sound.add('level4Music', { loop: true, volume: 0.5 });
         this.levelMusic.play();
-
-        // Player
+    
+        // Player Setup
         this.player = this.physics.add.sprite(100, height - 150, 'turboNegroStanding1');
         this.player.setCollideWorldBounds(true);
-
-        // Animations
+    
+        // Player Animations
         this.anims.create({
             key: 'idle',
             frames: [
@@ -56,48 +56,45 @@ export default class Level4 extends Phaser.Scene {
         });
         this.anims.create({ key: 'walk', frames: [{ key: 'turboNegroWalking' }], frameRate: 8, repeat: -1 });
         this.anims.create({ key: 'jump', frames: [{ key: 'turboNegroJump' }], frameRate: 1 });
-
-        // Input
+    
+        // Input Setup
         this.cursors = this.input.keyboard.createCursorKeys();
         this.attackKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
-
-        // Platforms
+    
+        // Platforms Setup
         this.platforms = this.physics.add.staticGroup();
-
+    
         // Add Invisible Ground
         this.ground = this.platforms.create(width / 2, height - 10, null).setDisplaySize(width, 20).setVisible(false).refreshBody();
-
-
+    
         // Add Other Platforms
         this.platforms.create(width / 2, height / 2 - 50, 'platform')
             .setDisplaySize(150, 20)
             .setVisible(true)
             .refreshBody();
-
+    
         this.platforms.create(50, height / 2, 'platform')
             .setDisplaySize(150, 20)
             .setVisible(true)
             .refreshBody();
-
+    
         this.platforms.create(width - 50, height / 2, 'platform')
             .setDisplaySize(150, 20)
             .setVisible(true)
             .refreshBody();
-
-
+    
         this.physics.add.collider(this.player, this.platforms);
-
+    
         // Groups
         this.projectiles = this.physics.add.group();
         this.enemies = this.physics.add.group();
         this.trumpetEnemies = this.physics.add.group();
         this.beignetProjectiles = this.physics.add.group();
         this.healthPacks = this.physics.add.group();
-
+    
         // Collisions
         this.physics.add.collider(this.enemies, this.platforms);
         this.physics.add.collider(this.trumpetEnemies, this.platforms);
-        this.physics.add.collider(this.player, this.platforms);
         this.physics.add.collider(this.projectiles, this.enemies, this.handleProjectileHit, null, this);
         this.physics.add.collider(this.projectiles, this.trumpetEnemies, this.handleProjectileHit, null, this);
         this.physics.add.collider(this.player, this.enemies, this.handleEnemyCollision, null, this);
@@ -105,14 +102,14 @@ export default class Level4 extends Phaser.Scene {
         this.physics.add.overlap(this.player, this.beignetProjectiles, this.handleBeignetHit, null, this);
         this.physics.add.collider(this.projectiles, this.beignetProjectiles, this.handleProjectileCollision, null, this);
         this.physics.add.overlap(this.player, this.healthPacks, this.collectHealthPack, null, this);
-
+    
         // Player Health
         this.playerHealth = 10;
         this.maxHealth = 10;
         this.totalEnemiesDefeated = 0;
         this.updateHealthUI();
         this.updateEnemyCountUI();
-
+    
         // Enemy Spawns
         this.time.addEvent({
             delay: 2000,
@@ -120,21 +117,61 @@ export default class Level4 extends Phaser.Scene {
             callbackScope: this,
             loop: true,
         });
-
+    
         this.time.addEvent({
             delay: 3000,
             callback: this.spawnTrumpetSkeleton,
             callbackScope: this,
             loop: true,
         });
-
+    
         this.time.addEvent({
             delay: 4000,
             callback: this.spawnBeignetMinion,
             callbackScope: this,
             loop: true,
         });
-    }
+    
+        // Mobile Controls
+        if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+            console.log("Mobile device detected. Initializing controls...");
+            this.setupJoystick(); // Updated joystick functionality
+        } else {
+            console.log("Desktop detected. Skipping mobile controls.");
+        }
+    
+        // Tap anywhere to attack (Mobile or Desktop)
+        this.input.on('pointerdown', (pointer) => {
+            if (!pointer.wasTouch) return;
+            this.fireProjectile();
+        });
+    
+        // Swipe up to jump
+        let startY = null;
+        this.input.on('pointerdown', (pointer) => {
+            startY = pointer.y;
+        });
+    
+        this.input.on('pointerup', (pointer) => {
+            if (startY !== null && pointer.y < startY - 50 && this.player.body.touching.down) {
+                this.player.setVelocityY(-500);
+                this.player.play('jump', true);
+            }
+            startY = null;
+        });
+    
+        // Bind attack button to fireProjectile
+        const attackButton = document.getElementById('attack-button');
+        if (attackButton) {
+            attackButton.addEventListener('click', () => {
+                this.fireProjectile();
+            });
+        } else {
+            console.warn("Attack button not found!");
+        }
+    
+        console.log("Level 4 setup complete.");
+    }    
 
     update() {
         if (!this.player || !this.cursors) return;
@@ -344,6 +381,91 @@ export default class Level4 extends Phaser.Scene {
         if (this.playerHealth <= 0) {
             this.gameOver();
         }
+    }
+
+    applyJoystickForce() {
+        if (this.player) {
+            // Apply X-axis movement
+            this.player.setVelocityX(this.joystickForceX * 160); // Adjust multiplier for sensitivity
+    
+            if (this.joystickForceX > 0) this.player.setFlipX(false);
+            if (this.joystickForceX < 0) this.player.setFlipX(true);
+    
+            // Jump if joystick is pushed upwards
+            if (this.joystickForceY < -0.5 && this.player.body.touching.down) {
+                this.player.setVelocityY(-500); // Jump
+            }
+    
+            // Change animation based on movement
+            if (Math.abs(this.joystickForceX) > 0.1 && this.player.body.touching.down) {
+                this.player.play('walk', true);
+            } else if (this.player.body.touching.down) {
+                this.player.play('idle', true);
+            }
+        }
+    }
+
+    setupJoystick() {
+        const joystickArea = document.getElementById('joystick-area');
+        let joystickKnob = document.getElementById('joystick-knob');
+    
+        // Add the knob dynamically if it doesn't exist
+        if (!joystickKnob) {
+            joystickKnob = document.createElement('div');
+            joystickKnob.id = 'joystick-knob';
+            joystickArea.appendChild(joystickKnob);
+        }
+    
+        let joystickStartX = 0;
+        let joystickStartY = 0;
+        let activeInterval;
+    
+        joystickArea.addEventListener('touchstart', (event) => {
+            const touch = event.touches[0];
+            joystickStartX = touch.clientX;
+            joystickStartY = touch.clientY;
+            joystickKnob.style.transform = `translate(-50%, -50%)`; // Reset to center
+    
+            // Start a continuous movement interval
+            activeInterval = setInterval(() => this.applyJoystickForce(), 16); // Run every ~16ms (60 FPS)
+        });
+    
+        joystickArea.addEventListener('touchmove', (event) => {
+            const touch = event.touches[0];
+            const deltaX = touch.clientX - joystickStartX;
+            const deltaY = touch.clientY - joystickStartY;
+    
+            const distance = Math.sqrt(deltaX ** 2 + deltaY ** 2);
+            const maxDistance = 50; // Joystick radius limit
+    
+            // Clamp the knob's movement to the max distance
+            const clampedX = (deltaX / distance) * Math.min(distance, maxDistance);
+            const clampedY = (deltaY / distance) * Math.min(distance, maxDistance);
+    
+            // Move the knob visually
+            joystickKnob.style.transform = `translate(calc(${clampedX}px - 50%), calc(${clampedY}px - 50%))`;
+    
+            // Store the clamped values for force application
+            this.joystickForceX = clampedX / maxDistance;
+            this.joystickForceY = clampedY / maxDistance;
+        });
+    
+        joystickArea.addEventListener('touchend', () => {
+            joystickKnob.style.transform = `translate(-50%, -50%)`; // Reset knob position
+            this.joystickForceX = 0; // Reset forces
+            this.joystickForceY = 0;
+    
+            if (this.player) {
+                this.player.setVelocityX(0); // Stop horizontal movement
+                this.player.anims.play('idle', true);
+            }
+    
+            clearInterval(activeInterval); // Stop continuous movement
+        });
+    
+        // Initialize joystick force values
+        this.joystickForceX = 0;
+        this.joystickForceY = 0;
     }
 
     levelComplete() {

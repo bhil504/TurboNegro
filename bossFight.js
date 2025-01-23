@@ -173,26 +173,38 @@ export default class BossFight extends Phaser.Scene {
     }
 
     spawnMinions() {
+        // Limit the number of active minions
+        const activeMinions = this.minions.getChildren().filter((minion) => minion.active).length;
+        if (activeMinions >= 5) return; // Max 5 active minions
+    
         let minion = this.minions.get(this.boss.x - 100, this.boss.y, 'beignetMonster');
         if (minion) {
             minion.setActive(true).setVisible(true);
-            minion.setVelocityX(-100);
+            minion.setVelocityX(Phaser.Math.Between(-100, 100)); // Randomize direction
             minion.health = 2;
+            console.log("Minion spawned!");
+    
+            // Dynamic attack frequency
+            const delay = Phaser.Math.Between(2000, 4000); // Randomize shooting frequency
             this.time.addEvent({
-                delay: 3000,
+                delay: delay,
                 callback: () => this.shootMinionProjectile(minion),
-                loop: true
+                loop: true,
             });
         }
-    }
+    }    
 
     shootMinionProjectile(minion) {
+        if (!minion.active) return; // Skip if minion is destroyed
+    
         let projectile = this.bossProjectiles.get(minion.x, minion.y, 'beignetProjectile');
         if (projectile) {
             projectile.setActive(true).setVisible(true);
             projectile.body.setAllowGravity(false);
+    
             const angle = Phaser.Math.Angle.Between(minion.x, minion.y, this.player.x, this.player.y);
-            projectile.setVelocity(Math.cos(angle) * 200, Math.sin(angle) * 200);
+            const speed = Phaser.Math.Between(200, 300); // Randomize projectile speed
+            projectile.setVelocity(Math.cos(angle) * speed, Math.sin(angle) * speed);
         }
     }
 
@@ -270,7 +282,11 @@ export default class BossFight extends Phaser.Scene {
     }
 
     updateEnemyCountUI() {
-        document.getElementById('enemy-count').innerText = `Enemies Left: ${20 - this.totalEnemiesDefeated}`;
+        const remaining = 20 - this.totalEnemiesDefeated;
+        const bossMessage = this.boss.visible
+            ? "Boss Active!"
+            : `Enemies Left: ${remaining} (Defeat to revive the boss!)`;
+        document.getElementById('enemy-count').innerText = bossMessage;
     }
 
     spawnEnemies(count) {
@@ -299,11 +315,91 @@ export default class BossFight extends Phaser.Scene {
         }
     }
 
+    setupJoystick() {
+        const joystickArea = document.getElementById('joystick-area');
+        let joystickKnob = document.getElementById('joystick-knob');
+
+        if (!joystickKnob) {
+            joystickKnob = document.createElement('div');
+            joystickKnob.id = 'joystick-knob';
+            joystickArea.appendChild(joystickKnob);
+        }
+
+        let joystickStartX = 0, joystickStartY = 0, activeInterval;
+
+        joystickArea.addEventListener('touchstart', (event) => {
+            const touch = event.touches[0];
+            joystickStartX = touch.clientX;
+            joystickStartY = touch.clientY;
+
+            activeInterval = setInterval(() => this.applyJoystickForce(), 16); // 60 FPS
+        });
+
+        joystickArea.addEventListener('touchmove', (event) => {
+            const touch = event.touches[0];
+            const deltaX = touch.clientX - joystickStartX;
+            const deltaY = touch.clientY - joystickStartY;
+            const maxDistance = 50; // Joystick radius
+            const distance = Math.min(maxDistance, Math.sqrt(deltaX ** 2 + deltaY ** 2));
+            const clampedX = (deltaX / distance) * Math.min(distance, maxDistance);
+            const clampedY = (deltaY / distance) * Math.min(distance, maxDistance);
+
+            joystickKnob.style.transform = `translate(calc(${clampedX}px - 50%), calc(${clampedY}px - 50%))`;
+            this.joystickForceX = clampedX / maxDistance;
+            this.joystickForceY = clampedY / maxDistance;
+        });
+
+        joystickArea.addEventListener('touchend', () => {
+            joystickKnob.style.transform = `translate(-50%, -50%)`;
+            this.joystickForceX = 0;
+            this.joystickForceY = 0;
+            clearInterval(activeInterval);
+
+            if (this.player) {
+                this.player.setVelocityX(0);
+                this.player.anims.play('idle', true);
+            }
+        });
+
+        this.joystickForceX = 0;
+        this.joystickForceY = 0;
+    }
+
+    applyJoystickForce() {
+        if (this.player) {
+            this.player.setVelocityX(this.joystickForceX * 160);
+    
+            if (this.joystickForceX > 0) this.player.setFlipX(false);
+            if (this.joystickForceX < 0) this.player.setFlipX(true);
+    
+            if (this.joystickForceY < -0.5 && this.player.body.touching.down) {
+                this.player.setVelocityY(-500);
+            }
+    
+            if (Math.abs(this.joystickForceX) > 0.1 && this.player.body.touching.down) {
+                this.player.play('walk', true);
+            } else if (this.player.body.touching.down) {
+                this.player.play('idle', true);
+            }
+        }
+    }
+
     changeBossPhase() {
-        // Example of changing boss behavior, could be expanded
         if (this.boss.health <= 15) {
-            this.time.removeEvent(this.shootProjectiles);
-            this.time.addEvent({ delay: 1000, callback: this.shootProjectiles, callbackScope: this, loop: true });
+            console.log("Boss entering phase 2!");
+            this.boss.setTint(0xff0000); // Visual cue: Boss glows red
+            this.time.removeEvent(this.shootProjectiles); // Remove old shooting pattern
+    
+            // Add a faster, more aggressive shooting pattern
+            this.time.addEvent({
+                delay: 800, // Faster attacks
+                callback: this.shootProjectiles,
+                callbackScope: this,
+                loop: true,
+            });
+    
+            // Increase boss speed slightly
+            this.boss.setVelocityX(this.boss.body.velocity.x * 1.2);
         }
     }
 

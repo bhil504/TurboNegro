@@ -35,27 +35,44 @@ export default class Level2 extends Phaser.Scene {
 
     create() {
         const { width, height } = this.scale;
-
+    
+        // Play background music
         this.levelMusic = this.sound.add('level2Music', { loop: true, volume: 0.5 });
         this.levelMusic.play();
-
-        this.add.image(width / 2, height / 2, 'level2Background').setDisplaySize(width, height).setDepth(0);
-
+    
+        // Set background
+        this.add.image(width / 2, height / 2, 'level2Background')
+            .setDisplaySize(width, height)
+            .setDepth(0);
+    
+        // Create platforms
         this.platforms = this.physics.add.staticGroup();
-        this.platforms.create(width / 2, height - 20, null).setDisplaySize(width, 20).setVisible(false).refreshBody();
-
+        this.platforms.create(width / 2, height - 20, null)
+            .setDisplaySize(width, 20)
+            .setVisible(false)
+            .refreshBody();
+    
         const leftLedge = this.add.image(150, height - 400, 'ledgeLeft').setDepth(2);
         const rightLedge = this.add.image(width - 150, height - 400, 'ledgeRight').setDepth(2);
-
-        const leftPlatform = this.platforms.create(150, height - 325, null).setDisplaySize(300, 10).setVisible(false).refreshBody();
-        const rightPlatform = this.platforms.create(width - 150, height - 325, null).setDisplaySize(300, 10).setVisible(false).refreshBody();
-
+    
+        this.platforms.create(150, height - 325, null)
+            .setDisplaySize(300, 10)
+            .setVisible(false)
+            .refreshBody();
+        this.platforms.create(width - 150, height - 325, null)
+            .setDisplaySize(300, 10)
+            .setVisible(false)
+            .refreshBody();
+    
+        // Create player
         this.player = this.physics.add.sprite(100, height - 100, 'turboNegroStanding1');
         this.player.setCollideWorldBounds(true);
         this.physics.add.collider(this.player, this.platforms);
-
+    
+        // Set player depth
         this.player.setDepth(1);
-
+    
+        // Create animations
         this.anims.create({
             key: 'idle',
             frames: [
@@ -69,82 +86,88 @@ export default class Level2 extends Phaser.Scene {
         });
         this.anims.create({ key: 'walk', frames: [{ key: 'turboNegroWalking' }], frameRate: 8, repeat: -1 });
         this.anims.create({ key: 'jump', frames: [{ key: 'turboNegroJump' }], frameRate: 1 });
-
+    
+        // Input setup
         this.cursors = this.input.keyboard.createCursorKeys();
         this.fireKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
-
+    
+        // Setup health packs
         this.healthPacks = this.physics.add.group();
         this.physics.add.collider(this.healthPacks, this.platforms);
         this.physics.add.overlap(this.player, this.healthPacks, this.handlePlayerHealthPackCollision, null, this);
-
+    
+        // Setup enemies and projectiles
         this.projectiles = this.physics.add.group({ defaultKey: 'projectileCD' });
         this.enemies = this.physics.add.group();
         this.trumpetEnemies = this.physics.add.group();
         this.totalEnemiesDefeated = 0;
-
+    
+        // Spawn timers
         this.enemySpawnTimer = this.time.addEvent({
             delay: 2000,
             callback: this.spawnMardiGrasZombie,
             callbackScope: this,
             loop: true,
         });
-
+    
         this.trumpetSpawnTimer = this.time.addEvent({
             delay: 3000,
             callback: this.spawnTrumpetSkeleton,
             callbackScope: this,
             loop: true,
         });
-
+    
+        // Player health setup
         this.playerHealth = 10;
         this.maxHealth = 10;
-
+    
         this.updateHealthUI();
         this.updateEnemyCountUI();
-
+    
+        // Setup collisions
         this.physics.add.collider(this.player, this.enemies, this.handlePlayerEnemyCollision, null, this);
         this.physics.add.collider(this.player, this.trumpetEnemies, this.handleTrumpetSkeletonCollision, null, this);
         this.physics.add.collider(this.projectiles, this.enemies, this.handleProjectileEnemyCollision, null, this);
         this.physics.add.collider(this.projectiles, this.trumpetEnemies, this.handleProjectileEnemyCollision, null, this);
         this.physics.add.collider(this.enemies, this.platforms);
         this.physics.add.collider(this.trumpetEnemies, this.platforms);
-
-         // Hook up the attack button to fireProjectile
-         const attackButton = document.getElementById('attack-button');
-         if (attackButton) {
-             attackButton.addEventListener('click', () => {
-                 this.fireProjectile();
-             });
-         }
- 
-         // Mobile-specific controls
-         if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-             console.log("Mobile device detected. Initializing controls...");
-             this.setupMobileControls();
-             this.setupJoystick();
-         } else {
-             console.log("Desktop detected. Skipping mobile controls.");
-         }
- 
-         // Tap anywhere to attack (Mobile or Desktop)
-         this.input.on('pointerdown', (pointer) => {
-             if (!pointer.wasTouch) return;
-             this.fireProjectile();
-         });
- 
-         // Swipe up to jump
-         let startY = null;
-         this.input.on('pointerdown', (pointer) => {
-             startY = pointer.y;
-         });
- 
-         this.input.on('pointerup', (pointer) => {
-             if (startY !== null && pointer.y < startY - 50 && this.player.body.touching.down) {
-                 this.player.setVelocityY(-500);
-                 this.player.play('jump', true);
-             }
-             startY = null;
-         });
+    
+        // Hook up the attack button
+        const attackButton = document.getElementById('attack-button');
+        if (attackButton) {
+            attackButton.addEventListener('click', () => {
+                this.fireProjectile();
+            });
+        }
+    
+        // Setup mobile controls
+        if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+            console.log("Mobile device detected. Initializing controls...");
+            this.setupMobileControls();
+            this.setupJoystick();
+        } else {
+            console.log("Desktop detected. Skipping mobile controls.");
+        }
+    
+        // Tap anywhere to attack
+        this.input.on('pointerdown', (pointer) => {
+            if (!pointer.wasTouch) return;
+            this.fireProjectile();
+        });
+    
+        // Swipe up to jump
+        let startY = null;
+        this.input.on('pointerdown', (pointer) => {
+            startY = pointer.y;
+        });
+    
+        this.input.on('pointerup', (pointer) => {
+            if (startY !== null && pointer.y < startY - 50 && this.player.body.touching.down) {
+                this.player.setVelocityY(-500);
+                this.player.play('jump', true);
+            }
+            startY = null;
+        });
     }
     
     update() {
@@ -231,7 +254,6 @@ export default class Level2 extends Phaser.Scene {
         this.updateHealthUI();
     }
 
-    
     spawnMardiGrasZombie() {
         const { width } = this.scale;
         const x = Phaser.Math.Between(50, width - 50);
