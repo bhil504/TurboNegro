@@ -337,11 +337,22 @@ export default class Level1 extends Phaser.Scene {
         const joystickArea = document.getElementById('joystick-area');
         let joystickStartX = 0;
         let joystickStartY = 0;
+        let joystickKnob;
+    
+        // Dynamically add the joystick knob if not present
+        if (!document.getElementById('joystick-knob')) {
+            joystickKnob = document.createElement('div');
+            joystickKnob.id = 'joystick-knob';
+            joystickArea.appendChild(joystickKnob);
+        } else {
+            joystickKnob = document.getElementById('joystick-knob');
+        }
     
         joystickArea.addEventListener('touchstart', (event) => {
             const touch = event.touches[0];
             joystickStartX = touch.clientX;
             joystickStartY = touch.clientY;
+            joystickKnob.style.transform = `translate(0px, 0px)`; // Reset knob position
         });
     
         joystickArea.addEventListener('touchmove', (event) => {
@@ -349,11 +360,19 @@ export default class Level1 extends Phaser.Scene {
             const deltaX = touch.clientX - joystickStartX;
             const deltaY = touch.clientY - joystickStartY;
     
-            const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
-            const maxDistance = 50;
+            const distance = Math.sqrt(deltaX ** 2 + deltaY ** 2);
+            const maxDistance = 50; // Radius limit for the joystick
     
-            const forceX = deltaX / Math.max(distance, maxDistance);
-            const forceY = deltaY / Math.max(distance, maxDistance);
+            // Clamp the joystick movement within the circular bounds
+            const clampedX = (deltaX / distance) * Math.min(distance, maxDistance);
+            const clampedY = (deltaY / distance) * Math.min(distance, maxDistance);
+    
+            // Move the joystick knob
+            joystickKnob.style.transform = `translate(${clampedX}px, ${clampedY}px)`;
+    
+            // Calculate forces and apply to the player
+            const forceX = clampedX / maxDistance;
+            const forceY = clampedY / maxDistance;
     
             if (this.player) {
                 this.player.setVelocityX(forceX * 160);
@@ -367,12 +386,13 @@ export default class Level1 extends Phaser.Scene {
         });
     
         joystickArea.addEventListener('touchend', () => {
+            joystickKnob.style.transform = `translate(0px, 0px)`; // Reset knob position
             if (this.player) {
                 this.player.setVelocityX(0);
                 this.player.anims.play('idle', true);
             }
         });
-    }    
+    }      
     
     updateHealthUI() {
         const healthPercentage = (this.playerHealth / this.maxHealth) * 100;
