@@ -431,5 +431,13 @@
         const game = new Phaser.Game(config);
         if (controlMode === 'tilt') initTiltControl();
     </script>
+
+    <script>
+        window.onload = function () {
+            const gameHeight = document.body.scrollHeight; // Calculate the total height of the game
+            window.parent.postMessage({ height: gameHeight }, "*"); // Send the height to the parent site
+        };
+    </script>
+
 </body>
 </html>
