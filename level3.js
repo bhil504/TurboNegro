@@ -743,29 +743,20 @@ export default class Level3 extends Phaser.Scene {
             const tiltX = event.gamma; // Horizontal tilt (-90 to +90)
     
             if (tiltX !== null) {
-                // Scale tilt to velocity and clamp it within limits
-                const targetVelocityX = Phaser.Math.Clamp(tiltX * 10, -160, 160);
-    
-                // Gradual transition for smooth movement
-                const smoothedVelocityX = Phaser.Math.Linear(this.player.body.velocity.x, targetVelocityX, 0.2);
-    
-                // Store tilt force to combine with joystick input later
-                this.tiltForceX = smoothedVelocityX / 160; // Normalize to -1 to 1 range
-    
-                // Apply combined velocity (from tilt alone for now)
-                this.player.setVelocityX(smoothedVelocityX);
+                const targetVelocityX = Phaser.Math.Clamp(tiltX * 10, -160, 160); // Scale tilt to velocity
+                this.player.setVelocityX(
+                    Phaser.Math.Linear(this.player.body.velocity.x, targetVelocityX, 0.2) // Smooth transition
+                );
     
                 // Update animations
-                if (Math.abs(smoothedVelocityX) > 10) {
-                    this.player.setFlipX(smoothedVelocityX < 0);
+                if (Math.abs(targetVelocityX) > 10) {
+                    this.player.setFlipX(targetVelocityX < 0);
                     if (this.player.body.touching.down) this.player.play('walk', true);
                 } else if (this.player.body.touching.down) {
                     this.player.play('idle', true);
                 }
-            } else {
-                this.tiltForceX = 0; // Reset tilt if undefined
             }
         });
-    }    
+    }
     
 }
