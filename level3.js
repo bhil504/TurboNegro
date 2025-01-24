@@ -233,6 +233,15 @@ export default class Level3 extends Phaser.Scene {
         if (Phaser.Input.Keyboard.JustDown(this.fireKey)) {
             this.fireProjectile();
         }
+
+        if (!this.player) return;
+
+        this.applyJoystickForce(); // Automatically applies both joystick and tilt input
+
+        // Handle fire key separately
+        if (Phaser.Input.Keyboard.JustDown(this.fireKey)) {
+            this.fireProjectile();
+        }
     }
 
     fireProjectile() {
@@ -706,11 +715,14 @@ export default class Level3 extends Phaser.Scene {
     
     applyJoystickForce() {
         if (this.player) {
-            // Apply X-axis movement
-            this.player.setVelocityX(this.joystickForceX * 160); // Adjust multiplier for sensitivity
+            const joystickVelocity = this.joystickForceX * 160; // Joystick velocity
+            const tiltVelocity = this.tiltForceX || 0; // Tilt velocity (set during enableTiltControls)
     
-            if (this.joystickForceX > 0) this.player.setFlipX(false);
-            if (this.joystickForceX < 0) this.player.setFlipX(true);
+            const combinedVelocity = joystickVelocity + tiltVelocity; // Combine both inputs
+            this.player.setVelocityX(combinedVelocity);
+    
+            if (combinedVelocity > 0) this.player.setFlipX(false);
+            if (combinedVelocity < 0) this.player.setFlipX(true);
     
             // Jump if joystick is pushed upwards
             if (this.joystickForceY < -0.5 && this.player.body.touching.down) {
@@ -718,32 +730,42 @@ export default class Level3 extends Phaser.Scene {
             }
     
             // Change animation based on movement
-            if (Math.abs(this.joystickForceX) > 0.1 && this.player.body.touching.down) {
+            if (Math.abs(combinedVelocity) > 10 && this.player.body.touching.down) {
                 this.player.play('walk', true);
             } else if (this.player.body.touching.down) {
                 this.player.play('idle', true);
             }
         }
-    }
+    }    
     
     enableTiltControls() {
         window.addEventListener('deviceorientation', (event) => {
             const tiltX = event.gamma; // Horizontal tilt (-90 to +90)
-            if (tiltX < -10) {
-                this.player.setVelocityX(-160);
-                this.player.setFlipX(true);
-                if (this.player.body.touching.down) this.player.play('walk', true);
-            } else if (tiltX > 10) {
-                this.player.setVelocityX(160);
-                this.player.setFlipX(false);
-                if (this.player.body.touching.down) this.player.play('walk', true);
+    
+            if (tiltX !== null) {
+                // Scale tilt to velocity and clamp it within limits
+                const targetVelocityX = Phaser.Math.Clamp(tiltX * 10, -160, 160);
+    
+                // Gradual transition for smooth movement
+                const smoothedVelocityX = Phaser.Math.Linear(this.player.body.velocity.x, targetVelocityX, 0.2);
+    
+                // Store tilt force to combine with joystick input later
+                this.tiltForceX = smoothedVelocityX / 160; // Normalize to -1 to 1 range
+    
+                // Apply combined velocity (from tilt alone for now)
+                this.player.setVelocityX(smoothedVelocityX);
+    
+                // Update animations
+                if (Math.abs(smoothedVelocityX) > 10) {
+                    this.player.setFlipX(smoothedVelocityX < 0);
+                    if (this.player.body.touching.down) this.player.play('walk', true);
+                } else if (this.player.body.touching.down) {
+                    this.player.play('idle', true);
+                }
             } else {
-                this.player.setVelocityX(0);
-                if (this.player.body.touching.down) this.player.play('idle', true);
+                this.tiltForceX = 0; // Reset tilt if undefined
             }
         });
-    }
-    
-
+    }    
     
 }
