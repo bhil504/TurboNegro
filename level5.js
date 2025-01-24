@@ -209,6 +209,7 @@ export default class Level5 extends Phaser.Scene {
                 
             }
 
+
     spawnHealthPack() {
         const { width } = this.scale;
         const x = Phaser.Math.Between(50, width - 50); // Random X position
@@ -388,7 +389,6 @@ export default class Level5 extends Phaser.Scene {
         const joystickArea = document.getElementById('joystick-area');
         let joystickKnob = document.getElementById('joystick-knob');
     
-        // Add the knob dynamically if it doesn't exist
         if (!joystickKnob) {
             joystickKnob = document.createElement('div');
             joystickKnob.id = 'joystick-knob';
@@ -403,9 +403,8 @@ export default class Level5 extends Phaser.Scene {
             const touch = event.touches[0];
             joystickStartX = touch.clientX;
             joystickStartY = touch.clientY;
-            joystickKnob.style.transform = `translate(-50%, -50%)`; // Reset to center
+            joystickKnob.style.transform = `translate(-50%, -50%)`;
     
-            // Start a continuous movement interval
             activeInterval = setInterval(() => this.applyJoystickForce(), 16); // Run every ~16ms (60 FPS)
         });
     
@@ -417,35 +416,31 @@ export default class Level5 extends Phaser.Scene {
             const distance = Math.sqrt(deltaX ** 2 + deltaY ** 2);
             const maxDistance = 50; // Joystick radius limit
     
-            // Clamp the knob's movement to the max distance
             const clampedX = (deltaX / distance) * Math.min(distance, maxDistance);
             const clampedY = (deltaY / distance) * Math.min(distance, maxDistance);
     
-            // Move the knob visually
             joystickKnob.style.transform = `translate(calc(${clampedX}px - 50%), calc(${clampedY}px - 50%))`;
     
-            // Store the clamped values for force application
             this.joystickForceX = clampedX / maxDistance;
             this.joystickForceY = clampedY / maxDistance;
         });
     
         joystickArea.addEventListener('touchend', () => {
-            joystickKnob.style.transform = `translate(-50%, -50%)`; // Reset knob position
-            this.joystickForceX = 0; // Reset forces
+            joystickKnob.style.transform = `translate(-50%, -50%)`;
+            this.joystickForceX = 0;
             this.joystickForceY = 0;
     
             if (this.player) {
-                this.player.setVelocityX(0); // Stop horizontal movement
+                this.player.setVelocityX(0);
                 this.player.anims.play('idle', true);
             }
     
-            clearInterval(activeInterval); // Stop continuous movement
+            clearInterval(activeInterval);
         });
     
-        // Initialize joystick force values
         this.joystickForceX = 0;
         this.joystickForceY = 0;
-    }    
+    }       
     
     setupMobileControls() {
         if (window.DeviceOrientationEvent) {
@@ -494,12 +489,32 @@ export default class Level5 extends Phaser.Scene {
                 this.player.play('idle', true);
             }
         }
-    } 
+    }    
 
     checkLevelCompletion() {
         if (this.totalEnemiesDefeated >= this.totalEnemiesToDefeat) {
             this.levelComplete();
         }
+    }
+
+    enableTiltControls() {
+        window.addEventListener('deviceorientation', (event) => {
+            const tilt = event.gamma; // Side-to-side tilt (-90 to +90)
+            if (tilt !== null) {
+                if (tilt > 8) { // Tilted to the right
+                    this.player.setVelocityX(160);
+                    this.player.setFlipX(false);
+                    this.player.play('walk', true);
+                } else if (tilt < -8) { // Tilted to the left
+                    this.player.setVelocityX(-160);
+                    this.player.setFlipX(true);
+                    this.player.play('walk', true);
+                } else { // Neutral tilt
+                    this.player.setVelocityX(0);
+                    this.player.play('idle', true);
+                }
+            }
+        });
     }
 
     levelComplete() {
