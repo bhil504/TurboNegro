@@ -132,10 +132,31 @@ export default class Level4 extends Phaser.Scene {
             loop: true,
         });
     
-        // Mobile Controls
+         // Mobile Controls
         if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
             console.log("Mobile device detected. Initializing controls...");
-            this.setupJoystick(); // Updated joystick functionality
+            
+            if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+                // Request motion permission for iOS
+                DeviceOrientationEvent.requestPermission()
+                    .then(permissionState => {
+                        if (permissionState === 'granted') {
+                            this.enableTiltControls();
+                            console.log("Tilt controls enabled for mobile.");
+                        } else {
+                            console.warn("Motion access denied. Falling back to joystick.");
+                            this.setupJoystick(); // Fallback to joystick
+                        }
+                    })
+                    .catch(error => {
+                        console.error("Error requesting motion permission:", error);
+                        this.setupJoystick(); // Fallback to joystick
+                    });
+            } else {
+                // Non-iOS or older versions
+                this.enableTiltControls();
+                console.log("Tilt controls enabled for non-iOS.");
+            }
         } else {
             console.log("Desktop detected. Skipping mobile controls.");
         }
