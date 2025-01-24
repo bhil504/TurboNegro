@@ -4,7 +4,7 @@ export default class BossFight extends Phaser.Scene {
     }
 
     preload() {
-        // Loading assets as before
+        // Loading assets
         this.load.image('finalFightBackground', 'assets/Levels/BackGrounds/finalFight.webp');
         this.load.image('beignetBoss', 'assets/Characters/Enemies/Beignet_Boss.png');
         this.load.image('beignetProjectile', 'assets/Characters/Projectiles/Beignet/Beignet2.png');
@@ -20,16 +20,15 @@ export default class BossFight extends Phaser.Scene {
         this.load.audio('bossMusic', 'assets/Audio/SmoothDaggers.mp3');
         this.load.audio('bossHit', 'assets/Audio/BossHit.mp3');
         this.load.audio('playerHit', 'assets/Audio/PlayerHit.mp3');
-        this.load.spritesheet('bossAnimation', 'assets/Characters/Enemies/Beignet_Boss_Animation.png', { frameWidth: 100, frameHeight: 100 });
     }
 
     create() {
         const { width, height } = this.scale;
 
-        // Setup scene
+        // Background
+        this.add.image(width, height / 2, 'finalFightBackground').setDisplaySize(width * 2, height);
         this.physics.world.setBounds(0, 0, width * 2, height);
         this.cameras.main.setBounds(0, 0, width * 2, height);
-        this.add.image(width, height / 2, 'finalFightBackground').setDisplaySize(width * 2, height);
 
         // Music
         this.bossMusic = this.sound.add('bossMusic', { loop: true, volume: 0.5 });
@@ -50,7 +49,7 @@ export default class BossFight extends Phaser.Scene {
         });
         this.anims.create({ key: 'walk', frames: [{ key: 'turboNegroWalking' }], frameRate: 8, repeat: -1 });
 
-        // Ground for collision
+        // Ground
         this.ground = this.physics.add.staticGroup();
         this.ground.create(width, height - 20, null).setDisplaySize(width * 2, 10).setVisible(false).refreshBody();
 
@@ -61,60 +60,37 @@ export default class BossFight extends Phaser.Scene {
         this.healthPacks = this.physics.add.group();
         this.hazards = this.physics.add.group();
 
-        // Boss setup with animations
-        this.boss = this.physics.add.sprite(width * 1.5, height - 200, 'bossAnimation');
+        // Boss setup
+        this.boss = this.physics.add.sprite(width * 1.5, height - 200, 'beignetBoss');
         this.boss.setCollideWorldBounds(true);
         this.boss.setScale(1);
-        this.boss.setVisible(true);
         this.boss.setAlpha(1);
         this.boss.body.setAllowGravity(true);
         this.boss.health = 20;
-        this.anims.create({
-            key: 'bossIdle',
-            frames: this.anims.generateFrameNumbers('bossAnimation', { start: 0, end: 3 }),
-            frameRate: 5,
-            repeat: -1
-        });
-        this.boss.play('bossIdle');
-
-        this.totalEnemiesDefeated = 0;
-        this.remainingEnemies = 20;
-        this.updateEnemyCountUI();
 
         // Collisions
         this.physics.add.collider(this.boss, this.ground);
         this.physics.add.collider(this.player, this.ground);
         this.physics.add.collider(this.minions, this.ground);
 
-        // Debug
-        // this.debugGraphics = this.add.graphics().setAlpha(0.75);
-        // this.physics.world.createDebugGraphic();
-        // this.physics.world.drawDebug = true;
-
         // Input
         this.cursors = this.input.keyboard.createCursorKeys();
         this.fireKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
 
-        // Collisions with effects
+        // Collision effects
         this.physics.add.collider(this.player, this.bossProjectiles, this.handlePlayerHit, null, this);
         this.physics.add.collider(this.projectiles, this.boss, this.handleBossHit, null, this);
         this.physics.add.collider(this.player, this.minions, this.handleMinionCollision, null, this);
         this.physics.add.overlap(this.player, this.healthPacks, this.collectHealthPack, null, this);
         this.physics.add.overlap(this.player, this.hazards, this.handleHazardCollision, null, this);
 
-        // Boss actions with phases
+        // Timed events
         this.time.addEvent({ delay: 2000, callback: this.shootProjectiles, callbackScope: this, loop: true });
         this.time.addEvent({ delay: 5000, callback: this.spawnMinions, callbackScope: this, loop: true });
-        this.time.addEvent({ delay: 15000, callback: this.spawnHealthPack, callbackScope: this, loop: true });
-        this.time.addEvent({ delay: 3000, callback: this.spawnHazard, callbackScope: this, loop: true });
-
-        // Boss phase change
-        this.time.addEvent({ delay: 10000, callback: this.changeBossPhase, callbackScope: this, loop: true });
     }
 
     update() {
-        if (!this.player || !this.cursors) return;
-
+        // Player controls
         this.player.setVelocityX(0);
         if (this.cursors.left.isDown) {
             this.player.setVelocityX(-160).setFlipX(true).play('walk', true);
@@ -129,18 +105,11 @@ export default class BossFight extends Phaser.Scene {
         if (Phaser.Input.Keyboard.JustDown(this.fireKey)) {
             this.fireProjectile();
         }
-
-        // Boss movement
-        if (this.boss.active && this.boss.visible) {
-            if (this.boss.x < this.scale.width * 0.75) {
-                this.boss.setVelocityX(50);
-            } else if (this.boss.x > this.scale.width * 1.25) {
-                this.boss.setVelocityX(-50);
-            }
-        }
     }
 
+
     fireProjectile() {
+        // Fire player's projectile
         let projectile = this.projectiles.get(this.player.x, this.player.y, 'playerProjectile');
         if (projectile) {
             projectile.setActive(true).setVisible(true);
@@ -150,49 +119,30 @@ export default class BossFight extends Phaser.Scene {
     }
 
     shootProjectiles() {
-        const pattern = Phaser.Math.Between(0, 1);
-        if (pattern === 0) {
-            for (let angle = -30; angle <= 30; angle += 15) {
-                let projectile = this.bossProjectiles.get(this.boss.x, this.boss.y, 'beignetProjectile');
-                if (projectile) {
-                    projectile.setActive(true).setVisible(true);
-                    projectile.body.setAllowGravity(false);
-                    const rad = Phaser.Math.DegToRad(angle);
-                    projectile.setVelocity(300 * Math.cos(rad), 300 * Math.sin(rad));
-                }
-            }
-        } else {
+        // Boss projectile pattern
+        for (let angle = -30; angle <= 30; angle += 15) {
             let projectile = this.bossProjectiles.get(this.boss.x, this.boss.y, 'beignetProjectile');
             if (projectile) {
                 projectile.setActive(true).setVisible(true);
                 projectile.body.setAllowGravity(false);
-                const angle = Phaser.Math.Angle.Between(this.boss.x, this.boss.y, this.player.x, this.player.y);
-                projectile.setVelocity(Math.cos(angle) * 300, Math.sin(angle) * 300);
+                const rad = Phaser.Math.DegToRad(angle);
+                projectile.setVelocity(300 * Math.cos(rad), 300 * Math.sin(rad));
             }
         }
-    }
+    }   
 
     spawnMinions() {
-        // Limit the number of active minions
+        // Spawn beignet minions
         const activeMinions = this.minions.getChildren().filter((minion) => minion.active).length;
-        if (activeMinions >= 5) return; // Max 5 active minions
-    
+        if (activeMinions >= 5) return;
+
         let minion = this.minions.get(this.boss.x - 100, this.boss.y, 'beignetMonster');
         if (minion) {
             minion.setActive(true).setVisible(true);
-            minion.setVelocityX(Phaser.Math.Between(-100, 100)); // Randomize direction
+            minion.setVelocityX(Phaser.Math.Between(-100, 100));
             minion.health = 2;
-            console.log("Minion spawned!");
-    
-            // Dynamic attack frequency
-            const delay = Phaser.Math.Between(2000, 4000); // Randomize shooting frequency
-            this.time.addEvent({
-                delay: delay,
-                callback: () => this.shootMinionProjectile(minion),
-                loop: true,
-            });
         }
-    }    
+    }      
 
     shootMinionProjectile(minion) {
         if (!minion.active) return; // Skip if minion is destroyed
@@ -228,12 +178,12 @@ export default class BossFight extends Phaser.Scene {
     }
 
     handlePlayerHit(player, projectile) {
+        // Handle player getting hit
         this.sound.play('playerHit');
         projectile.destroy();
         this.playerHealth -= 1;
-        this.updateHealthUI();
         if (this.playerHealth <= 0) {
-            this.scene.start('GameOver'); // Assuming you have a 'GameOver' scene
+            this.scene.start('GameOver');
         }
     }
 
@@ -256,20 +206,15 @@ export default class BossFight extends Phaser.Scene {
     }
 
     handleBossHit(projectile, boss) {
+        // Handle boss getting hit
         this.sound.play('bossHit');
         projectile.destroy();
         boss.health -= 1;
 
-        if (boss.health <= 10 && this.boss.visible) {
-            this.boss.setVisible(false);
-            this.spawnEnemies(20);
+        if (boss.health <= 0) {
+            this.levelComplete();
         }
-
-        if (boss.health <= 0 && !this.boss.visible && this.totalEnemiesDefeated >= 20) {
-            this.boss.setVisible(true);
-            boss.health = 10;
-        }
-    }
+    }   
 
     collectHealthPack(player, healthPack) {
         healthPack.destroy();
@@ -384,6 +329,16 @@ export default class BossFight extends Phaser.Scene {
         }
     }
 
+    startPhaseTwo() {
+        this.bossPhase = 2;
+        this.boss.setTint(0xff0000);
+        this.boss.setVelocityX(200);
+        this.time.addEvent({ delay: 2000, callback: () => {
+            this.boss.x = this.boss.x < 0 ? this.scale.width * 2 : 0;
+        }, loop: true });
+    }
+    
+
     changeBossPhase() {
         if (this.boss.health <= 15) {
             console.log("Boss entering phase 2!");
@@ -418,20 +373,8 @@ export default class BossFight extends Phaser.Scene {
     }
 
     levelComplete() {
+        // Complete the level
         console.log("Boss Defeated!");
-        if (this.bossMusic) this.bossMusic.stop();
-        if (this.time) this.time.clearPendingEvents();
-        this.minions.clear(true, true);
-        this.bossProjectiles.clear(true, true);
-        this.projectiles.clear(true, true);
-        if (this.boss) {
-            this.boss.destroy();
-            this.boss = null;
-        }
-        this.add.image(this.scale.width / 2, this.scale.height / 2, 'levelComplete').setOrigin(0.5);
-    
-        this.input.keyboard.once('keydown-SPACE', () => {
-            this.scene.start('VictoryScene'); // Assuming a victory scene follows
-        });
+        this.scene.start('VictoryScene');
     }
 }
