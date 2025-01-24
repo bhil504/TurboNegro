@@ -141,13 +141,30 @@ export default class Level3 extends Phaser.Scene {
             loop: true,
         });
     
-        // Mobile controls
-        if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-            console.log("Mobile device detected. Initializing controls...");
-            this.setupJoystick(); // Updated joystick functionality
+        // Mobile Controls for Tilt
+    if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+        console.log("Mobile device detected. Initializing controls...");
+        if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+            DeviceOrientationEvent.requestPermission()
+                .then(permissionState => {
+                    if (permissionState === 'granted') {
+                        this.enableTiltControls();
+                    } else {
+                        console.warn("Motion access denied. Joystick is available.");
+                        this.setupJoystick(); // Fallback to joystick
+                    }
+                })
+                .catch(error => {
+                    console.error("Error requesting motion permission:", error);
+                    this.setupJoystick(); // Fallback to joystick
+                });
         } else {
-            console.log("Desktop detected. Skipping mobile controls.");
+            this.enableTiltControls(); // For non-iOS or older devices
         }
+    } else {
+        console.log("Desktop detected. Skipping mobile-specific controls.");
+    }
+
     
         // Tap anywhere to attack (Mobile or Desktop)
         this.input.on('pointerdown', (pointer) => {
@@ -707,6 +724,24 @@ export default class Level3 extends Phaser.Scene {
                 this.player.play('idle', true);
             }
         }
+    }
+    
+    enableTiltControls() {
+        window.addEventListener('deviceorientation', (event) => {
+            const tiltX = event.gamma; // Horizontal tilt (-90 to +90)
+            if (tiltX < -10) {
+                this.player.setVelocityX(-160);
+                this.player.setFlipX(true);
+                if (this.player.body.touching.down) this.player.play('walk', true);
+            } else if (tiltX > 10) {
+                this.player.setVelocityX(160);
+                this.player.setFlipX(false);
+                if (this.player.body.touching.down) this.player.play('walk', true);
+            } else {
+                this.player.setVelocityX(0);
+                if (this.player.body.touching.down) this.player.play('idle', true);
+            }
+        });
     }
     
 
