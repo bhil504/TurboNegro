@@ -140,8 +140,8 @@ export default class Level2 extends Phaser.Scene {
             });
         }
     
-        // Setup mobile controls
-        if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+         // Setup mobile controls
+         if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
             console.log("Mobile device detected. Initializing controls...");
             this.setupMobileControls();
             this.setupJoystick();
@@ -168,6 +168,8 @@ export default class Level2 extends Phaser.Scene {
             }
             startY = null;
         });
+
+        this.setupMobileControls();
     }
     
     update() {
@@ -364,25 +366,25 @@ export default class Level2 extends Phaser.Scene {
 
     setupMobileControls() {
         if (window.DeviceOrientationEvent) {
-            if (typeof DeviceOrientationEvent.requestPermission === 'function') {
-                // Request permission for iOS devices
-                DeviceOrientationEvent.requestPermission()
-                    .then(permissionState => {
-                        if (permissionState === 'granted') {
-                            this.enableTiltControls();
-                        } else {
-                            console.warn("Motion access denied. Enabling joystick as fallback.");
-                            this.setupJoystick(); // Fallback to joystick
-                        }
-                    })
-                    .catch(error => {
-                        console.error("Error requesting motion permission:", error);
-                        this.setupJoystick(); // Fallback to joystick
-                    });
-            } else {
-                // Non-iOS or older versions
-                this.enableTiltControls();
-            }
+            this.tiltListener = (event) => {
+                const tilt = event.gamma;
+
+                if (tilt !== null) {
+                    if (tilt > 8) {
+                        this.player.setVelocityX(160);
+                        this.player.setFlipX(false);
+                        this.player.play('walk', true);
+                    } else if (tilt < -8) {
+                        this.player.setVelocityX(-160);
+                        this.player.setFlipX(true);
+                        this.player.play('walk', true);
+                    } else {
+                        this.player.setVelocityX(0);
+                        this.player.play('idle', true);
+                    }
+                }
+            };
+            window.addEventListener('deviceorientation', this.tiltListener);
         } else {
             console.warn("Tilt controls unavailable. Enabling joystick as fallback.");
             this.setupJoystick();
@@ -392,80 +394,73 @@ export default class Level2 extends Phaser.Scene {
     setupJoystick() {
         const joystickArea = document.getElementById('joystick-area');
         let joystickKnob = document.getElementById('joystick-knob');
-        
-        // Add the knob dynamically if it doesn't exist
+
         if (!joystickKnob) {
             joystickKnob = document.createElement('div');
             joystickKnob.id = 'joystick-knob';
             joystickArea.appendChild(joystickKnob);
         }
-        
+
         let joystickStartX = 0;
         let joystickStartY = 0;
         let activeInterval;
-        
+
         joystickArea.addEventListener('touchstart', (event) => {
             const touch = event.touches[0];
             joystickStartX = touch.clientX;
             joystickStartY = touch.clientY;
-            joystickKnob.style.transform = `translate(-50%, -50%)`; // Reset to center
-            
-            // Start a continuous movement interval
-            activeInterval = setInterval(() => this.applyJoystickForce(), 16); // Run every ~16ms (60 FPS)
+            joystickKnob.style.transform = `translate(-50%, -50%)`;
+
+            activeInterval = setInterval(() => this.applyJoystickForce(), 16);
         });
-        
+
         joystickArea.addEventListener('touchmove', (event) => {
             const touch = event.touches[0];
             const deltaX = touch.clientX - joystickStartX;
             const deltaY = touch.clientY - joystickStartY;
-            
+
             const distance = Math.sqrt(deltaX ** 2 + deltaY ** 2);
-            const maxDistance = 50; // Joystick radius limit
-            
-            // Clamp the knob's movement to the max distance
+            const maxDistance = 50;
+
             const clampedX = (deltaX / distance) * Math.min(distance, maxDistance);
             const clampedY = (deltaY / distance) * Math.min(distance, maxDistance);
-            
-            // Move the knob visually
+
             joystickKnob.style.transform = `translate(calc(${clampedX}px - 50%), calc(${clampedY}px - 50%))`;
-            
-            // Store the clamped values for force application
+
             this.joystickForceX = clampedX / maxDistance;
             this.joystickForceY = clampedY / maxDistance;
         });
-        
+
         joystickArea.addEventListener('touchend', () => {
-            joystickKnob.style.transform = `translate(-50%, -50%)`; // Reset knob position
-            this.joystickForceX = 0; // Reset forces
+            joystickKnob.style.transform = `translate(-50%, -50%)`;
+            this.joystickForceX = 0;
             this.joystickForceY = 0;
-            
+
             if (this.player) {
-                this.player.setVelocityX(0); // Stop horizontal movement
+                this.player.setVelocityX(0);
                 this.player.anims.play('idle', true);
             }
-            
-            clearInterval(activeInterval); // Stop continuous movement
+
+            clearInterval(activeInterval);
         });
-        
-        // Initialize joystick force values
+
         this.joystickForceX = 0;
         this.joystickForceY = 0;
     }
     
     applyJoystickForce() {
         if (this.player) {
-            // Apply X-axis movement
-            this.player.setVelocityX(this.joystickForceX * 160); // Adjust multiplier for sensitivity
-            
+            this.player.setVelocityX(this.joystickForceX * 160);
+
             if (this.joystickForceX > 0) this.player.setFlipX(false);
             if (this.joystickForceX < 0) this.player.setFlipX(true);
-            
-            // Jump if joystick is pushed upwards
-            if (this.joystickForceY < -0.5 && this.player.body.touching.down) {
-                this.player.setVelocityY(-500); // Jump
+
+            if (this.joystickForceY < -0.5 && this.player.body.touching.down && !this.jumpCooldown) {
+                this.jumpCooldown = true; // Activate cooldown
+                this.player.setVelocityY(-500);
+                setTimeout(() => (this.jumpCooldown = false), 500); // 500ms cooldown
             }
-    
-            // Change animation based on movement
+
             if (Math.abs(this.joystickForceX) > 0.1 && this.player.body.touching.down) {
                 this.player.play('walk', true);
             } else if (this.player.body.touching.down) {
@@ -473,60 +468,79 @@ export default class Level2 extends Phaser.Scene {
             }
         }
     }
+
+    shutdown() {
+        // Cleanup mobile controls and listeners
+        this.destroyMobileControls();
+    }
     
     gameOver() {
         // Stop background music
         if (this.levelMusic) this.levelMusic.stop();
-    
+
         // Stop enemy and projectile spawns
         if (this.enemySpawnTimer) this.enemySpawnTimer.remove();
         if (this.trumpetSpawnTimer) this.trumpetSpawnTimer.remove();
-    
+
         // Clear active game objects
         this.enemies.clear(true, true);
         this.trumpetEnemies.clear(true, true);
         this.projectiles.clear(true, true);
-    
+
         // Display game over screen
         this.add.image(this.scale.width / 2, this.scale.height / 2, 'gameOver').setOrigin(0.5);
-    
+
         // Restart the level on SPACE (desktop) or tap (mobile)
         const restartLevel = () => {
             this.scene.restart();
         };
-    
+
         // Desktop: Listen for SPACE key
         this.input.keyboard.once('keydown-SPACE', restartLevel);
-    
+
         // Mobile: Listen for tap
         this.input.once('pointerdown', restartLevel);
+
+        // Cleanup
+        this.shutdown();
     }
     
     levelComplete() {
         // Stop background music
         if (this.levelMusic) this.levelMusic.stop();
-    
+
         // Stop enemy and projectile spawns
         if (this.enemySpawnTimer) this.enemySpawnTimer.remove();
         if (this.trumpetSpawnTimer) this.trumpetSpawnTimer.remove();
-    
+
         // Clear active game objects
         this.enemies.clear(true, true);
         this.trumpetEnemies.clear(true, true);
         this.projectiles.clear(true, true);
-    
+
         // Display level complete screen
         this.add.image(this.scale.width / 2, this.scale.height / 2, 'levelComplete').setOrigin(0.5);
-    
+
         // Move to the next level on SPACE (desktop) or tap (mobile)
         const proceedToNextLevel = () => {
             this.scene.start('Level3'); // Proceed to Level 3
         };
-    
+
         // Desktop: Listen for SPACE key
         this.input.keyboard.once('keydown-SPACE', proceedToNextLevel);
-    
+
         // Mobile: Listen for tap
         this.input.once('pointerdown', proceedToNextLevel);
+
+        // Cleanup
+        this.shutdown();
+    }
+
+    destroyMobileControls() {
+        // Remove tilt controls if they were added
+        if (this.tiltListener) {
+            window.removeEventListener('deviceorientation', this.tiltListener);
+            this.tiltListener = null;
+        }
     }
 }

@@ -81,27 +81,27 @@ export default class Level1 extends Phaser.Scene {
         // Mobile-specific controls
         if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
             console.log("Mobile device detected. Initializing controls...");
+            this.setupJoystick(); // Always initialize joystick
+            
             if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
                 // Request motion permission for iOS
                 DeviceOrientationEvent.requestPermission()
                     .then(permissionState => {
                         if (permissionState === 'granted') {
-                            this.setupMobileControls();
+                            this.enableTiltControls();
                         } else {
-                            console.warn("Motion access denied. Enabling joystick as fallback.");
-                            this.setupJoystick();
+                            console.warn("Motion access denied. Joystick is available.");
                         }
                     })
                     .catch(error => {
                         console.error("Error requesting motion permission:", error);
-                        this.setupJoystick(); // Fallback to joystick
                     });
             } else {
-                // Enable controls directly for non-iOS or older versions
-                this.setupMobileControls();
+                // Enable tilt controls directly for non-iOS or older versions
+                this.enableTiltControls();
             }
         } else {
-            console.log("Desktop detected. Skipping mobile controls.");
+            console.log("Desktop detected. Skipping mobile-specific controls.");
         }
     
         // Tap anywhere to attack (Mobile or Desktop)
