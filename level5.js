@@ -129,7 +129,85 @@ export default class Level5 extends Phaser.Scene {
         // Add overlap detection for health packs and player
         this.physics.add.overlap(this.player, this.healthPacks, this.handlePlayerHealthPackCollision, null, this);
 
-    }
+        // Mobile-specific controls
+        if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+            console.log("Mobile device detected. Initializing controls...");
+            if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+                // Request motion permission for iOS
+                DeviceOrientationEvent.requestPermission()
+                    .then(permissionState => {
+                        if (permissionState === 'granted') {
+                            this.setupMobileControls();
+                        } else {
+                            console.warn("Motion access denied. Enabling joystick as fallback.");
+                            this.setupJoystick();
+                        }
+                    })
+                    .catch(error => {
+                        console.error("Error requesting motion permission:", error);
+                        this.setupJoystick(); // Fallback to joystick
+                    });
+            } else {
+                // Enable controls directly for non-iOS or older versions
+                this.setupMobileControls();
+            }
+        } else {
+            console.log("Desktop detected. Skipping mobile controls.");
+        }
+
+        // Tap anywhere to attack
+        this.input.on('pointerdown', (pointer) => {
+            if (!pointer.wasTouch) return; // Prevent mouse clicks from triggering on desktop
+            this.fireProjectile();
+        });
+
+        // Swipe up to jump
+        let startY = null;
+        this.input.on('pointerdown', (pointer) => {
+            startY = pointer.y; // Record starting Y position
+        });
+
+        this.input.on('pointerup', (pointer) => {
+            if (startY !== null && pointer.y < startY - 50 && this.player.body.touching.down) {
+                this.player.setVelocityY(-500); // Jump velocity
+                this.player.play('jump', true);
+            }
+            startY = null; // Reset
+        });
+
+        // Tilt controls (accelerometer)
+        if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+            DeviceOrientationEvent.requestPermission()
+                .then(permissionState => {
+                    if (permissionState === 'granted') {
+                        window.addEventListener('deviceorientation', (event) => {
+                            const tiltX = event.gamma; // Horizontal tilt (-90 to +90)
+                            if (tiltX < -10) {
+                                this.player.setVelocityX(-160);
+                                this.player.setFlipX(true);
+                                this.player.play('walk', true);
+                            } else if (tiltX > 10) {
+                                this.player.setVelocityX(160);
+                                this.player.setFlipX(false);
+                                this.player.play('walk', true);
+                            } else {
+                                this.player.setVelocityX(0);
+                                this.player.play('idle', true);
+                            }
+                        });
+                    }
+                })
+                .catch((error) => {
+                    console.error("Motion permissions denied:", error);
+                    this.setupJoystick(); // Fallback to joystick
+                });
+                } else {
+                    console.log("Non-iOS device or motion permissions not required.");
+                    this.setupJoystick(); // Fallback for unsupported devices
+                }
+
+                
+            }
 
     spawnHealthPack() {
         const { width } = this.scale;
@@ -154,9 +232,14 @@ export default class Level5 extends Phaser.Scene {
 
     update() {
         if (!this.player || !this.cursors) return;
-
+    
+        // Reset horizontal velocity
         this.player.setVelocityX(0);
-
+    
+        // Handle joystick or tilt input
+        if (this.isUsingJoystick) return;
+    
+        // Keyboard controls
         if (this.cursors.left.isDown) {
             this.player.setVelocityX(-160);
             this.player.setFlipX(true);
@@ -168,16 +251,13 @@ export default class Level5 extends Phaser.Scene {
         } else {
             this.player.play('idle', true);
         }
-
+        
+        // Jump
         if (this.cursors.up.isDown && this.player.body.touching.down) {
             this.player.setVelocityY(-500);
             this.player.play('jump', true);
         }
-
-        if (Phaser.Input.Keyboard.JustDown(this.attackKey)) {
-            this.fireProjectile();
-        }
-    }
+    }      
 
     fireProjectile() {
         const projectile = this.projectiles.create(this.player.x, this.player.y, 'playerProjectile');
@@ -193,15 +273,10 @@ export default class Level5 extends Phaser.Scene {
         }
     }
 
-    updateHealthUI() {
-        const healthPercentage = (this.playerHealth / this.maxHealth) * 100;
-        document.getElementById('health-bar-inner').style.width = `${healthPercentage}%`;
-    }
     updateEnemyCountUI() {
         const enemiesLeft = this.totalEnemiesToDefeat - this.totalEnemiesDefeated;
         document.getElementById('enemy-count').innerText = `Enemies Left: ${enemiesLeft}`;
     }
-    
     
     spawnHealthPack() {
         const { width } = this.scale;
@@ -309,18 +384,82 @@ export default class Level5 extends Phaser.Scene {
         }
     }
 
+    setupJoystick() {
+        const joystickArea = document.getElementById('joystick-area');
+        const joystickKnob = document.getElementById('joystick-knob');
+    
+        let isDragging = false;
+        let startX = 0;
+    
+        joystickArea.addEventListener('touchstart', (e) => {
+            isDragging = true;
+            startX = e.touches[0].clientX;
+        });
+    
+        joystickArea.addEventListener('touchmove', (e) => {
+            if (!isDragging) return;
+            const deltaX = e.touches[0].clientX - startX;
+    
+            if (deltaX < -20) {
+                this.player.setVelocityX(-160);
+                this.player.setFlipX(true);
+                this.player.play('walk', true);
+            } else if (deltaX > 20) {
+                this.player.setVelocityX(160);
+                this.player.setFlipX(false);
+                this.player.play('walk', true);
+            } else {
+                this.player.setVelocityX(0);
+                this.player.play('idle', true);
+            }
+        });
+    
+        joystickArea.addEventListener('touchend', () => {
+            isDragging = false;
+            this.player.setVelocityX(0);
+            this.player.play('idle', true);
+        });
+    }    
+    
+    setupMobileControls() {
+        window.addEventListener('deviceorientation', (event) => {
+            const tiltX = event.gamma; // Horizontal tilt (-90 to 90)
+            if (tiltX < -10) {
+                this.player.setVelocityX(-160);
+                this.player.setFlipX(true);
+                this.player.play('walk', true);
+            } else if (tiltX > 10) {
+                this.player.setVelocityX(160);
+                this.player.setFlipX(false);
+                this.player.play('walk', true);
+            } else {
+                this.player.setVelocityX(0);
+                this.player.play('idle', true);
+            }
+        });
+    }
+
     checkLevelCompletion() {
         if (this.totalEnemiesDefeated >= this.totalEnemiesToDefeat) {
             this.levelComplete();
         }
     }
-    
-    levelComplete() {
-        console.log("Level Complete");
-        this.levelMusic.stop();
-        this.scene.start('BossFight'); // Transition to BossFight
-    }
 
+    levelComplete() {
+        console.log("Level 5 Complete!");
+    
+        // Stop music and clean up timers
+        if (this.levelMusic) this.levelMusic.stop();
+        if (this.enemySpawnTimer) this.enemySpawnTimer.remove();
+    
+        // Clear active objects
+        this.enemies.clear(true, true);
+        this.projectiles.clear(true, true);
+    
+        // Proceed to the boss fight
+        this.scene.start('BossFight');
+    }
+    
     gameOver() {
         console.log("Game Over");
         this.levelMusic.stop();
