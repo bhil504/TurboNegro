@@ -504,21 +504,22 @@ export default class Level5 extends Phaser.Scene {
         window.addEventListener('deviceorientation', (event) => {
             const tilt = event.gamma; // Side-to-side tilt (-90 to +90)
             if (tilt !== null) {
-                if (tilt > 8) { // Tilted to the right
-                    this.player.setVelocityX(160);
+                const clampedTilt = Math.max(-30, Math.min(30, tilt)); // Clamp tilt to [-30, 30]
+                const velocityX = clampedTilt * 5; // Adjust multiplier for sensitivity
+                this.player.setVelocityX(velocityX);
+    
+                if (velocityX > 0) {
                     this.player.setFlipX(false);
                     this.player.play('walk', true);
-                } else if (tilt < -8) { // Tilted to the left
-                    this.player.setVelocityX(-160);
+                } else if (velocityX < 0) {
                     this.player.setFlipX(true);
                     this.player.play('walk', true);
-                } else { // Neutral tilt
-                    this.player.setVelocityX(0);
+                } else {
                     this.player.play('idle', true);
                 }
             }
         });
-    }
+    }    
 
     levelComplete() {
         console.log("Level 5 Complete!");

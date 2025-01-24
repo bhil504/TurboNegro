@@ -505,34 +505,70 @@ export default class Level4 extends Phaser.Scene {
 
     levelComplete() {
         console.log("Level Complete!");
+    
+        // Stop music and clear timers
         if (this.levelMusic) this.levelMusic.stop();
         if (this.enemySpawnTimer) this.enemySpawnTimer.remove();
         if (this.trumpetSpawnTimer) this.trumpetSpawnTimer.remove();
+        if (this.fireBeadsTimer) this.fireBeadsTimer.remove();
+    
+        // Clear objects and stop interactions
         this.enemies.clear(true, true);
         this.trumpetEnemies.clear(true, true);
-        this.beignetProjectiles.clear(true, true);
         this.projectiles.clear(true, true);
+        if (this.mardiGrasBlimp) {
+            this.mardiGrasBlimp.destroy();
+            this.mardiGrasBlimp = null;
+        }
+    
+        // Disable player and enemy movement
+        this.physics.pause();
+    
+        // Display Level Complete screen
         this.add.image(this.scale.width / 2, this.scale.height / 2, 'levelComplete').setOrigin(0.5);
     
-        this.input.keyboard.once('keydown-SPACE', () => {
-            this.scene.start('Level5');
-        });
-    }   
+        // Proceed to the next level
+        const nextLevel = () => {
+            this.scene.start('Level5'); // Adjust to the actual next level key
+        };
+    
+        // Add input handlers for both desktop and mobile
+        this.input.keyboard.once('keydown-SPACE', nextLevel);
+        this.input.once('pointerdown', nextLevel);
+    }    
     
     gameOver() {
         console.log("Game Over!");
+    
+        // Stop music and clear timers
         if (this.levelMusic) this.levelMusic.stop();
         if (this.enemySpawnTimer) this.enemySpawnTimer.remove();
         if (this.trumpetSpawnTimer) this.trumpetSpawnTimer.remove();
+        if (this.fireBeadsTimer) this.fireBeadsTimer.remove();
+    
+        // Clear objects and stop interactions
         this.enemies.clear(true, true);
         this.trumpetEnemies.clear(true, true);
-        this.beignetProjectiles.clear(true, true);
         this.projectiles.clear(true, true);
+        if (this.mardiGrasBlimp) {
+            this.mardiGrasBlimp.destroy();
+            this.mardiGrasBlimp = null;
+        }
+    
+        // Disable player and enemy movement
+        this.physics.pause();
+    
+        // Display Game Over screen
         this.add.image(this.scale.width / 2, this.scale.height / 2, 'gameOver').setOrigin(0.5);
     
-        this.input.keyboard.once('keydown-SPACE', () => {
+        // Restart the level
+        const restartLevel = () => {
             this.scene.restart();
-        });
+        };
+    
+        // Add input handlers for both desktop and mobile
+        this.input.keyboard.once('keydown-SPACE', restartLevel);
+        this.input.once('pointerdown', restartLevel);
     }  
     
 }
