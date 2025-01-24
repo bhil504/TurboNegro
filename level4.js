@@ -468,6 +468,28 @@ export default class Level4 extends Phaser.Scene {
         this.joystickForceY = 0;
     }
 
+    enableTiltControls() {
+        window.addEventListener("deviceorientation", (event) => {
+            const tilt = event.gamma; // Side-to-side tilt angle
+            if (tilt !== null) {
+                if (tilt > 8) {
+                    this.player.setVelocityX(160); // Move right
+                    this.player.setFlipX(false);
+                    this.player.play("walk", true);
+                } else if (tilt < -8) {
+                    this.player.setVelocityX(-160); // Move left
+                    this.player.setFlipX(true);
+                    this.player.play("walk", true);
+                } else {
+                    this.player.setVelocityX(0); // Stop moving
+                    this.player.play("idle", true);
+                }
+            } else {
+                console.warn("Tilt data unavailable.");
+            }
+        });
+    }
+
     levelComplete() {
         console.log("Level Complete!");
         if (this.levelMusic) this.levelMusic.stop();
