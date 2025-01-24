@@ -66,9 +66,28 @@ export default class StartMenu extends Phaser.Scene {
             this.scene.start('Level1');
         });
 
+        // Keyboard shortcuts for quick level testing
+        this.input.keyboard.on('keydown-ONE', () => {
+            this.scene.start('Level1');
+        });
+        this.input.keyboard.on('keydown-TWO', () => {
+            this.scene.start('Level2');
+        });
+        this.input.keyboard.on('keydown-THREE', () => {
+            this.scene.start('Level3');
+        });
+        this.input.keyboard.on('keydown-FOUR', () => {
+            this.scene.start('Level4');
+        });
+        this.input.keyboard.on('keydown-FIVE', () => {
+            this.scene.start('Level5');
+        });
+        this.input.keyboard.on('keydown-B', () => {
+            this.scene.start('BossFight');
+        });
+
         // Play background music
         const music = this.sound.add('menuMusic', { loop: true, volume: 0.6 });
         music.play();
-        
     }
 }
