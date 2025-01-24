@@ -23,22 +23,22 @@ export default class Level5 extends Phaser.Scene {
 
     create() {
         const { width, height } = this.scale;
-    
+
         this.totalEnemiesToDefeat = 45; // Set the goal for level completion
         this.totalEnemiesDefeated = 0;  // Reset defeated enemies count
         this.updateEnemyCountUI();      // Initialize the enemy count UI
-    
+
         // Background
         this.add.image(width / 2, height / 2, 'level5Background').setDisplaySize(width, height);
-    
+
         // Music
         this.levelMusic = this.sound.add('level5Music', { loop: true, volume: 0.5 });
         this.levelMusic.play();
-    
+
         // Player
         this.player = this.physics.add.sprite(100, height - 150, 'turboNegroStanding1');
         this.player.setCollideWorldBounds(true);
-    
+
         // Animations
         this.anims.create({
             key: 'idle',
@@ -53,47 +53,47 @@ export default class Level5 extends Phaser.Scene {
         });
         this.anims.create({ key: 'walk', frames: [{ key: 'turboNegroWalking' }], frameRate: 8, repeat: -1 });
         this.anims.create({ key: 'jump', frames: [{ key: 'turboNegroJump' }], frameRate: 1 });
-    
+
         // Input
         this.cursors = this.input.keyboard.createCursorKeys();
         this.attackKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
-    
+
         // Platforms
         this.platforms = this.physics.add.staticGroup();
-    
+
         // Add Invisible Ground
         this.ground = this.platforms.create(width / 2, height - 10, null).setDisplaySize(width, 20).setVisible(false).refreshBody();
-    
+
         // Add Other Platforms (Matching Level 4)
         this.platforms.create(width / 2, height / 2 - 50, 'platform')
             .setDisplaySize(200, 20) // Adjusted size
             .setVisible(true)
             .refreshBody();
-    
+
         this.platforms.create(50, height / 2, 'platform')
             .setDisplaySize(200, 20) // Adjusted size
             .setVisible(true)
             .refreshBody();
-    
+
         this.platforms.create(width - 50, height / 2, 'platform')
             .setDisplaySize(200, 20) // Adjusted size
             .setVisible(true)
             .refreshBody();
-    
+
         this.physics.add.collider(this.player, this.platforms);
-    
+
         // Groups
         this.projectiles = this.physics.add.group();
         this.beignetProjectiles = this.physics.add.group();
         this.enemies = this.physics.add.group();
         this.healthPacks = this.physics.add.group();
-    
+
         // Collisions
         this.physics.add.collider(this.enemies, this.platforms);
         this.physics.add.collider(this.projectiles, this.enemies, this.handleProjectileHit, null, this);
         this.physics.add.overlap(this.player, this.beignetProjectiles, this.handleBeignetHit, null, this);
         this.physics.add.overlap(this.player, this.healthPacks, this.handlePlayerHealthPackCollision, null, this);
-    
+
         // Mobile Controls
         if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
             console.log("Mobile device detected. Initializing controls...");
@@ -101,19 +101,19 @@ export default class Level5 extends Phaser.Scene {
         } else {
             console.log("Desktop detected. Skipping mobile controls.");
         }
-    
+
         // Tap anywhere to attack (Mobile or Desktop)
         this.input.on('pointerdown', (pointer) => {
             if (!pointer.wasTouch) return;
             this.fireProjectile();
         });
-    
+
         // Swipe up to jump
         let startY = null;
         this.input.on('pointerdown', (pointer) => {
             startY = pointer.y;
         });
-    
+
         this.input.on('pointerup', (pointer) => {
             if (startY !== null && pointer.y < startY - 50 && this.player.body.touching.down) {
                 this.player.setVelocityY(-500);
@@ -121,7 +121,7 @@ export default class Level5 extends Phaser.Scene {
             }
             startY = null;
         });
-    
+
         // Bind attack button to fireProjectile
         const attackButton = document.getElementById('attack-button');
         if (attackButton) {
@@ -131,23 +131,23 @@ export default class Level5 extends Phaser.Scene {
         } else {
             console.warn("Attack button not found!");
         }
-    
+
         // Timers for Enemy Spawning
-        this.time.addEvent({
-            delay: 3000, // 3 seconds for Beignet Minions
-            callback: this.spawnBeignetMinion,
-            callbackScope: this,
-            loop: true,
-        });
-    
-        this.time.addEvent({
-            delay: 4000, // 4 seconds for Beignet Monsters
-            callback: this.spawnBeignetMonster,
-            callbackScope: this,
-            loop: true,
-        });
+            this.time.addEvent({
+                delay: 3000, // 3 seconds for Beignet Minions
+                callback: this.spawnBeignetMinion,
+                callbackScope: this,
+                loop: true,
+            });
+
+            this.time.addEvent({
+                delay: 2000, // 2 seconds for Beignet Monsters
+                callback: this.spawnBeignetMonster,
+                callbackScope: this,
+                loop: true,
+            });
     }
-    
+
     spawnHealthPack() {
         const { width } = this.scale;
         const x = Phaser.Math.Between(50, width - 50); // Random X position
