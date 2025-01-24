@@ -129,18 +129,20 @@ export default class Level5 extends Phaser.Scene {
         // Add overlap detection for health packs and player
         this.physics.add.overlap(this.player, this.healthPacks, this.handlePlayerHealthPackCollision, null, this);
 
-        // Mobile-specific controls
+        // Mobile Controls
         if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
             console.log("Mobile device detected. Initializing controls...");
+            
             if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
                 // Request motion permission for iOS
                 DeviceOrientationEvent.requestPermission()
                     .then(permissionState => {
                         if (permissionState === 'granted') {
-                            this.setupMobileControls();
+                            this.enableTiltControls();
+                            console.log("Tilt controls enabled for mobile.");
                         } else {
-                            console.warn("Motion access denied. Enabling joystick as fallback.");
-                            this.setupJoystick();
+                            console.warn("Motion access denied. Falling back to joystick.");
+                            this.setupJoystick(); // Fallback to joystick
                         }
                     })
                     .catch(error => {
@@ -148,8 +150,9 @@ export default class Level5 extends Phaser.Scene {
                         this.setupJoystick(); // Fallback to joystick
                     });
             } else {
-                // Enable controls directly for non-iOS or older versions
-                this.setupMobileControls();
+                // Non-iOS or older versions
+                this.enableTiltControls();
+                console.log("Tilt controls enabled for non-iOS.");
             }
         } else {
             console.log("Desktop detected. Skipping mobile controls.");
