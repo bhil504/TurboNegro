@@ -469,10 +469,7 @@ export default class Level2 extends Phaser.Scene {
         }
     }
 
-    shutdown() {
-        // Cleanup mobile controls and listeners
-        this.destroyMobileControls();
-    }
+    
     
     gameOver() {
         // Stop background music
@@ -501,8 +498,6 @@ export default class Level2 extends Phaser.Scene {
         // Mobile: Listen for tap
         this.input.once('pointerdown', restartLevel);
 
-        // Cleanup
-        this.shutdown();
     }
     
     levelComplete() {
@@ -532,15 +527,8 @@ export default class Level2 extends Phaser.Scene {
         // Mobile: Listen for tap
         this.input.once('pointerdown', proceedToNextLevel);
 
-        // Cleanup
-        this.shutdown();
+    
     }
 
-    destroyMobileControls() {
-        // Remove tilt controls if they were added
-        if (this.tiltListener) {
-            window.removeEventListener('deviceorientation', this.tiltListener);
-            this.tiltListener = null;
-        }
-    }
+    
 }
