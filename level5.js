@@ -1,4 +1,4 @@
-export default class Level1 extends Phaser.Scene {
+export default class Level5 extends Phaser.Scene {
     constructor() {
         super({ key: 'Level5' });
     }
@@ -386,58 +386,115 @@ export default class Level1 extends Phaser.Scene {
 
     setupJoystick() {
         const joystickArea = document.getElementById('joystick-area');
-        const joystickKnob = document.getElementById('joystick-knob');
+        let joystickKnob = document.getElementById('joystick-knob');
     
-        let isDragging = false;
-        let startX = 0;
+        // Add the knob dynamically if it doesn't exist
+        if (!joystickKnob) {
+            joystickKnob = document.createElement('div');
+            joystickKnob.id = 'joystick-knob';
+            joystickArea.appendChild(joystickKnob);
+        }
     
-        joystickArea.addEventListener('touchstart', (e) => {
-            isDragging = true;
-            startX = e.touches[0].clientX;
+        let joystickStartX = 0;
+        let joystickStartY = 0;
+        let activeInterval;
+    
+        joystickArea.addEventListener('touchstart', (event) => {
+            const touch = event.touches[0];
+            joystickStartX = touch.clientX;
+            joystickStartY = touch.clientY;
+            joystickKnob.style.transform = `translate(-50%, -50%)`; // Reset to center
+    
+            // Start a continuous movement interval
+            activeInterval = setInterval(() => this.applyJoystickForce(), 16); // Run every ~16ms (60 FPS)
         });
     
-        joystickArea.addEventListener('touchmove', (e) => {
-            if (!isDragging) return;
-            const deltaX = e.touches[0].clientX - startX;
+        joystickArea.addEventListener('touchmove', (event) => {
+            const touch = event.touches[0];
+            const deltaX = touch.clientX - joystickStartX;
+            const deltaY = touch.clientY - joystickStartY;
     
-            if (deltaX < -20) {
-                this.player.setVelocityX(-160);
-                this.player.setFlipX(true);
-                this.player.play('walk', true);
-            } else if (deltaX > 20) {
-                this.player.setVelocityX(160);
-                this.player.setFlipX(false);
-                this.player.play('walk', true);
-            } else {
-                this.player.setVelocityX(0);
-                this.player.play('idle', true);
-            }
+            const distance = Math.sqrt(deltaX ** 2 + deltaY ** 2);
+            const maxDistance = 50; // Joystick radius limit
+    
+            // Clamp the knob's movement to the max distance
+            const clampedX = (deltaX / distance) * Math.min(distance, maxDistance);
+            const clampedY = (deltaY / distance) * Math.min(distance, maxDistance);
+    
+            // Move the knob visually
+            joystickKnob.style.transform = `translate(calc(${clampedX}px - 50%), calc(${clampedY}px - 50%))`;
+    
+            // Store the clamped values for force application
+            this.joystickForceX = clampedX / maxDistance;
+            this.joystickForceY = clampedY / maxDistance;
         });
     
         joystickArea.addEventListener('touchend', () => {
-            isDragging = false;
-            this.player.setVelocityX(0);
-            this.player.play('idle', true);
+            joystickKnob.style.transform = `translate(-50%, -50%)`; // Reset knob position
+            this.joystickForceX = 0; // Reset forces
+            this.joystickForceY = 0;
+    
+            if (this.player) {
+                this.player.setVelocityX(0); // Stop horizontal movement
+                this.player.anims.play('idle', true);
+            }
+    
+            clearInterval(activeInterval); // Stop continuous movement
         });
+    
+        // Initialize joystick force values
+        this.joystickForceX = 0;
+        this.joystickForceY = 0;
     }    
     
     setupMobileControls() {
-        window.addEventListener('deviceorientation', (event) => {
-            const tiltX = event.gamma; // Horizontal tilt (-90 to 90)
-            if (tiltX < -10) {
-                this.player.setVelocityX(-160);
-                this.player.setFlipX(true);
-                this.player.play('walk', true);
-            } else if (tiltX > 10) {
-                this.player.setVelocityX(160);
-                this.player.setFlipX(false);
-                this.player.play('walk', true);
+        if (window.DeviceOrientationEvent) {
+            if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+                // Request permission for iOS devices
+                DeviceOrientationEvent.requestPermission()
+                    .then(permissionState => {
+                        if (permissionState === 'granted') {
+                            this.enableTiltControls();
+                        } else {
+                            console.warn("Motion access denied. Enabling joystick as fallback.");
+                            this.setupJoystick(); // Fallback to joystick
+                        }
+                    })
+                    .catch(error => {
+                        console.error("Error requesting motion permission:", error);
+                        this.setupJoystick(); // Fallback to joystick
+                    });
             } else {
-                this.player.setVelocityX(0);
+                // Non-iOS or older versions
+                this.enableTiltControls();
+            }
+        } else {
+            console.warn("Tilt controls unavailable. Enabling joystick as fallback.");
+            this.setupJoystick();
+        }
+    }
+
+    applyJoystickForce() {
+        if (this.player) {
+            // Apply X-axis movement
+            this.player.setVelocityX(this.joystickForceX * 160); // Adjust multiplier for sensitivity
+    
+            if (this.joystickForceX > 0) this.player.setFlipX(false);
+            if (this.joystickForceX < 0) this.player.setFlipX(true);
+    
+            // Jump if joystick is pushed upwards
+            if (this.joystickForceY < -0.5 && this.player.body.touching.down) {
+                this.player.setVelocityY(-500); // Jump
+            }
+    
+            // Change animation based on movement
+            if (Math.abs(this.joystickForceX) > 0.1 && this.player.body.touching.down) {
+                this.player.play('walk', true);
+            } else if (this.player.body.touching.down) {
                 this.player.play('idle', true);
             }
-        });
-    }
+        }
+    } 
 
     checkLevelCompletion() {
         if (this.totalEnemiesDefeated >= this.totalEnemiesToDefeat) {
