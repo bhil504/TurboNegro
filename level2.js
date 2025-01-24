@@ -364,6 +364,26 @@ export default class Level2 extends Phaser.Scene {
         }
     }
 
+    enableTiltControls() {
+        window.addEventListener('deviceorientation', (event) => {
+            const tilt = event.gamma; // Side-to-side tilt (-90 to +90)
+            if (tilt !== null) {
+                if (tilt > 8) { // Tilted to the right
+                    this.player.setVelocityX(160);
+                    this.player.setFlipX(false);
+                    this.player.play('walk', true);
+                } else if (tilt < -8) { // Tilted to the left
+                    this.player.setVelocityX(-160);
+                    this.player.setFlipX(true);
+                    this.player.play('walk', true);
+                } else { // Neutral tilt
+                    this.player.setVelocityX(0);
+                    this.player.play('idle', true);
+                }
+            }
+        });
+    }
+
     setupMobileControls() {
         if (window.DeviceOrientationEvent) {
             this.tiltListener = (event) => {
@@ -394,82 +414,81 @@ export default class Level2 extends Phaser.Scene {
     setupJoystick() {
         const joystickArea = document.getElementById('joystick-area');
         let joystickKnob = document.getElementById('joystick-knob');
-
+    
         if (!joystickKnob) {
             joystickKnob = document.createElement('div');
             joystickKnob.id = 'joystick-knob';
             joystickArea.appendChild(joystickKnob);
         }
-
+    
         let joystickStartX = 0;
         let joystickStartY = 0;
         let activeInterval;
-
+    
         joystickArea.addEventListener('touchstart', (event) => {
             const touch = event.touches[0];
             joystickStartX = touch.clientX;
             joystickStartY = touch.clientY;
             joystickKnob.style.transform = `translate(-50%, -50%)`;
-
-            activeInterval = setInterval(() => this.applyJoystickForce(), 16);
+    
+            activeInterval = setInterval(() => this.applyJoystickForce(), 16); // Run every ~16ms (60 FPS)
         });
-
+    
         joystickArea.addEventListener('touchmove', (event) => {
             const touch = event.touches[0];
             const deltaX = touch.clientX - joystickStartX;
             const deltaY = touch.clientY - joystickStartY;
-
+    
             const distance = Math.sqrt(deltaX ** 2 + deltaY ** 2);
-            const maxDistance = 50;
-
+            const maxDistance = 50; // Joystick radius limit
+    
             const clampedX = (deltaX / distance) * Math.min(distance, maxDistance);
             const clampedY = (deltaY / distance) * Math.min(distance, maxDistance);
-
+    
             joystickKnob.style.transform = `translate(calc(${clampedX}px - 50%), calc(${clampedY}px - 50%))`;
-
+    
             this.joystickForceX = clampedX / maxDistance;
             this.joystickForceY = clampedY / maxDistance;
         });
-
+    
         joystickArea.addEventListener('touchend', () => {
             joystickKnob.style.transform = `translate(-50%, -50%)`;
             this.joystickForceX = 0;
             this.joystickForceY = 0;
-
+    
             if (this.player) {
                 this.player.setVelocityX(0);
                 this.player.anims.play('idle', true);
             }
-
+    
             clearInterval(activeInterval);
         });
-
+    
         this.joystickForceX = 0;
         this.joystickForceY = 0;
     }
     
     applyJoystickForce() {
         if (this.player) {
-            this.player.setVelocityX(this.joystickForceX * 160);
-
+            // Apply X-axis movement
+            this.player.setVelocityX(this.joystickForceX * 160); // Adjust multiplier for sensitivity
+    
             if (this.joystickForceX > 0) this.player.setFlipX(false);
             if (this.joystickForceX < 0) this.player.setFlipX(true);
-
-            if (this.joystickForceY < -0.5 && this.player.body.touching.down && !this.jumpCooldown) {
-                this.jumpCooldown = true; // Activate cooldown
-                this.player.setVelocityY(-500);
-                setTimeout(() => (this.jumpCooldown = false), 500); // 500ms cooldown
+    
+            // Jump if joystick is pushed upwards
+            if (this.joystickForceY < -0.5 && this.player.body.touching.down) {
+                this.player.setVelocityY(-500); // Jump
             }
-
+    
+            // Change animation based on movement
             if (Math.abs(this.joystickForceX) > 0.1 && this.player.body.touching.down) {
                 this.player.play('walk', true);
             } else if (this.player.body.touching.down) {
                 this.player.play('idle', true);
             }
         }
-    }
-
-    
+    }    
     
     gameOver() {
         // Stop background music
