@@ -233,15 +233,6 @@ export default class Level3 extends Phaser.Scene {
         if (Phaser.Input.Keyboard.JustDown(this.fireKey)) {
             this.fireProjectile();
         }
-
-        if (!this.player) return;
-
-        this.applyJoystickForce(); // Automatically applies both joystick and tilt input
-
-        // Handle fire key separately
-        if (Phaser.Input.Keyboard.JustDown(this.fireKey)) {
-            this.fireProjectile();
-        }
     }
 
     fireProjectile() {
@@ -715,14 +706,11 @@ export default class Level3 extends Phaser.Scene {
     
     applyJoystickForce() {
         if (this.player) {
-            const joystickVelocity = this.joystickForceX * 160; // Joystick velocity
-            const tiltVelocity = this.tiltForceX || 0; // Tilt velocity (set during enableTiltControls)
+            // Apply X-axis movement
+            this.player.setVelocityX(this.joystickForceX * 160); // Adjust multiplier for sensitivity
     
-            const combinedVelocity = joystickVelocity + tiltVelocity; // Combine both inputs
-            this.player.setVelocityX(combinedVelocity);
-    
-            if (combinedVelocity > 0) this.player.setFlipX(false);
-            if (combinedVelocity < 0) this.player.setFlipX(true);
+            if (this.joystickForceX > 0) this.player.setFlipX(false);
+            if (this.joystickForceX < 0) this.player.setFlipX(true);
     
             // Jump if joystick is pushed upwards
             if (this.joystickForceY < -0.5 && this.player.body.touching.down) {
@@ -730,13 +718,13 @@ export default class Level3 extends Phaser.Scene {
             }
     
             // Change animation based on movement
-            if (Math.abs(combinedVelocity) > 10 && this.player.body.touching.down) {
+            if (Math.abs(this.joystickForceX) > 0.1 && this.player.body.touching.down) {
                 this.player.play('walk', true);
             } else if (this.player.body.touching.down) {
                 this.player.play('idle', true);
             }
         }
-    }    
+    }
     
     enableTiltControls() {
         window.addEventListener('deviceorientation', (event) => {
