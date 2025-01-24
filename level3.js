@@ -600,30 +600,27 @@ export default class Level3 extends Phaser.Scene {
 
     setupMobileControls() {
         if (window.DeviceOrientationEvent) {
-            if (typeof DeviceOrientationEvent.requestPermission === 'function') {
-                // iOS: Request permission
-                DeviceOrientationEvent.requestPermission()
-                    .then((permissionState) => {
-                        if (permissionState === 'granted') {
-                            console.log("Tilt controls enabled.");
-                            this.enableTiltControls(); // Start tilt controls
-                        } else {
-                            console.warn("Motion access denied. Enabling joystick as fallback.");
-                            this.setupJoystick(); // Fallback to joystick
-                        }
-                    })
-                    .catch((error) => {
-                        console.error("Error requesting motion permission:", error);
-                        this.setupJoystick(); // Fallback to joystick
-                    });
-            } else {
-                // Non-iOS or older versions: Enable tilt controls directly
-                console.log("Enabling tilt controls for non-iOS or older devices.");
-                this.enableTiltControls();
-            }
+            window.addEventListener('deviceorientation', (event) => {
+                const tilt = event.gamma;
+
+                if (tilt !== null) {
+                    if (tilt > 8) {
+                        this.player.setVelocityX(160);
+                        this.player.setFlipX(false);
+                        this.player.play('walk', true);
+                    } else if (tilt < -8) {
+                        this.player.setVelocityX(-160);
+                        this.player.setFlipX(true);
+                        this.player.play('walk', true);
+                    } else {
+                        this.player.setVelocityX(0);
+                        this.player.play('idle', true);
+                    }
+                }
+            });
         } else {
-            console.warn("DeviceOrientationEvent not supported. Enabling joystick as fallback.");
-            this.setupJoystick(); // Fallback to joystick
+            console.warn("Tilt controls unavailable. Enabling joystick as fallback.");
+            this.setupJoystick();
         }
     }
 
@@ -712,26 +709,6 @@ export default class Level3 extends Phaser.Scene {
         }
     }
     
-    enableTiltControls() {
-        window.addEventListener("deviceorientation", (event) => {
-            const tilt = event.gamma; // Side-to-side tilt angle
-            if (tilt !== null) {
-                if (tilt > 8) {
-                    this.player.setVelocityX(160); // Move right
-                    this.player.setFlipX(false);
-                    this.player.play("walk", true);
-                } else if (tilt < -8) {
-                    this.player.setVelocityX(-160); // Move left
-                    this.player.setFlipX(true);
-                    this.player.play("walk", true);
-                } else {
-                    this.player.setVelocityX(0); // Stop moving
-                    this.player.play("idle", true);
-                }
-            } else {
-                console.warn("Tilt data unavailable.");
-            }
-        });
-    }
+
     
 }
