@@ -28,6 +28,7 @@ export default class Level5 extends Phaser.Scene {
         this.totalEnemiesDefeated = 0;  // Reset defeated enemies count
         this.updateEnemyCountUI();      // Initialize the enemy count UI
 
+
         // Background
         this.add.image(width / 2, height / 2, 'level5Background').setDisplaySize(width, height);
 
@@ -80,72 +81,54 @@ export default class Level5 extends Phaser.Scene {
             .setVisible(true)
             .refreshBody();
 
+
         this.physics.add.collider(this.player, this.platforms);
 
         // Groups
         this.projectiles = this.physics.add.group();
         this.beignetProjectiles = this.physics.add.group();
         this.enemies = this.physics.add.group();
-        this.healthPacks = this.physics.add.group();
 
         // Collisions
-        this.physics.add.collider(this.enemies, this.platforms);
-        this.physics.add.collider(this.projectiles, this.enemies, this.handleProjectileHit, null, this);
+        this.physics.add.collider(this.enemies, this.platforms, (enemy) => {
+            if (enemy.body.velocity.x === 0) {
+                enemy.setVelocityX(Math.random() < 0.5 ? 100 : -100);
+            }
+        });
         this.physics.add.overlap(this.player, this.beignetProjectiles, this.handleBeignetHit, null, this);
+        this.physics.add.collider(this.projectiles, this.enemies, this.handleProjectileHit, null, this);
+        this.physics.add.collider(this.projectiles, this.beignetProjectiles, this.handleProjectileCollision, null, this);
+
+        // Player Health
+        this.playerHealth = 10;
+        this.maxHealth = 10;
+        this.totalEnemiesDefeated = 0;
+        this.updateHealthUI();
+
+        // Spawning Enemies
+        this.time.addEvent({
+            delay: 3000,
+            callback: this.spawnBeignetMinion,
+            callbackScope: this,
+            loop: true,
+        });
+
+        this.time.addEvent({
+            delay: 4000,
+            callback: this.spawnBeignetMonster,
+            callbackScope: this,
+            loop: true,
+        });
+
+        // Create a group for health packs
+        this.healthPacks = this.physics.add.group();
+
+        // Add collision detection for health packs and platforms
+        this.physics.add.collider(this.healthPacks, this.platforms);
+
+        // Add overlap detection for health packs and player
         this.physics.add.overlap(this.player, this.healthPacks, this.handlePlayerHealthPackCollision, null, this);
 
-        // Mobile Controls
-        if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-            console.log("Mobile device detected. Initializing controls...");
-            this.setupJoystick();
-        } else {
-            console.log("Desktop detected. Skipping mobile controls.");
-        }
-
-        // Tap anywhere to attack (Mobile or Desktop)
-        this.input.on('pointerdown', (pointer) => {
-            if (!pointer.wasTouch) return;
-            this.fireProjectile();
-        });
-
-        // Swipe up to jump
-        let startY = null;
-        this.input.on('pointerdown', (pointer) => {
-            startY = pointer.y;
-        });
-
-        this.input.on('pointerup', (pointer) => {
-            if (startY !== null && pointer.y < startY - 50 && this.player.body.touching.down) {
-                this.player.setVelocityY(-500);
-                this.player.play('jump', true);
-            }
-            startY = null;
-        });
-
-        // Bind attack button to fireProjectile
-        const attackButton = document.getElementById('attack-button');
-        if (attackButton) {
-            attackButton.addEventListener('click', () => {
-                this.fireProjectile();
-            });
-        } else {
-            console.warn("Attack button not found!");
-        }
-
-        // Timers for Enemy Spawning
-            this.time.addEvent({
-                delay: 3000, // 3 seconds for Beignet Minions
-                callback: this.spawnBeignetMinion,
-                callbackScope: this,
-                loop: true,
-            });
-
-            this.time.addEvent({
-                delay: 2000, // 2 seconds for Beignet Monsters
-                callback: this.spawnBeignetMonster,
-                callbackScope: this,
-                loop: true,
-            });
     }
 
     spawnHealthPack() {
@@ -214,11 +197,11 @@ export default class Level5 extends Phaser.Scene {
         const healthPercentage = (this.playerHealth / this.maxHealth) * 100;
         document.getElementById('health-bar-inner').style.width = `${healthPercentage}%`;
     }
-
     updateEnemyCountUI() {
         const enemiesLeft = this.totalEnemiesToDefeat - this.totalEnemiesDefeated;
         document.getElementById('enemy-count').innerText = `Enemies Left: ${enemiesLeft}`;
     }
+    
     
     spawnHealthPack() {
         const { width } = this.scale;
@@ -326,81 +309,6 @@ export default class Level5 extends Phaser.Scene {
         }
     }
 
-    setupJoystick() {
-        const joystickArea = document.getElementById('joystick-area');
-        let joystickKnob = document.getElementById('joystick-knob');
-
-        if (!joystickKnob) {
-            joystickKnob = document.createElement('div');
-            joystickKnob.id = 'joystick-knob';
-            joystickArea.appendChild(joystickKnob);
-        }
-
-        let joystickStartX = 0;
-        let joystickStartY = 0;
-        let activeInterval;
-
-        joystickArea.addEventListener('touchstart', (event) => {
-            const touch = event.touches[0];
-            joystickStartX = touch.clientX;
-            joystickStartY = touch.clientY;
-
-            activeInterval = setInterval(() => this.applyJoystickForce(), 16);
-        });
-
-        joystickArea.addEventListener('touchmove', (event) => {
-            const touch = event.touches[0];
-            const deltaX = touch.clientX - joystickStartX;
-            const deltaY = touch.clientY - joystickStartY;
-
-            const maxDistance = 50;
-            const distance = Math.min(maxDistance, Math.sqrt(deltaX ** 2 + deltaY ** 2));
-
-            const clampedX = (deltaX / distance) * Math.min(distance, maxDistance);
-            const clampedY = (deltaY / distance) * Math.min(distance, maxDistance);
-
-            joystickKnob.style.transform = `translate(calc(${clampedX}px - 50%), calc(${clampedY}px - 50%))`;
-
-            this.joystickForceX = clampedX / maxDistance;
-            this.joystickForceY = clampedY / maxDistance;
-        });
-
-        joystickArea.addEventListener('touchend', () => {
-            joystickKnob.style.transform = `translate(-50%, -50%)`;
-            this.joystickForceX = 0;
-            this.joystickForceY = 0;
-
-            clearInterval(activeInterval);
-
-            if (this.player) {
-                this.player.setVelocityX(0);
-                this.player.anims.play('idle', true);
-            }
-        });
-
-        this.joystickForceX = 0;
-        this.joystickForceY = 0;
-    }
-
-    applyJoystickForce() {
-        if (this.player) {
-            this.player.setVelocityX(this.joystickForceX * 160);
-
-            if (this.joystickForceX > 0) this.player.setFlipX(false);
-            if (this.joystickForceX < 0) this.player.setFlipX(true);
-
-            if (this.joystickForceY < -0.5 && this.player.body.touching.down) {
-                this.player.setVelocityY(-500);
-            }
-
-            if (Math.abs(this.joystickForceX) > 0.1 && this.player.body.touching.down) {
-                this.player.play('walk', true);
-            } else if (this.player.body.touching.down) {
-                this.player.play('idle', true);
-            }
-        }
-    }
-
     checkLevelCompletion() {
         if (this.totalEnemiesDefeated >= this.totalEnemiesToDefeat) {
             this.levelComplete();
@@ -408,30 +316,14 @@ export default class Level5 extends Phaser.Scene {
     }
     
     levelComplete() {
-        console.log("Level Complete!");
-        if (this.levelMusic) this.levelMusic.stop();
-        if (this.enemySpawnTimer) this.enemySpawnTimer.remove();
-        this.enemies.clear(true, true);
-        this.beignetProjectiles.clear(true, true);
-        this.projectiles.clear(true, true);
-        this.add.image(this.scale.width / 2, this.scale.height / 2, 'levelComplete').setOrigin(0.5);
-    
-        this.input.keyboard.once('keydown-SPACE', () => {
-            this.scene.start('BossFight');
-        });
+        console.log("Level Complete");
+        this.levelMusic.stop();
+        this.scene.start('BossFight'); // Transition to BossFight
     }
 
     gameOver() {
-        console.log("Game Over!");
-        if (this.levelMusic) this.levelMusic.stop();
-        if (this.enemySpawnTimer) this.enemySpawnTimer.remove();
-        this.enemies.clear(true, true);
-        this.beignetProjectiles.clear(true, true);
-        this.projectiles.clear(true, true);
-        this.add.image(this.scale.width / 2, this.scale.height / 2, 'gameOver').setOrigin(0.5);
-    
-        this.input.keyboard.once('keydown-SPACE', () => {
-            this.scene.restart();
-        });
+        console.log("Game Over");
+        this.levelMusic.stop();
+        this.scene.restart();
     }
 }
