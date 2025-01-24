@@ -702,7 +702,7 @@ export default class Level3 extends Phaser.Scene {
         // Initialize joystick force values
         this.joystickForceX = 0;
         this.joystickForceY = 0;
-    }
+    }    
     
     applyJoystickForce() {
         if (this.player) {
@@ -724,23 +724,22 @@ export default class Level3 extends Phaser.Scene {
                 this.player.play('idle', true);
             }
         }
-    }
+    }    
     
     enableTiltControls() {
         window.addEventListener('deviceorientation', (event) => {
-            const tiltX = event.gamma; // Horizontal tilt (-90 to +90)
-    
-            if (tiltX !== null) {
-                const targetVelocityX = Phaser.Math.Clamp(tiltX * 10, -160, 160); // Scale tilt to velocity
-                this.player.setVelocityX(
-                    Phaser.Math.Linear(this.player.body.velocity.x, targetVelocityX, 0.2) // Smooth transition
-                );
-    
-                // Update animations
-                if (Math.abs(targetVelocityX) > 10) {
-                    this.player.setFlipX(targetVelocityX < 0);
-                    if (this.player.body.touching.down) this.player.play('walk', true);
-                } else if (this.player.body.touching.down) {
+            const tilt = event.gamma; // Side-to-side tilt (-90 to +90)
+            if (tilt !== null) {
+                if (tilt > 8) { // Tilted to the right
+                    this.player.setVelocityX(160);
+                    this.player.setFlipX(false);
+                    this.player.play('walk', true);
+                } else if (tilt < -8) { // Tilted to the left
+                    this.player.setVelocityX(-160);
+                    this.player.setFlipX(true);
+                    this.player.play('walk', true);
+                } else { // Neutral tilt
+                    this.player.setVelocityX(0);
                     this.player.play('idle', true);
                 }
             }
