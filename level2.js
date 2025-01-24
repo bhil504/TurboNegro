@@ -364,29 +364,30 @@ export default class Level2 extends Phaser.Scene {
 
     setupMobileControls() {
         if (window.DeviceOrientationEvent) {
-            window.addEventListener('deviceorientation', (event) => {
-                const tilt = event.gamma;
-                
-                if (tilt !== null) {
-                    if (tilt > 8) {
-                        this.player.setVelocityX(160);
-                        this.player.setFlipX(false);
-                        this.player.play('walk', true);
-                    } else if (tilt < -8) {
-                        this.player.setVelocityX(-160);
-                        this.player.setFlipX(true);
-                        this.player.play('walk', true);
-                    } else {
-                        this.player.setVelocityX(0);
-                        this.player.play('idle', true);
-                    }
-                }
-            });
+            if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+                // Request permission for iOS devices
+                DeviceOrientationEvent.requestPermission()
+                    .then(permissionState => {
+                        if (permissionState === 'granted') {
+                            this.enableTiltControls();
+                        } else {
+                            console.warn("Motion access denied. Enabling joystick as fallback.");
+                            this.setupJoystick(); // Fallback to joystick
+                        }
+                    })
+                    .catch(error => {
+                        console.error("Error requesting motion permission:", error);
+                        this.setupJoystick(); // Fallback to joystick
+                    });
+            } else {
+                // Non-iOS or older versions
+                this.enableTiltControls();
+            }
         } else {
             console.warn("Tilt controls unavailable. Enabling joystick as fallback.");
             this.setupJoystick();
         }
-    }    
+    }   
     
     setupJoystick() {
         const joystickArea = document.getElementById('joystick-area');
