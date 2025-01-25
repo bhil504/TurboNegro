@@ -334,9 +334,33 @@
             background: #999;
         }
 
+        #fullscreen-button {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            z-index: 10;
+            font-size: 14px;
+            padding: 10px 15px;
+            background: linear-gradient(180deg, #333, #555);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        #fullscreen-button:hover {
+            background: linear-gradient(180deg, #555, #777);
+        }
+
+        #ui-container {
+            transition: opacity 0.3s ease;
+        }
+
     </style>
 </head>
 <body>
+    <button id="fullscreen-button">Fullscreen</button>
     <div id="main-container">
         <!-- UI and Game Container -->
         <div id="ui-container">
@@ -350,7 +374,6 @@
                         <div id="health-bar-inner"></div>
                     </div>
                     <div id="enemy-count">Enemies Left: 0</div>
-                    <button id="fullscreen-button" class="control-button">Fullscreen</button>
                 </div>
             </div>
             <div>
@@ -515,7 +538,7 @@
             type: Phaser.AUTO,
             parent: 'game-container',
             scale: {
-                mode: Phaser.Scale.RESIZE, // Automatically adjusts size
+                mode: Phaser.Scale.FIT,
                 autoCenter: Phaser.Scale.CENTER_BOTH,
             },
             width: 1100,
@@ -527,49 +550,20 @@
             scene: [StartMenu, Level1, Level2, Level3, Level4, Level5, BossFight],
         };
 
-
         const game = new Phaser.Game(config);
         if (controlMode === 'tilt') initTiltControl();
 
-        // Add Fullscreen Button Logic
-        document.getElementById('fullscreen-button').addEventListener('click', () => {
+        const fullscreenButton = document.getElementById('fullscreen-button');
+        fullscreenButton.addEventListener('click', () => {
             if (!document.fullscreenElement) {
-                document.documentElement.requestFullscreen().catch((err) => {
-                    console.error(`Error attempting to enable fullscreen: ${err.message} (${err.name})`);
-                });
+                document.documentElement.requestFullscreen();
+                document.getElementById('ui-container').style.opacity = 0.5;
             } else {
-                document.exitFullscreen().catch((err) => {
-                    console.error(`Error attempting to exit fullscreen: ${err.message} (${err.name})`);
-                });
+                document.exitFullscreen();
+                document.getElementById('ui-container').style.opacity = 1;
             }
         });
-
-        // Adjust UI Elements on Fullscreen Toggle
-        document.addEventListener('fullscreenchange', () => {
-            const isFullscreen = !!document.fullscreenElement;
-            const gameContainer = document.getElementById('game-container');
-            const uiContainer = document.getElementById('ui-container');
-            const controls = document.getElementById('onscreen-controls');
-
-            if (isFullscreen) {
-                gameContainer.style.width = '100%';
-                gameContainer.style.height = '100%';
-                uiContainer.style.position = 'absolute';
-                uiContainer.style.top = '10px';
-                uiContainer.style.left = '50%';
-                uiContainer.style.transform = 'translateX(-50%)';
-                controls.style.bottom = '10px';
-            } else {
-                gameContainer.style.width = '100%';
-                gameContainer.style.height = '';
-                uiContainer.style.position = 'relative';
-                uiContainer.style.top = '';
-                uiContainer.style.left = '';
-                uiContainer.style.transform = '';
-                controls.style.bottom = '20px';
-            }
-        });
-
+    </script>
     </script>
 
     <div id="bhilliondollar">
@@ -583,15 +577,6 @@
             const gameHeight = document.body.scrollHeight; // Calculate the total height of the game
             window.parent.postMessage({ height: gameHeight }, "*"); // Send the height to the parent site
         };
-        window.addEventListener('resize', () => {
-        const gameContainer = document.getElementById('game-container');
-        const width = window.innerWidth;
-        const height = window.innerHeight;
-
-        gameContainer.style.width = `${width}px`;
-        gameContainer.style.height = `${height}px`;
-    });
-
     </script>
 
 </body>
