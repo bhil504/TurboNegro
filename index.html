@@ -228,6 +228,7 @@
             background: linear-gradient(180deg, #555, #777);
             transform: scale(1.05);
         }
+
         .enemy-info {
         display: flex;
         flex-direction: column;
@@ -295,6 +296,44 @@
             background: linear-gradient(180deg, #555, #777);
         }
 
+        #bhilliondollar {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        margin: 30px auto;
+        padding: 20px;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.1);
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.8);
+        max-width: 600px;
+        font-size: 16px;
+        line-height: 1.5;
+        }
+
+        #bhilliondollar button {
+            margin-top: 10px;
+            padding: 10px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            color: white;
+            background: linear-gradient(180deg, #333, #555);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.2s ease, background 0.2s ease;
+        }
+
+        #bhilliondollar button:hover {
+            transform: scale(1.05);
+            background: linear-gradient(180deg, #555, #777);
+        }
+
+        #bhilliondollar button:active {
+            transform: scale(1);
+            background: #999;
+        }
+
     </style>
 </head>
 <body>
@@ -311,6 +350,7 @@
                         <div id="health-bar-inner"></div>
                     </div>
                     <div id="enemy-count">Enemies Left: 0</div>
+                    <button id="fullscreen-button" class="control-button">Fullscreen</button>
                 </div>
             </div>
             <div>
@@ -357,11 +397,12 @@
                 <div>
                     <h2>Character Description:</h2>
                     <div class="character-info">
-                        <img src="assets/Characters/Character1/TurboNegroStanding/TurboNegroStanding1.png" alt="Negro Standing" class="character-image">
+                        <img src="assets/Characters/Character1/TurboNegroStanding/TurboNegroStanding1.png" alt="Negro Standing">
                         <h3><strong>Turbo Negro</strong></h3>
-                        <p><Strong>Origin:</Strong> New Orleans native and local. Was visiting the legendary French Quarter when randomly attacked.</p>
-                        <p><strong>Attacks:</strong> Shoots an unlimited amount of CD projectiles</p>
-                        <p>For more info, click here: <button a="https://bhilliondollar.com/the-tales-of-turbo-negro-ttn">The Tales Of Turbo Negro</button></p>
+                        <p><strong>Origin:</strong> New Orleans native and local. Was visiting the legendary French Quarter when randomly attacked.</p>
+                        <p><strong>Attacks:</strong> Shoots an unlimited amount of CD projectiles.</p>
+                        <p>For more info, click here:</p>
+                        <button onclick="window.open('https://bhilliondollar.com/the-tales-of-turbo-negro-ttn', '_blank')">The Tales Of Turbo Negro</button>
                     </div>
                     <h2>Enemy Descriptions and Attack Patterns:</h2>
                     <div class="enemy-info">
@@ -474,7 +515,7 @@
             type: Phaser.AUTO,
             parent: 'game-container',
             scale: {
-                mode: Phaser.Scale.FIT,
+                mode: Phaser.Scale.RESIZE, // Automatically adjusts size
                 autoCenter: Phaser.Scale.CENTER_BOTH,
             },
             width: 1100,
@@ -486,15 +527,71 @@
             scene: [StartMenu, Level1, Level2, Level3, Level4, Level5, BossFight],
         };
 
+
         const game = new Phaser.Game(config);
         if (controlMode === 'tilt') initTiltControl();
+
+        // Add Fullscreen Button Logic
+        document.getElementById('fullscreen-button').addEventListener('click', () => {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch((err) => {
+                    console.error(`Error attempting to enable fullscreen: ${err.message} (${err.name})`);
+                });
+            } else {
+                document.exitFullscreen().catch((err) => {
+                    console.error(`Error attempting to exit fullscreen: ${err.message} (${err.name})`);
+                });
+            }
+        });
+
+        // Adjust UI Elements on Fullscreen Toggle
+        document.addEventListener('fullscreenchange', () => {
+            const isFullscreen = !!document.fullscreenElement;
+            const gameContainer = document.getElementById('game-container');
+            const uiContainer = document.getElementById('ui-container');
+            const controls = document.getElementById('onscreen-controls');
+
+            if (isFullscreen) {
+                gameContainer.style.width = '100%';
+                gameContainer.style.height = '100%';
+                uiContainer.style.position = 'absolute';
+                uiContainer.style.top = '10px';
+                uiContainer.style.left = '50%';
+                uiContainer.style.transform = 'translateX(-50%)';
+                controls.style.bottom = '10px';
+            } else {
+                gameContainer.style.width = '100%';
+                gameContainer.style.height = '';
+                uiContainer.style.position = 'relative';
+                uiContainer.style.top = '';
+                uiContainer.style.left = '';
+                uiContainer.style.transform = '';
+                controls.style.bottom = '20px';
+            }
+        });
+
     </script>
 
+    <div id="bhilliondollar">
+        Made by Bhillion Dollar Productions. <br> An independent media company based in New Orleans, La, USA.<br> For more info, visit: 
+        <button onclick="window.open('https://bhilliondollar.com/', '_blank')">
+            www.bhilliondollar.com
+        </button>
+    </div>
     <script>
         window.onload = function () {
             const gameHeight = document.body.scrollHeight; // Calculate the total height of the game
             window.parent.postMessage({ height: gameHeight }, "*"); // Send the height to the parent site
         };
+        window.addEventListener('resize', () => {
+        const gameContainer = document.getElementById('game-container');
+        const width = window.innerWidth;
+        const height = window.innerHeight;
+
+        gameContainer.style.width = `${width}px`;
+        gameContainer.style.height = `${height}px`;
+    });
+
     </script>
 
 </body>

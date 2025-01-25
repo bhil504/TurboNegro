@@ -1,3 +1,6 @@
+import { addFullscreenButton } from '../utils/fullScreenUtils.js';
+
+
 export default class Level1 extends Phaser.Scene {
     constructor() {
         super({ key: 'Level1' });
@@ -123,6 +126,28 @@ export default class Level1 extends Phaser.Scene {
             }
             startY = null;
         });
+
+        const fullscreenButton = addFullscreenButton(this);
+
+        // Adjust button position on resize
+        this.scale.on('resize', (gameSize) => {
+            const { width, height } = gameSize;
+            fullscreenButton.setPosition(20, 20); // Ensure it stays at the top-left
+        });
+
+        this.scale.on('fullscreenchange', (isFullscreen) => {
+            if (isFullscreen) {
+                // Example: Adjust UI for fullscreen
+                document.getElementById('ui-container').style.position = 'absolute';
+                document.getElementById('ui-container').style.top = '10px';
+            } else {
+                // Reset UI when exiting fullscreen
+                document.getElementById('ui-container').style.position = 'relative';
+                document.getElementById('ui-container').style.top = '';
+            }
+        });
+        
+
     }
     
     spawnEnemy() {
