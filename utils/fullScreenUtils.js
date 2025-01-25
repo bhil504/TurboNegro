@@ -18,5 +18,10 @@ export function addFullscreenButton(scene) {
         }
     });
 
+    if (!document.fullscreenEnabled) {
+        console.warn("Fullscreen mode is not supported by your browser.");
+    }
+    
+
     return fullscreenButton;
 }

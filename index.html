@@ -342,6 +342,7 @@
             justify-content: flex-start; /* Adjust based on layout */
             align-items: center;
             background: black; /* Optional, for consistency */
+            pointer-events: auto; /* Ensure touch interactions are enabled */
         }
 
 
@@ -477,6 +478,14 @@
             document.getElementById('joystick-area').style.display = 'none';
             document.getElementById('attack-button').style.display = 'none';
         }
+
+        const fullscreenButton = scene.add.text(20, 20, 'Fullscreen', {
+            fontSize: '30px', // Increase font size for better touch accessibility
+            fill: '#ffffff',
+            backgroundColor: '#000000',
+            padding: { left: 15, right: 15, top: 10, bottom: 10 },
+            borderRadius: '8px', // Slightly larger border radius
+        }).setInteractive();
 
         // Initialize Tilt Controls
         function initTiltControl() {
