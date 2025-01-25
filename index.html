@@ -245,6 +245,56 @@
             margin-bottom: 10px;
         }
 
+        .character-info {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        margin: 20px auto;
+        padding: 20px;
+        border-radius: 12px;
+        background: rgba(255, 255, 255, 0.1);
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.8);
+        
+        }
+
+        .character-info img {
+            max-width: 150px;
+            height: auto;
+            margin-bottom: 15px;
+
+        }
+
+        .character-info h3 {
+            font-size: 24px;
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+
+        .character-info p {
+            margin: 5px 0;
+            font-size: 16px;
+            line-height: 1.5;
+        }
+
+        .character-info button {
+            margin-top: 15px;
+            padding: 10px 20px;
+            font-size: 16px;
+            font-weight: bold;
+            color: white;
+            background: linear-gradient(180deg, #333, #555);
+            border: none;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: transform 0.2s ease, background 0.2s ease;
+        }
+
+        .character-info button:hover {
+            transform: scale(1.05);
+            background: linear-gradient(180deg, #555, #777);
+        }
+
     </style>
 </head>
 <body>
@@ -305,6 +355,14 @@
                     IOS and Android users may not have the proper permissions for the tilt to move function to work. <br>
                     In that case, please, use joystick for movement.</div>
                 <div>
+                    <h2>Character Description:</h2>
+                    <div class="character-info">
+                        <img src="assets/Characters/Character1/TurboNegroStanding/TurboNegroStanding1.png" alt="Negro Standing" class="character-image">
+                        <h3><strong>Turbo Negro</strong></h3>
+                        <p><Strong>Origin:</Strong> New Orleans native and local. Was visiting the legendary French Quarter when randomly attacked.</p>
+                        <p><strong>Attacks:</strong> Shoots an unlimited amount of CD projectiles</p>
+                        <p>For more info, click here: <button a="https://bhilliondollar.com/the-tales-of-turbo-negro-ttn">The Tales Of Turbo Negro</button></p>
+                    </div>
                     <h2>Enemy Descriptions and Attack Patterns:</h2>
                     <div class="enemy-info">
                         <img src="assets/Characters/Enemies/MardiGrasZombie.png" alt="Mardi Gras Zombie" class="enemy-image">
