@@ -9,12 +9,20 @@ export function addFullscreenButton(scene) {
 
     fullscreenButton.on('pointerdown', () => {
         const fullscreenElement = document.getElementById('fullscreen');
-        if (!document.fullscreenElement) {
-            fullscreenElement.requestFullscreen().catch((err) => {
-                console.error(`Error attempting to enable fullscreen: ${err.message}`);
-            });
+        if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+            if (fullscreenElement.requestFullscreen) {
+                fullscreenElement.requestFullscreen();
+            } else if (fullscreenElement.webkitRequestFullscreen) {
+                fullscreenElement.webkitRequestFullscreen();
+            } else {
+                console.error('Fullscreen not supported by this browser.');
+            }
         } else {
-            document.exitFullscreen();
+            if (document.exitFullscreen) {
+                document.exitFullscreen();
+            } else if (document.webkitExitFullscreen) {
+                document.webkitExitFullscreen();
+            }
         }
     });
 
