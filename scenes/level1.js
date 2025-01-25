@@ -1,4 +1,4 @@
-import { addFullscreenButton } from '../utils/fullScreenUtils.js';
+// import { addFullscreenButton } from '../utils/fullScreenUtils.js';
 
 
 export default class Level1 extends Phaser.Scene {
