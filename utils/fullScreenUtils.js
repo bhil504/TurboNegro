@@ -8,10 +8,13 @@ export function addFullscreenButton(scene) {
     }).setInteractive();
 
     fullscreenButton.on('pointerdown', () => {
-        if (scene.scale.isFullscreen) {
-            scene.scale.stopFullscreen();
+        const fullscreenElement = document.getElementById('fullscreen'); // Target the specific section
+        if (!document.fullscreenElement) {
+            fullscreenElement.requestFullscreen().catch((err) => {
+                console.error(`Error attempting to enable fullscreen: ${err.message}`);
+            });
         } else {
-            scene.scale.startFullscreen();
+            document.exitFullscreen();
         }
     });
 

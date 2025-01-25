@@ -127,21 +127,7 @@ export default class Level1 extends Phaser.Scene {
             startY = null;
         });
 
-        const fullscreenButton = this.add.text(20, 20, 'Fullscreen', {
-            fontSize: '20px',
-            fill: '#ffffff',
-            backgroundColor: '#000000',
-            padding: { left: 10, right: 10, top: 5, bottom: 5 },
-            borderRadius: '5px'
-        }).setInteractive();
-        
-        fullscreenButton.on('pointerdown', () => {
-            if (this.scale.isFullscreen) {
-                this.scale.stopFullscreen();
-            } else {
-                this.scale.startFullscreen();
-            }
-        });
+        addFullscreenButton(this).setPosition(width - 120, 20); // Place at the top-right
         
     }
     
