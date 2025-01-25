@@ -1,17 +1,14 @@
 export function addFullscreenButton(scene) {
     const fullscreenButton = scene.add.text(20, 20, 'Fullscreen', {
-        fontSize: '30px', // Increase size for touch accessibility
+        fontSize: '20px',
         fill: '#ffffff',
         backgroundColor: '#000000',
-        padding: { left: 15, right: 15, top: 10, bottom: 10 },
-        borderRadius: '8px',
+        padding: { left: 10, right: 10, top: 5, bottom: 5 },
+        borderRadius: '5px',
     }).setInteractive();
 
-    fullscreenButton.on('pointerdown', handleFullscreen);
-    fullscreenButton.on('touchstart', handleFullscreen);
-
-    function handleFullscreen() {
-        const fullscreenElement = document.getElementById('fullscreen'); // Target the specific section
+    fullscreenButton.on('pointerdown', () => {
+        const fullscreenElement = document.getElementById('fullscreen');
         if (!document.fullscreenElement) {
             fullscreenElement.requestFullscreen().catch((err) => {
                 console.error(`Error attempting to enable fullscreen: ${err.message}`);
@@ -19,11 +16,7 @@ export function addFullscreenButton(scene) {
         } else {
             document.exitFullscreen();
         }
-    }
-
-    if (!document.fullscreenEnabled) {
-        console.warn("Fullscreen mode is not supported by your browser.");
-    }
+    });
 
     return fullscreenButton;
 }
