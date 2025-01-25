@@ -157,7 +157,7 @@ export default class Level1 extends Phaser.Scene {
         });
     
         // Desktop fullscreen button
-        const fullscreenButton = this.add.text(20, 20, 'Fullscreen', {
+        const fullscreenButton = this.add.text(20, 20, '[]', {
             fontSize: '20px',
             fill: '#ffffff',
             backgroundColor: '#000000',
