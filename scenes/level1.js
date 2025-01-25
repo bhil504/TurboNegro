@@ -127,25 +127,22 @@ export default class Level1 extends Phaser.Scene {
             startY = null;
         });
 
-        // Add fullscreen button
-        const fullscreenButton = addFullscreenButton(this);
-
-        // Adjust fullscreen button on resize
-        this.scale.on('resize', (gameSize) => {
-            const { width, height } = gameSize;
-            fullscreenButton.setPosition(20, 20);
-        });
-
-        // Dynamically adjust UI for fullscreen
-        this.scale.on('fullscreenchange', (isFullscreen) => {
-            const uiContainer = document.getElementById('ui-container');
-            if (isFullscreen) {
-                uiContainer.style.opacity = 0.5; // Dim UI in fullscreen
+        const fullscreenButton = this.add.text(20, 20, 'Fullscreen', {
+            fontSize: '20px',
+            fill: '#ffffff',
+            backgroundColor: '#000000',
+            padding: { left: 10, right: 10, top: 5, bottom: 5 },
+            borderRadius: '5px'
+        }).setInteractive();
+        
+        fullscreenButton.on('pointerdown', () => {
+            if (this.scale.isFullscreen) {
+                this.scale.stopFullscreen();
             } else {
-                uiContainer.style.opacity = 1; // Reset UI
+                this.scale.startFullscreen();
             }
         });
-    
+        
     }
     
     spawnEnemy() {
