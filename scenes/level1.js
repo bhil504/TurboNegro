@@ -125,7 +125,8 @@ export default class Level1 extends Phaser.Scene {
                     const fullscreenElement = document.getElementById('fullscreen');
                     if (!document.fullscreenElement) {
                         fullscreenElement.requestFullscreen().catch((err) => {
-                            console.error(`Error attempting to enable fullscreen: ${err.message}`);
+                            alert(`Error attempting to enable fullscreen: ${err.message}`);
+                            console.error(err);
                         });
                     } else {
                         document.exitFullscreen();
@@ -170,13 +171,14 @@ export default class Level1 extends Phaser.Scene {
             const fullscreenElement = document.getElementById('fullscreen');
             if (!document.fullscreenElement) {
                 fullscreenElement.requestFullscreen().catch((err) => {
-                    console.error(`Error attempting to enable fullscreen: ${err.message}`);
+                    alert(`Error attempting to enable fullscreen: ${err.message}`);
+                    console.error(err);
                 });
             } else {
                 document.exitFullscreen();
             }
         });
-    }    
+    }      
     
     spawnEnemy() {
         const { width, height } = this.scale;
