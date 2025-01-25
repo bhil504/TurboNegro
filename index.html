@@ -95,6 +95,7 @@
         #game-container {
         width: 70vw; /* Take most of the width for the game */
         height: 100%; /* Full height */
+        aspect-ratio: 16/9;
         }
 
         #onscreen-controls {
@@ -331,7 +332,9 @@
         
         #ui-container {
             transition: opacity 0.3s ease;
+            padding: 10px;
         }
+
         
         /* Show the joystick label only on mobile devices */
         @media screen and (max-width: 768px) {
@@ -354,6 +357,7 @@
             }
         }
 
+
         @media screen and (orientation: landscape) {
             #onscreen-controls {
                 flex-direction: column;
@@ -362,16 +366,28 @@
             }
         }
 
+
         #joystick-area, #attack-button {
             width: 80px;
-            height: 80px; /* Adjust control sizes */
+            height: 80px; /* Adjusted control sizes */
             margin: 10px 0;
         }
+
+
+        @media screen and (orientation: landscape) {
+            #fullscreen-button {
+                top: 20px;
+                right: 20px;
+            }
+        }
+
+
         
     </style>
 </head>
 <body>
-    <button id="fullscreen-button">Fullscreen</button>
+    <button id="fullscreen-button" aria-label="Enable fullscreen mode">Fullscreen</button>
+
     <div id="main-container">
         <!-- UI and Game Container -->
         <div id="ui-container">
@@ -624,10 +640,14 @@
                 }
             }
 
-
             // Listen for orientation changes
             window.addEventListener("resize", handleOrientationChange);
             document.addEventListener("DOMContentLoaded", handleOrientationChange);
+
+            document.addEventListener("fullscreenchange", () => {
+            handleOrientationChange(); // Reapply layout for fullscreen
+        });
+
 
         </script>
 
