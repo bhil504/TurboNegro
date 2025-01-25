@@ -119,11 +119,11 @@
         }
 
         #onscreen-controls {
-            position: relative; /* Ensure it stays within the flow of the layout */
+            position: relative;
             width: 75%; /* 75% of the game screen width */
-            margin: 10px auto; /* Center it horizontally */
+            margin: 10px auto; /* Center horizontally */
             display: flex;
-            justify-content: space-between;
+            justify-content: space-around; /* Evenly space the controls */
             align-items: center;
             padding: 10px;
             box-sizing: border-box;
@@ -367,9 +367,10 @@
             background-color: black;
             border: 2px solid white;
             border-radius: 5px;
-            margin: 0 10px; /* Center between joystick and attack button */
             text-align: center;
+            line-height: 50px; /* Center text vertically */
         }
+
 
 
     </style>

@@ -105,13 +105,13 @@ export default class Level1 extends Phaser.Scene {
                         if (fullscreenElement.requestFullscreen) {
                             fullscreenElement.requestFullscreen();
                         } else if (fullscreenElement.webkitRequestFullscreen) {
-                            fullscreenElement.webkitRequestFullscreen();
+                            fullscreenElement.webkitRequestFullscreen(); // iOS-specific
                         }
                     } else {
                         if (document.exitFullscreen) {
                             document.exitFullscreen();
                         } else if (document.webkitExitFullscreen) {
-                            document.webkitExitFullscreen();
+                            document.webkitExitFullscreen(); // iOS-specific
                         }
                     }
                 });
@@ -176,7 +176,7 @@ export default class Level1 extends Phaser.Scene {
                 document.exitFullscreen();
             }
         });
-    }        
+    }           
     
     spawnEnemy() {
         const { width, height } = this.scale;
