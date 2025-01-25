@@ -28,51 +28,51 @@ export default class Level1 extends Phaser.Scene {
     
     create() {
         const { width, height } = this.scale;
-
+    
         // Background and music
         this.add.image(width / 2, height / 2, 'level1Background').setDisplaySize(width, height);
         this.levelMusic = this.sound.add('level1Music', { loop: true, volume: 0.5 });
         this.levelMusic.play();
-
-        // Platforms
+    
+        // Platforms setup
         this.platforms = this.physics.add.staticGroup();
         this.platforms.create(width / 2, height - 20, null).setDisplaySize(width, 20).setVisible(false).refreshBody();
         const balcony = this.platforms.create(width / 2, height - 350, 'balcony').setScale(1).refreshBody();
         balcony.body.setSize(280, 10).setOffset((balcony.displayWidth - 280) / 2, balcony.displayHeight - 75);
-
+    
         // Player setup
         this.player = this.physics.add.sprite(100, height - 100, 'turboNegroStanding1');
         this.player.setCollideWorldBounds(true);
         this.physics.add.collider(this.player, this.platforms);
-
+    
         // Animations
         this.anims.create({ key: 'idle', frames: [{ key: 'turboNegroStanding1' }, { key: 'turboNegroStanding2' }, { key: 'turboNegroStanding3' }, { key: 'turboNegroStanding4' }], frameRate: 4, repeat: -1 });
         this.anims.create({ key: 'walk', frames: [{ key: 'turboNegroWalking' }], frameRate: 8, repeat: -1 });
         this.anims.create({ key: 'jump', frames: [{ key: 'turboNegroJump' }], frameRate: 1 });
-
+    
         // Input setup
         this.cursors = this.input.keyboard.createCursorKeys();
         this.fireKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
-
+    
         // Health and enemy setup
         this.playerHealth = 10;
         this.maxHealth = 10;
         this.totalEnemiesDefeated = 0;
         this.updateHealthUI();
         this.updateEnemyCountUI();
-
+    
         this.projectiles = this.physics.add.group({ defaultKey: 'projectileCD' });
         this.enemies = this.physics.add.group();
         this.enemySpawnTimer = this.time.addEvent({ delay: 1000, callback: this.spawnEnemy, callbackScope: this, loop: true });
-
+    
         this.healthPacks = this.physics.add.group();
         this.physics.add.collider(this.healthPacks, this.platforms);
         this.physics.add.overlap(this.player, this.healthPacks, this.handlePlayerHealthPackCollision, null, this);
-
+    
         this.physics.add.collider(this.player, this.enemies, this.handlePlayerEnemyCollision, null, this);
         this.physics.add.collider(this.projectiles, this.enemies, this.handleProjectileEnemyCollision, null, this);
         this.physics.add.collider(this.enemies, this.platforms);
-
+    
         // Hook up the attack button to fireProjectile
         const attackButton = document.getElementById('attack-button');
         if (attackButton) {
@@ -80,13 +80,13 @@ export default class Level1 extends Phaser.Scene {
                 this.fireProjectile();
             });
         }
-
-        // Initialize mobile-specific controls
+    
+        // Mobile-specific controls
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         if (isMobile) {
             console.log("Mobile device detected. Initializing controls...");
             this.setupJoystick(); // Always initialize joystick
-
+    
             if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
                 // Request motion permission for iOS
                 DeviceOrientationEvent.requestPermission()
@@ -104,20 +104,48 @@ export default class Level1 extends Phaser.Scene {
                 // Enable tilt controls directly for non-iOS or older versions
                 this.enableTiltControls();
             }
+    
+            // Add mobile fullscreen button
+            const onscreenControls = document.getElementById('onscreen-controls');
+            if (onscreenControls) {
+                const mobileFullscreenButton = document.createElement('button');
+                mobileFullscreenButton.id = 'mobile-fullscreen-button';
+                mobileFullscreenButton.textContent = 'Fullscreen';
+                mobileFullscreenButton.style.cssText = `
+                    width: 100px;
+                    height: 50px;
+                    font-size: 14px;
+                    color: white;
+                    background-color: black;
+                    border: 2px solid white;
+                    border-radius: 5px;
+                    margin: 10px;
+                `;
+                mobileFullscreenButton.addEventListener('click', () => {
+                    if (this.scale.isFullscreen) {
+                        this.scale.stopFullscreen();
+                    } else {
+                        this.scale.startFullscreen();
+                    }
+                });
+                onscreenControls.appendChild(mobileFullscreenButton);
+            }
         } else {
             console.log("Desktop detected. Skipping mobile-specific controls.");
         }
-
-        // Handle tap-to-attack and swipe-to-jump
+    
+        // Tap anywhere to attack (Mobile or Desktop)
+        this.input.on('pointerdown', (pointer) => {
+            if (!pointer.wasTouch) return; // Ensures it's not triggered by a mouse
+            this.fireProjectile();
+        });
+    
+        // Swipe up to jump
         let startY = null;
         this.input.on('pointerdown', (pointer) => {
-            if (pointer.wasTouch) {
-                startY = pointer.y;
-            } else {
-                this.fireProjectile(); // Attack on mouse/tap
-            }
+            startY = pointer.y;
         });
-
+    
         this.input.on('pointerup', (pointer) => {
             if (startY !== null && pointer.y < startY - 50 && this.player.body.touching.down) {
                 this.player.setVelocityY(-500);
@@ -125,15 +153,24 @@ export default class Level1 extends Phaser.Scene {
             }
             startY = null;
         });
-
-        // Add fullscreen button
-        try {
-            addFullscreenButton(this).setPosition(width - 150, 30);
-        } catch (error) {
-            console.error("Error adding fullscreen button:", error);
-        }
+    
+        // Desktop fullscreen button
+        const fullscreenButton = this.add.text(20, 20, 'Fullscreen', {
+            fontSize: '20px',
+            fill: '#ffffff',
+            backgroundColor: '#000000',
+            padding: { left: 10, right: 10, top: 5, bottom: 5 },
+            borderRadius: '5px'
+        }).setInteractive();
+    
+        fullscreenButton.on('pointerdown', () => {
+            if (this.scale.isFullscreen) {
+                this.scale.stopFullscreen();
+            } else {
+                this.scale.startFullscreen();
+            }
+        });
     }
-
     
     spawnEnemy() {
         const { width, height } = this.scale;
