@@ -81,11 +81,12 @@ export default class Level1 extends Phaser.Scene {
             });
         }
     
-        // Mobile-specific controls
-        if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+        // Initialize mobile-specific controls
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        if (isMobile) {
             console.log("Mobile device detected. Initializing controls...");
             this.setupJoystick(); // Always initialize joystick
-            
+    
             if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
                 // Request motion permission for iOS
                 DeviceOrientationEvent.requestPermission()
@@ -107,16 +108,14 @@ export default class Level1 extends Phaser.Scene {
             console.log("Desktop detected. Skipping mobile-specific controls.");
         }
     
-        // Tap anywhere to attack (Mobile or Desktop)
-        this.input.on('pointerdown', (pointer) => {
-            if (!pointer.wasTouch) return; // Ensures it's not triggered by a mouse
-            this.fireProjectile();
-        });
-    
-        // Swipe up to jump
+        // Handle tap-to-attack and swipe-to-jump
         let startY = null;
         this.input.on('pointerdown', (pointer) => {
-            startY = pointer.y;
+            if (pointer.wasTouch) {
+                startY = pointer.y;
+            } else {
+                this.fireProjectile(); // Attack on mouse/tap
+            }
         });
     
         this.input.on('pointerup', (pointer) => {
@@ -126,10 +125,14 @@ export default class Level1 extends Phaser.Scene {
             }
             startY = null;
         });
-
-        addFullscreenButton(this).setPosition(width - 150, 30);
-        
-    }
+    
+        // Add fullscreen button
+        try {
+            addFullscreenButton(this).setPosition(width - 150, 30);
+        } catch (error) {
+            console.error("Error adding fullscreen button:", error);
+        }
+    }    
     
     spawnEnemy() {
         const { width, height } = this.scale;
