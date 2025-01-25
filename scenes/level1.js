@@ -122,10 +122,13 @@ export default class Level1 extends Phaser.Scene {
                     margin: 10px;
                 `;
                 mobileFullscreenButton.addEventListener('click', () => {
-                    if (this.scale.isFullscreen) {
-                        this.scale.stopFullscreen();
+                    const fullscreenElement = document.getElementById('fullscreen');
+                    if (!document.fullscreenElement) {
+                        fullscreenElement.requestFullscreen().catch((err) => {
+                            console.error(`Error attempting to enable fullscreen: ${err.message}`);
+                        });
                     } else {
-                        this.scale.startFullscreen();
+                        document.exitFullscreen();
                     }
                 });
                 onscreenControls.appendChild(mobileFullscreenButton);
@@ -164,13 +167,16 @@ export default class Level1 extends Phaser.Scene {
         }).setInteractive();
     
         fullscreenButton.on('pointerdown', () => {
-            if (this.scale.isFullscreen) {
-                this.scale.stopFullscreen();
+            const fullscreenElement = document.getElementById('fullscreen');
+            if (!document.fullscreenElement) {
+                fullscreenElement.requestFullscreen().catch((err) => {
+                    console.error(`Error attempting to enable fullscreen: ${err.message}`);
+                });
             } else {
-                this.scale.startFullscreen();
+                document.exitFullscreen();
             }
         });
-    }
+    }    
     
     spawnEnemy() {
         const { width, height } = this.scale;
