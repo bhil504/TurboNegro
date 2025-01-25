@@ -127,7 +127,7 @@ export default class Level1 extends Phaser.Scene {
             startY = null;
         });
 
-        addFullscreenButton(this).setPosition(width - 120, 20); // Place at the top-right
+        addFullscreenButton(this).setPosition(width - 150, 30);
         
     }
     
