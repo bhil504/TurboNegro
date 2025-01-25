@@ -377,9 +377,10 @@
                 </div>
             </div>
             <div>
-                <div id="game-container"></div>
-                <!-- On-Screen Controls -->
-                <div id="onscreen-controls">
+                <div id="fullscreen"></div>
+                    <div id="game-container"></div>
+                    <!-- On-Screen Controls -->
+                    <div id="onscreen-controls">
                     <div>
                         <div id="joystick-area">
                             <div id="joystick-knob"></div>
@@ -553,16 +554,19 @@
         const game = new Phaser.Game(config);
         if (controlMode === 'tilt') initTiltControl();
 
-        const fullscreenButton = document.getElementById('fullscreen-button');
-        fullscreenButton.addEventListener('click', () => {
-            if (!document.fullscreenElement) {
-                document.documentElement.requestFullscreen();
-                document.getElementById('ui-container').style.opacity = 0.5;
+        document.addEventListener('fullscreenchange', () => {
+            const gameSection = document.querySelector('#game-container').parentElement;
+            if (document.fullscreenElement) {
+                gameSection.style.background = '#000'; // Example: Change background in fullscreen
+                gameSection.style.width = '100vw';    // Full width
+                gameSection.style.height = '100vh';   // Full height
             } else {
-                document.exitFullscreen();
-                document.getElementById('ui-container').style.opacity = 1;
+                gameSection.style.background = '';    // Reset to default
+                gameSection.style.width = '';         // Reset to default
+                gameSection.style.height = '';        // Reset to default
             }
         });
+
     </script>
     </script>
 
