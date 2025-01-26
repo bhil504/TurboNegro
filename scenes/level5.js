@@ -212,7 +212,6 @@ export default class Level5 extends Phaser.Scene {
                 
             }
 
-
     spawnHealthPack() {
         const { width } = this.scale;
         const x = Phaser.Math.Between(50, width - 50); // Random X position
@@ -240,8 +239,20 @@ export default class Level5 extends Phaser.Scene {
         // Reset horizontal velocity
         this.player.setVelocityX(0);
     
-        // Handle joystick or tilt input
-        if (this.isUsingJoystick) return;
+        // Tilt controls
+        if (this.isUsingJoystick) return; // Skip if joystick is active
+        if (typeof this.joystickForceX !== "undefined" && this.joystickForceX !== 0) {
+            this.player.setVelocityX(this.joystickForceX * 160); // Joystick or tilt control velocity
+            this.player.setFlipX(this.joystickForceX < 0);
+            this.player.play('walk', true);
+        } else if (this.tiltX !== undefined && Math.abs(this.tiltX) > 8) {
+            this.player.setVelocityX(this.tiltX * 5); // Adjust sensitivity multiplier
+            this.player.setFlipX(this.tiltX < 0);
+            this.player.play('walk', true);
+        } else {
+            // Default idle animation
+            this.player.play('idle', true);
+        }
     
         // Keyboard controls
         if (this.cursors.left.isDown) {
@@ -252,16 +263,19 @@ export default class Level5 extends Phaser.Scene {
             this.player.setVelocityX(160);
             this.player.setFlipX(false);
             this.player.play('walk', true);
-        } else {
-            this.player.play('idle', true);
         }
-        
-        // Jump
+    
+        // Jump logic
         if (this.cursors.up.isDown && this.player.body.touching.down) {
             this.player.setVelocityY(-500);
             this.player.play('jump', true);
         }
-    }      
+    
+        // Fire projectile logic
+        if (Phaser.Input.Keyboard.JustDown(this.attackKey)) {
+            this.fireProjectile();
+        }
+    }     
 
     fireProjectile() {
         const projectile = this.projectiles.create(this.player.x, this.player.y, 'playerProjectile');
