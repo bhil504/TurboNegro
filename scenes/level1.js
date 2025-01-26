@@ -86,33 +86,31 @@ export default class Level1 extends Phaser.Scene {
             });
         }
     
+        // Fullscreen logic with landscape mode
+        const fullscreenElement = document.getElementById('fullscreen');
+        if (fullscreenElement && !document.fullscreenElement) {
+            fullscreenElement.requestFullscreen().then(() => {
+                if (screen.orientation && screen.orientation.lock) {
+                    screen.orientation.lock('landscape').catch(err => {
+                        console.warn('Failed to lock orientation:', err);
+                    });
+                }
+            });
+        }
+    
         // Mobile-specific controls
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         if (isMobile) {
             console.log("Mobile device detected. Initializing controls...");
             this.setupJoystick();
     
-            // Remove game screen fullscreen button on mobile
-            const gameScreenFullscreenButton = document.getElementById('fullscreen-button');
-            if (gameScreenFullscreenButton) gameScreenFullscreenButton.style.display = 'none';
-    
-            // Handle mobile fullscreen button
             const mobileFullscreenButton = document.getElementById('mobile-fullscreen-button');
             if (mobileFullscreenButton) {
                 mobileFullscreenButton.addEventListener('click', () => {
-                    const fullscreenElement = document.getElementById('fullscreen');
                     if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-                        if (fullscreenElement.requestFullscreen) {
-                            fullscreenElement.requestFullscreen();
-                        } else if (fullscreenElement.webkitRequestFullscreen) {
-                            fullscreenElement.webkitRequestFullscreen(); // iOS-specific
-                        }
+                        fullscreenElement.requestFullscreen();
                     } else {
-                        if (document.exitFullscreen) {
-                            document.exitFullscreen();
-                        } else if (document.webkitExitFullscreen) {
-                            document.webkitExitFullscreen(); // iOS-specific
-                        }
+                        document.exitFullscreen();
                     }
                 });
             }
@@ -136,7 +134,7 @@ export default class Level1 extends Phaser.Scene {
             console.log("Desktop detected. Skipping mobile-specific controls.");
         }
     
-        // Tap anywhere to attack (Mobile or Desktop)
+        // Tap anywhere to attack
         this.input.on('pointerdown', (pointer) => {
             if (!pointer.wasTouch) return;
             this.fireProjectile();
@@ -166,9 +164,8 @@ export default class Level1 extends Phaser.Scene {
         }).setInteractive();
     
         fullscreenButton.on('pointerdown', () => {
-            const fullscreenElement = document.getElementById('fullscreen');
             if (!document.fullscreenElement) {
-                fullscreenElement.requestFullscreen().catch((err) => {
+                fullscreenElement.requestFullscreen().catch(err => {
                     alert(`Error attempting to enable fullscreen: ${err.message}`);
                     console.error(err);
                 });
@@ -176,7 +173,8 @@ export default class Level1 extends Phaser.Scene {
                 document.exitFullscreen();
             }
         });
-    }           
+    }
+               
     
     spawnEnemy() {
         const { width, height } = this.scale;
