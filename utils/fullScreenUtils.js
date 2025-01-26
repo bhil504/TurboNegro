@@ -11,7 +11,13 @@ export function addFullscreenButton(scene) {
         const fullscreenElement = document.getElementById('fullscreen');
         if (!document.fullscreenElement && !document.webkitFullscreenElement) {
             if (fullscreenElement.requestFullscreen) {
-                fullscreenElement.requestFullscreen();
+                fullscreenElement.requestFullscreen().then(() => {
+                    if (screen.orientation && screen.orientation.lock) {
+                        screen.orientation.lock('landscape').catch((err) => {
+                            console.warn('Failed to lock orientation:', err);
+                        });
+                    }
+                });
             } else if (fullscreenElement.webkitRequestFullscreen) {
                 fullscreenElement.webkitRequestFullscreen();
             } else {
