@@ -1,3 +1,5 @@
+import { addFullscreenButton } from '../utils/fullScreenUtils.js';
+
 export default class Level3 extends Phaser.Scene {
     constructor() {
         super({ key: 'Level3' });
@@ -26,7 +28,10 @@ export default class Level3 extends Phaser.Scene {
         const { width, height } = this.scale;
         console.log("Creating Level 3...");
     
-        // Background setup (adjusted origin and positioning for full coverage)
+        // Add fullscreen button
+        addFullscreenButton(this);
+    
+        // Background setup
         this.add.image(0, 0, 'level3Background')
             .setOrigin(0, 0)
             .setDisplaySize(1600, height);
@@ -48,53 +53,14 @@ export default class Level3 extends Phaser.Scene {
             .setVisible(false)
             .refreshBody();
     
-        // Left ledge
-        this.platforms.create(100, height - 230, null)
-            .setDisplaySize(200, 10)
-            .setVisible(false)
-            .refreshBody();
-        this.add.image(100, height - 180, 'ledgeLeft').setOrigin(0.5, 1).setScale(0.8).setDepth(2);
-    
-        // Right ledge
-        this.platforms.create(1500, height - 230, null)
-            .setDisplaySize(200, 10)
-            .setVisible(false)
-            .refreshBody();
-        this.add.image(1500, height - 180, 'ledgeRight').setOrigin(0.5, 1).setScale(0.8).setDepth(2);
-    
-        // Middle platform
-        this.platforms.create(800, height - 165, null)
-            .setDisplaySize(300, 10)
-            .setVisible(false)
-            .refreshBody();
-        this.add.image(800, height - 148, 'platform').setOrigin(0.5, 1).setDepth(2);
+        // Ledges and platforms
+        this.setupPlatforms(height);
     
         // Player setup
-        this.player = this.physics.add.sprite(200, height - 100, 'turboNegroStanding1');
-        this.player.setCollideWorldBounds(true);
-        this.physics.add.collider(this.player, this.platforms);
-        this.player.setDepth(1);
-    
-        // Player animations
-        this.anims.create({
-            key: 'idle',
-            frames: [
-                { key: 'turboNegroStanding1' },
-                { key: 'turboNegroStanding2' },
-                { key: 'turboNegroStanding3' },
-                { key: 'turboNegroStanding4' },
-            ],
-            frameRate: 4,
-            repeat: -1,
-        });
-        this.anims.create({ key: 'walk', frames: [{ key: 'turboNegroWalking' }], frameRate: 8, repeat: -1 });
-    
-        // Input setup
-        this.cursors = this.input.keyboard.createCursorKeys();
-        this.fireKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
+        this.setupPlayer(height);
     
         // Object groups
-        this.projectiles = this.physics.add.group({ defaultKey: 'projectileCD', collideWorldBounds: false, runChildUpdate: true });
+        this.projectiles = this.physics.add.group({ defaultKey: 'projectileCD', runChildUpdate: true });
         this.enemyProjectiles = this.physics.add.group();
         this.enemies = this.physics.add.group();
         this.trumpetEnemies = this.physics.add.group();
@@ -111,10 +77,62 @@ export default class Level3 extends Phaser.Scene {
         // Camera follows player
         this.cameras.main.startFollow(this.player);
     
-        // Create and manage Blimp
+        // Blimp setup
         this.createBlimpPath();
     
-        // Physics and collision
+        // Physics and collision setup
+        this.setupCollisions();
+    
+        // Enemy spawn timers
+        this.setupEnemySpawns();
+    
+        // Mobile Controls (Tilt or Joystick)
+        this.setupMobileControls();
+    
+        // Tap anywhere to attack
+        this.setupPointerAttack();
+    
+        // Swipe up to jump
+        this.setupSwipeJump();
+    
+        // Bind attack button to fireProjectile
+        this.setupAttackButton();
+    
+        console.log("Level 3 setup complete.");
+    }
+
+    setupPlatforms(height) {
+        this.platforms.create(100, height - 230, null).setDisplaySize(200, 10).setVisible(false).refreshBody();
+        this.add.image(100, height - 180, 'ledgeLeft').setOrigin(0.5, 1).setScale(0.8).setDepth(2);
+    
+        this.platforms.create(1500, height - 230, null).setDisplaySize(200, 10).setVisible(false).refreshBody();
+        this.add.image(1500, height - 180, 'ledgeRight').setOrigin(0.5, 1).setScale(0.8).setDepth(2);
+    
+        this.platforms.create(800, height - 165, null).setDisplaySize(300, 10).setVisible(false).refreshBody();
+        this.add.image(800, height - 148, 'platform').setOrigin(0.5, 1).setDepth(2);
+    }
+
+    setupPlayer(height) {
+        this.player = this.physics.add.sprite(200, height - 100, 'turboNegroStanding1');
+        this.player.setCollideWorldBounds(true);
+        this.physics.add.collider(this.player, this.platforms);
+        this.player.setDepth(1);
+    
+        this.anims.create({
+            key: 'idle',
+            frames: [
+                { key: 'turboNegroStanding1' },
+                { key: 'turboNegroStanding2' },
+                { key: 'turboNegroStanding3' },
+                { key: 'turboNegroStanding4' },
+            ],
+            frameRate: 4,
+            repeat: -1,
+        });
+        this.anims.create({ key: 'walk', frames: [{ key: 'turboNegroWalking' }], frameRate: 8, repeat: -1 });
+    }
+
+    setupCollisions() {
         this.physics.add.overlap(this.projectiles, this.mardiGrasBlimp, this.destroyBlimp, null, this);
         this.physics.add.overlap(this.enemyProjectiles, this.player, this.handleBeadCollision, null, this);
         this.physics.add.collider(this.enemies, this.platforms);
@@ -125,8 +143,9 @@ export default class Level3 extends Phaser.Scene {
         this.physics.add.collider(this.projectiles, this.trumpetEnemies, this.handleProjectileEnemyCollision, null, this);
         this.physics.add.collider(this.healthPacks, this.platforms);
         this.physics.add.overlap(this.player, this.healthPacks, this.handlePlayerHealthPackCollision, null, this);
-    
-        // Enemy spawn timers
+    }
+
+    setupEnemySpawns() {
         this.enemySpawnTimer = this.time.addEvent({
             delay: 2000,
             callback: this.spawnMardiGrasZombie,
@@ -140,64 +159,37 @@ export default class Level3 extends Phaser.Scene {
             callbackScope: this,
             loop: true,
         });
-    
-        // Mobile Controls for Tilt
-    if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-        console.log("Mobile device detected. Initializing controls...");
-        if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-            DeviceOrientationEvent.requestPermission()
-                .then(permissionState => {
-                    if (permissionState === 'granted') {
-                        this.enableTiltControls();
-                    } else {
-                        console.warn("Motion access denied. Joystick is available.");
-                        this.setupJoystick(); // Fallback to joystick
-                    }
-                })
-                .catch(error => {
-                    console.error("Error requesting motion permission:", error);
-                    this.setupJoystick(); // Fallback to joystick
-                });
-        } else {
-            this.enableTiltControls(); // For non-iOS or older devices
-        }
-    } else {
-        console.log("Desktop detected. Skipping mobile-specific controls.");
     }
 
-    
-        // Tap anywhere to attack (Mobile or Desktop)
-        this.input.on('pointerdown', (pointer) => {
-            if (!pointer.wasTouch) return;
-            this.fireProjectile();
-        });
-    
-        // Swipe up to jump
-        let startY = null;
-        this.input.on('pointerdown', (pointer) => {
-            startY = pointer.y;
-        });
-    
-        this.input.on('pointerup', (pointer) => {
-            if (startY !== null && pointer.y < startY - 50 && this.player.body.touching.down) {
-                this.player.setVelocityY(-500);
-                this.player.play('jump', true);
+    setupMobileControls() {
+        if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+            console.log("Mobile device detected. Initializing controls...");
+            if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+                // For iOS: Request permission for motion and orientation
+                DeviceOrientationEvent.requestPermission()
+                    .then((permissionState) => {
+                        if (permissionState === 'granted') {
+                            this.enableTiltControls();
+                        } else {
+                            console.warn("Motion access denied. Enabling joystick as fallback.");
+                            this.setupJoystick();
+                        }
+                    })
+                    .catch(() => {
+                        console.warn("Error requesting motion access. Enabling joystick as fallback.");
+                        this.setupJoystick();
+                    });
+            } else if (window.DeviceOrientationEvent) {
+                // For non-iOS devices
+                this.enableTiltControls();
+            } else {
+                console.warn("Tilt controls unavailable. Enabling joystick as fallback.");
+                this.setupJoystick();
             }
-            startY = null;
-        });
-    
-        // Bind attack button to fireProjectile
-        const attackButton = document.getElementById('attack-button');
-        if (attackButton) {
-            attackButton.addEventListener('click', () => {
-                this.fireProjectile();
-            });
         } else {
-            console.warn("Attack button not found!");
+            console.log("Desktop detected. Skipping mobile-specific controls.");
         }
-    
-        console.log("Level 3 setup complete.");
-    }       
+    }
 
     updateHealthUI() {
         const healthPercentage = (this.playerHealth / this.maxHealth) * 100;
@@ -209,31 +201,59 @@ export default class Level3 extends Phaser.Scene {
     }
 
     update() {
+        // Ensure player and input exist
         if (!this.player || !this.cursors) return;
-
+    
+        // Reset player's horizontal velocity
         this.player.setVelocityX(0);
-
+    
+        // Horizontal movement: left or right
         if (this.cursors.left.isDown) {
             this.player.setVelocityX(-165);
-            this.player.setFlipX(true);
-            if (this.player.body.touching.down) this.player.play('walk', true);
+            this.player.setFlipX(true); // Flip sprite for left movement
+            if (this.player.body.touching.down) {
+                this.player.play('walk', true); // Play walk animation
+            }
         } else if (this.cursors.right.isDown) {
             this.player.setVelocityX(165);
-            this.player.setFlipX(false);
-            if (this.player.body.touching.down) this.player.play('walk', true);
+            this.player.setFlipX(false); // Default orientation for right movement
+            if (this.player.body.touching.down) {
+                this.player.play('walk', true); // Play walk animation
+            }
         } else if (this.player.body.touching.down) {
-            this.player.play('idle', true);
+            this.player.play('idle', true); // Play idle animation if not moving
         }
-
+    
+        // Jumping logic
         if (this.cursors.up.isDown && this.player.body.touching.down) {
-            this.player.setVelocityY(-500);
+            this.player.setVelocityY(-500); // Apply vertical velocity for jumping
+            this.player.play('jump', true); // Play jump animation
             console.log("Player jumps!");
         }
-
+    
+        // Handle firing projectiles when the fire key is pressed
         if (Phaser.Input.Keyboard.JustDown(this.fireKey)) {
             this.fireProjectile();
         }
-    }
+    
+        // Additional mobile tilt controls
+        if (this.joystickForceX) {
+            this.player.setVelocityX(this.joystickForceX * 165); // Apply joystick force for horizontal movement
+            if (this.joystickForceX > 0) {
+                this.player.setFlipX(false);
+            } else if (this.joystickForceX < 0) {
+                this.player.setFlipX(true);
+            }
+            if (this.player.body.touching.down) {
+                this.player.play('walk', true);
+            }
+        }
+    
+        if (this.joystickForceY < -0.5 && this.player.body.touching.down) {
+            this.player.setVelocityY(-500); // Apply upward velocity for jumping via joystick
+            this.player.play('jump', true);
+        }
+    }    
 
     fireProjectile() {
         const projectile = this.projectiles.create(this.player.x, this.player.y, 'projectileCD');
@@ -612,32 +632,6 @@ export default class Level3 extends Phaser.Scene {
     
         if (this.playerHealth <= 0) {
             this.gameOver();
-        }
-    }
-
-    setupMobileControls() {
-        if (window.DeviceOrientationEvent) {
-            window.addEventListener('deviceorientation', (event) => {
-                const tilt = event.gamma;
-
-                if (tilt !== null) {
-                    if (tilt > 8) {
-                        this.player.setVelocityX(160);
-                        this.player.setFlipX(false);
-                        this.player.play('walk', true);
-                    } else if (tilt < -8) {
-                        this.player.setVelocityX(-160);
-                        this.player.setFlipX(true);
-                        this.player.play('walk', true);
-                    } else {
-                        this.player.setVelocityX(0);
-                        this.player.play('idle', true);
-                    }
-                }
-            });
-        } else {
-            console.warn("Tilt controls unavailable. Enabling joystick as fallback.");
-            this.setupJoystick();
         }
     }
 

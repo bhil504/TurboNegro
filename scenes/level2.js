@@ -1,3 +1,5 @@
+import { addFullscreenButton } from '../utils/fullScreenUtils.js';
+
 export default class Level2 extends Phaser.Scene {
     constructor() {
         super({ key: 'Level2' });
@@ -35,6 +37,40 @@ export default class Level2 extends Phaser.Scene {
 
     create() {
         const { width, height } = this.scale;
+    
+        // Add fullscreen button
+        const fullscreenButton = this.add.text(20, 20, '[ Fullscreen ]', {
+            fontSize: '20px',
+            fill: '#ffffff',
+            backgroundColor: '#000000',
+            padding: { left: 10, right: 10, top: 5, bottom: 5 },
+            borderRadius: 5,
+        }).setInteractive();
+    
+        fullscreenButton.on('pointerdown', () => {
+            const fullscreenElement = document.getElementById('fullscreen');
+            if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+                if (fullscreenElement.requestFullscreen) {
+                    fullscreenElement.requestFullscreen().then(() => {
+                        if (screen.orientation && screen.orientation.lock) {
+                            screen.orientation.lock('landscape').catch((err) => {
+                                console.warn('Failed to lock orientation:', err);
+                            });
+                        }
+                    });
+                } else if (fullscreenElement.webkitRequestFullscreen) {
+                    fullscreenElement.webkitRequestFullscreen();
+                } else {
+                    console.error('Fullscreen not supported by this browser.');
+                }
+            } else {
+                if (document.exitFullscreen) {
+                    document.exitFullscreen();
+                } else if (document.webkitExitFullscreen) {
+                    document.webkitExitFullscreen();
+                }
+            }
+        });
     
         // Play background music
         this.levelMusic = this.sound.add('level2Music', { loop: true, volume: 0.5 });
@@ -140,8 +176,9 @@ export default class Level2 extends Phaser.Scene {
             });
         }
     
-         // Setup mobile controls
-         if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+        // Setup mobile controls
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        if (isMobile) {
             console.log("Mobile device detected. Initializing controls...");
             this.setupMobileControls();
             this.setupJoystick();
@@ -168,9 +205,7 @@ export default class Level2 extends Phaser.Scene {
             }
             startY = null;
         });
-
-        this.setupMobileControls();
-    }
+    }    
     
     update() {
         if (!this.player || !this.cursors) return;

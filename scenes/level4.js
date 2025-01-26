@@ -1,3 +1,5 @@
+import { addFullscreenButton } from '../utils/fullScreenUtils.js';
+
 export default class Level4 extends Phaser.Scene {
     constructor() {
         super({ key: 'Level4' });
@@ -68,20 +70,15 @@ export default class Level4 extends Phaser.Scene {
         this.ground = this.platforms.create(width / 2, height - 10, null).setDisplaySize(width, 20).setVisible(false).refreshBody();
     
         // Add Other Platforms
-        this.platforms.create(width / 2, height / 2 - 50, 'platform')
-            .setDisplaySize(150, 20)
-            .setVisible(true)
-            .refreshBody();
+        const platformData = [
+            { x: width / 2, y: height / 2 - 50 },
+            { x: 50, y: height / 2 },
+            { x: width - 50, y: height / 2 }
+        ];
     
-        this.platforms.create(50, height / 2, 'platform')
-            .setDisplaySize(150, 20)
-            .setVisible(true)
-            .refreshBody();
-    
-        this.platforms.create(width - 50, height / 2, 'platform')
-            .setDisplaySize(150, 20)
-            .setVisible(true)
-            .refreshBody();
+        platformData.forEach(({ x, y }) => {
+            this.platforms.create(x, y, 'platform').setDisplaySize(150, 20).setVisible(true).refreshBody();
+        });
     
         this.physics.add.collider(this.player, this.platforms);
     
@@ -111,57 +108,20 @@ export default class Level4 extends Phaser.Scene {
         this.updateEnemyCountUI();
     
         // Enemy Spawns
-        this.time.addEvent({
-            delay: 2000,
-            callback: this.spawnMardiGrasZombie,
-            callbackScope: this,
-            loop: true,
+        const spawnEvents = [
+            { delay: 2000, callback: this.spawnMardiGrasZombie },
+            { delay: 3000, callback: this.spawnTrumpetSkeleton },
+            { delay: 4000, callback: this.spawnBeignetMinion }
+        ];
+    
+        spawnEvents.forEach(({ delay, callback }) => {
+            this.time.addEvent({ delay, callback, callbackScope: this, loop: true });
         });
     
-        this.time.addEvent({
-            delay: 3000,
-            callback: this.spawnTrumpetSkeleton,
-            callbackScope: this,
-            loop: true,
-        });
+        // Mobile Controls
+        this.setupMobileControls();
     
-        this.time.addEvent({
-            delay: 4000,
-            callback: this.spawnBeignetMinion,
-            callbackScope: this,
-            loop: true,
-        });
-    
-         // Mobile Controls
-        if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-            console.log("Mobile device detected. Initializing controls...");
-            
-            if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-                // Request motion permission for iOS
-                DeviceOrientationEvent.requestPermission()
-                    .then(permissionState => {
-                        if (permissionState === 'granted') {
-                            this.enableTiltControls();
-                            console.log("Tilt controls enabled for mobile.");
-                        } else {
-                            console.warn("Motion access denied. Falling back to joystick.");
-                            this.setupJoystick(); // Fallback to joystick
-                        }
-                    })
-                    .catch(error => {
-                        console.error("Error requesting motion permission:", error);
-                        this.setupJoystick(); // Fallback to joystick
-                    });
-            } else {
-                // Non-iOS or older versions
-                this.enableTiltControls();
-                console.log("Tilt controls enabled for non-iOS.");
-            }
-        } else {
-            console.log("Desktop detected. Skipping mobile controls.");
-        }
-    
-        // Tap anywhere to attack (Mobile or Desktop)
+        // Tap anywhere to attack
         this.input.on('pointerdown', (pointer) => {
             if (!pointer.wasTouch) return;
             this.fireProjectile();
@@ -192,7 +152,7 @@ export default class Level4 extends Phaser.Scene {
         }
     
         console.log("Level 4 setup complete.");
-    }    
+    }       
 
     update() {
         if (!this.player || !this.cursors) return;
@@ -428,8 +388,14 @@ export default class Level4 extends Phaser.Scene {
 
     setupJoystick() {
         const joystickArea = document.getElementById('joystick-area');
+        if (!joystickArea) {
+            console.warn("Joystick area not found!");
+            return;
+        }
+    
         let joystickKnob = document.getElementById('joystick-knob');
     
+        // Dynamically create the joystick knob if it doesn't exist
         if (!joystickKnob) {
             joystickKnob = document.createElement('div');
             joystickKnob.id = 'joystick-knob';
@@ -440,68 +406,137 @@ export default class Level4 extends Phaser.Scene {
         let joystickStartY = 0;
         let activeInterval;
     
-        joystickArea.addEventListener('touchstart', (event) => {
+        // Handle joystick start (touchstart)
+        const onJoystickStart = (event) => {
             const touch = event.touches[0];
             joystickStartX = touch.clientX;
             joystickStartY = touch.clientY;
-            joystickKnob.style.transform = `translate(-50%, -50%)`;
     
-            activeInterval = setInterval(() => this.applyJoystickForce(), 16); // Run every ~16ms (60 FPS)
-        });
+            joystickKnob.style.transform = `translate(-50%, -50%)`; // Reset position
     
-        joystickArea.addEventListener('touchmove', (event) => {
+            // Start applying joystick force continuously
+            activeInterval = setInterval(() => this.applyJoystickForce(), 16); // ~60 FPS
+        };
+    
+        // Handle joystick movement (touchmove)
+        const onJoystickMove = (event) => {
             const touch = event.touches[0];
             const deltaX = touch.clientX - joystickStartX;
             const deltaY = touch.clientY - joystickStartY;
     
             const distance = Math.sqrt(deltaX ** 2 + deltaY ** 2);
-            const maxDistance = 50; // Joystick radius limit
+            const maxDistance = 50; // Maximum joystick radius
     
+            // Calculate clamped joystick positions
             const clampedX = (deltaX / distance) * Math.min(distance, maxDistance);
             const clampedY = (deltaY / distance) * Math.min(distance, maxDistance);
     
+            // Update joystick knob position
             joystickKnob.style.transform = `translate(calc(${clampedX}px - 50%), calc(${clampedY}px - 50%))`;
     
+            // Set joystick forces
             this.joystickForceX = clampedX / maxDistance;
             this.joystickForceY = clampedY / maxDistance;
-        });
+        };
     
-        joystickArea.addEventListener('touchend', () => {
-            joystickKnob.style.transform = `translate(-50%, -50%)`;
-            this.joystickForceX = 0;
+        // Handle joystick end (touchend)
+        const onJoystickEnd = () => {
+            joystickKnob.style.transform = `translate(-50%, -50%)`; // Reset knob position
+            this.joystickForceX = 0; // Reset forces
             this.joystickForceY = 0;
     
             if (this.player) {
-                this.player.setVelocityX(0);
-                this.player.anims.play('idle', true);
+                this.player.setVelocityX(0); // Stop player movement
+                this.player.play('idle', true); // Set idle animation
             }
     
-            clearInterval(activeInterval);
-        });
+            clearInterval(activeInterval); // Stop continuous force application
+        };
     
+        // Add event listeners for joystick actions
+        joystickArea.addEventListener('touchstart', onJoystickStart);
+        joystickArea.addEventListener('touchmove', onJoystickMove);
+        joystickArea.addEventListener('touchend', onJoystickEnd);
+    
+        // Initialize joystick forces
         this.joystickForceX = 0;
         this.joystickForceY = 0;
-    }    
+    }       
 
     enableTiltControls() {
         window.addEventListener('deviceorientation', (event) => {
-            const tilt = event.gamma; // Side-to-side tilt (-90 to +90)
+            const tilt = event.gamma;
             if (tilt !== null) {
-                if (tilt > 8) { // Tilted to the right
+                if (tilt > 8) {
                     this.player.setVelocityX(160);
                     this.player.setFlipX(false);
                     this.player.play('walk', true);
-                } else if (tilt < -8) { // Tilted to the left
+                } else if (tilt < -8) {
                     this.player.setVelocityX(-160);
                     this.player.setFlipX(true);
                     this.player.play('walk', true);
-                } else { // Neutral tilt
+                } else {
                     this.player.setVelocityX(0);
                     this.player.play('idle', true);
                 }
             }
         });
-    }    
+    }  
+
+    setupMobileControls() {
+        if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+            console.log("Mobile device detected. Initializing controls...");
+            if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+                // For iOS: Request permission for motion and orientation
+                DeviceOrientationEvent.requestPermission()
+                    .then((permissionState) => {
+                        if (permissionState === 'granted') {
+                            this.enableTiltControls();
+                        } else {
+                            console.warn("Motion access denied. Enabling joystick as fallback.");
+                            this.setupJoystick();
+                        }
+                    })
+                    .catch(() => {
+                        console.warn("Error requesting motion access. Enabling joystick as fallback.");
+                        this.setupJoystick();
+                    });
+            } else if (window.DeviceOrientationEvent) {
+                // For non-iOS devices
+                this.enableTiltControls();
+            } else {
+                console.warn("Tilt controls unavailable. Enabling joystick as fallback.");
+                this.setupJoystick();
+            }
+        } else {
+            console.log("Desktop detected. Skipping mobile-specific controls.");
+        }
+    }
+
+    setupCollisions() {
+        this.physics.add.collider(this.player, this.enemies, this.handlePlayerEnemyCollision, null, this);
+        this.physics.add.overlap(this.player, this.healthPacks, this.handlePlayerHealthPackCollision, null, this);
+    }
+
+    setupPlayer(height) {
+        this.player = this.physics.add.sprite(200, height - 100, 'turboNegroStanding1');
+        this.player.setCollideWorldBounds(true);
+        this.physics.add.collider(this.player, this.platforms);
+        this.player.setDepth(1);
+
+        this.anims.create({
+            key: 'idle',
+            frames: [
+                { key: 'turboNegroStanding1' },
+                { key: 'turboNegroStanding2' },
+                { key: 'turboNegroStanding3' },
+                { key: 'turboNegroStanding4' },
+            ],
+            frameRate: 4,
+            repeat: -1,
+        });
+        this.anims.create({ key: 'walk', frames: [{ key: 'turboNegroWalking' }], frameRate: 8, repeat: -1 });
+    }
 
     levelComplete() {
         console.log("Level Complete!");
