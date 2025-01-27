@@ -502,6 +502,9 @@ export default class Level1 extends Phaser.Scene {
     }
 
     enableTiltControls() {
+        let smoothedTilt = 0; // Smoothed tilt value for stabilization
+        const smoothingFactor = 0.1; // Adjust for tilt responsiveness (higher is slower smoothing)
+    
         window.addEventListener('deviceorientation', (event) => {
             let tilt;
             const isLandscape = window.orientation === 90 || window.orientation === -90;
@@ -511,7 +514,7 @@ export default class Level1 extends Phaser.Scene {
             tilt = isLandscape ? event.beta : event.gamma;
     
             if (tilt !== null) {
-                const maxTilt = isLandscape ? 30 : 90; // Normalize tilt ranges: beta (landscape) vs gamma (portrait)
+                const maxTilt = isLandscape ? 20 : 80; // Normalize tilt ranges: beta (landscape) vs gamma (portrait)
                 const deadZone = 8; // Dead zone for movement initiation
                 const velocity = 320; // Match velocity for consistent gameplay feel
     
@@ -523,24 +526,39 @@ export default class Level1 extends Phaser.Scene {
                     tilt = -tilt;
                 }
     
-                // Handle movement logic based on tilt
-                if (tilt > deadZone) {
+                // Apply smoothing to the tilt value
+                smoothedTilt += (tilt - smoothedTilt) * smoothingFactor;
+    
+                // Handle movement logic based on smoothed tilt
+                if (smoothedTilt > deadZone) {
                     // Move right
-                    this.player.setVelocityX((tilt - deadZone) / (maxTilt - deadZone) * velocity);
+                    this.player.setVelocityX((smoothedTilt - deadZone) / (maxTilt - deadZone) * velocity);
                     this.player.setFlipX(false);
-                    this.player.play('walk', true);
-                } else if (tilt < -deadZone) {
+    
+                    // Trigger animation only if it has changed
+                    if (this.player.anims.currentAnim?.key !== 'walk') {
+                        this.player.play('walk', true);
+                    }
+                } else if (smoothedTilt < -deadZone) {
                     // Move left
-                    this.player.setVelocityX((tilt + deadZone) / (maxTilt - deadZone) * velocity);
+                    this.player.setVelocityX((smoothedTilt + deadZone) / (maxTilt - deadZone) * velocity);
                     this.player.setFlipX(true);
-                    this.player.play('walk', true);
+    
+                    // Trigger animation only if it has changed
+                    if (this.player.anims.currentAnim?.key !== 'walk') {
+                        this.player.play('walk', true);
+                    }
                 } else {
                     // Stay idle if tilt is within the dead zone
                     this.player.setVelocityX(0);
-                    this.player.play('idle', true);
+    
+                    // Trigger animation only if it has changed
+                    if (this.player.anims.currentAnim?.key !== 'idle') {
+                        this.player.play('idle', true);
+                    }
                 }
             }
         });
-    }    
+    }       
     
 }
