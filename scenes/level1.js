@@ -514,7 +514,7 @@ export default class Level1 extends Phaser.Scene {
             tilt = isLandscape ? event.beta : event.gamma;
     
             if (tilt !== null) {
-                const maxTilt = isLandscape ? 20 : 80; // Normalize tilt ranges: beta (landscape) vs gamma (portrait)
+                const maxTilt = isLandscape ? 20 : 90; // Normalize tilt ranges: beta (landscape) vs gamma (portrait)
                 const deadZone = 8; // Dead zone for movement initiation
                 const velocity = 320; // Match velocity for consistent gameplay feel
     
@@ -560,5 +560,20 @@ export default class Level1 extends Phaser.Scene {
             }
         });
     }       
+
+    shutdown() {
+        if (this.levelMusic) {
+            this.levelMusic.stop();
+            this.levelMusic.destroy();
+        }
+        if (this.enemySpawnTimer) {
+            this.enemySpawnTimer.remove();
+        }
+        window.removeEventListener('deviceorientation', this.tiltHandler);
+    }
+    destroy() {
+        this.shutdown(); // Call shutdown when the scene is destroyed
+    }
+    
     
 }
