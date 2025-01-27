@@ -1,3 +1,6 @@
+import { addFullscreenButton } from '../utils/fullScreenUtils.js';
+
+
 export default class Level1 extends Phaser.Scene {
     constructor() {
         super({ key: 'Level1' });
@@ -31,7 +34,7 @@ export default class Level1 extends Phaser.Scene {
         this.levelMusic = this.sound.add('level1Music', { loop: true, volume: 0.5 });
         this.levelMusic.play();
     
-        // Platforms
+        // Platforms setup
         this.platforms = this.physics.add.staticGroup();
         this.platforms.create(width / 2, height - 20, null).setDisplaySize(width, 20).setVisible(false).refreshBody();
         const balcony = this.platforms.create(width / 2, height - 350, 'balcony').setScale(1).refreshBody();
@@ -43,7 +46,12 @@ export default class Level1 extends Phaser.Scene {
         this.physics.add.collider(this.player, this.platforms);
     
         // Animations
-        this.anims.create({ key: 'idle', frames: [{ key: 'turboNegroStanding1' }, { key: 'turboNegroStanding2' }, { key: 'turboNegroStanding3' }, { key: 'turboNegroStanding4' }], frameRate: 4, repeat: -1 });
+        this.anims.create({
+            key: 'idle',
+            frames: [{ key: 'turboNegroStanding1' }, { key: 'turboNegroStanding2' }, { key: 'turboNegroStanding3' }, { key: 'turboNegroStanding4' }],
+            frameRate: 4,
+            repeat: -1,
+        });
         this.anims.create({ key: 'walk', frames: [{ key: 'turboNegroWalking' }], frameRate: 8, repeat: -1 });
         this.anims.create({ key: 'jump', frames: [{ key: 'turboNegroJump' }], frameRate: 1 });
     
@@ -78,13 +86,36 @@ export default class Level1 extends Phaser.Scene {
             });
         }
     
+        // Fullscreen logic with landscape mode
+        const fullscreenElement = document.getElementById('fullscreen');
+        if (fullscreenElement && !document.fullscreenElement) {
+            fullscreenElement.requestFullscreen().then(() => {
+                if (screen.orientation && screen.orientation.lock) {
+                    screen.orientation.lock('landscape').catch(err => {
+                        console.warn('Failed to lock orientation:', err);
+                    });
+                }
+            });
+        }
+    
         // Mobile-specific controls
-        if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        if (isMobile) {
             console.log("Mobile device detected. Initializing controls...");
-            this.setupJoystick(); // Always initialize joystick
-            
+            this.setupJoystick();
+    
+            const mobileFullscreenButton = document.getElementById('mobile-fullscreen-button');
+            if (mobileFullscreenButton) {
+                mobileFullscreenButton.addEventListener('click', () => {
+                    if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+                        fullscreenElement.requestFullscreen();
+                    } else {
+                        document.exitFullscreen();
+                    }
+                });
+            }
+    
             if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-                // Request motion permission for iOS
                 DeviceOrientationEvent.requestPermission()
                     .then(permissionState => {
                         if (permissionState === 'granted') {
@@ -97,16 +128,15 @@ export default class Level1 extends Phaser.Scene {
                         console.error("Error requesting motion permission:", error);
                     });
             } else {
-                // Enable tilt controls directly for non-iOS or older versions
                 this.enableTiltControls();
             }
         } else {
             console.log("Desktop detected. Skipping mobile-specific controls.");
         }
     
-        // Tap anywhere to attack (Mobile or Desktop)
+        // Tap anywhere to attack
         this.input.on('pointerdown', (pointer) => {
-            if (!pointer.wasTouch) return; // Ensures it's not triggered by a mouse
+            if (!pointer.wasTouch) return;
             this.fireProjectile();
         });
     
@@ -123,24 +153,27 @@ export default class Level1 extends Phaser.Scene {
             }
             startY = null;
         });
-
-        const fullscreenButton = this.add.text(20, 20, 'Fullscreen', {
+    
+        // Desktop fullscreen button
+        const fullscreenButton = this.add.text(20, 20, '[ fullscreen ]', {
             fontSize: '20px',
             fill: '#ffffff',
             backgroundColor: '#000000',
             padding: { left: 10, right: 10, top: 5, bottom: 5 },
-            borderRadius: '5px'
+            borderRadius: '5px',
         }).setInteractive();
-        
+    
         fullscreenButton.on('pointerdown', () => {
-            if (this.scale.isFullscreen) {
-                this.scale.stopFullscreen();
+            if (!document.fullscreenElement) {
+                fullscreenElement.requestFullscreen().catch(err => {
+                    alert(`Error attempting to enable fullscreen: ${err.message}`);
+                    console.error(err);
+                });
             } else {
-                this.scale.startFullscreen();
+                document.exitFullscreen();
             }
         });
-        
-    }
+    }        
     
     spawnEnemy() {
         const { width, height } = this.scale;
@@ -446,22 +479,32 @@ export default class Level1 extends Phaser.Scene {
 
     enableTiltControls() {
         window.addEventListener('deviceorientation', (event) => {
-            const tilt = event.gamma; // Side-to-side tilt
+            let tilt = event.gamma; // Side-to-side tilt
+    
+            // Adjust for landscape mode
+            if (window.orientation === 90 || window.orientation === -90) {
+                tilt = event.beta; // Use beta for landscape mode
+            }
+    
             if (tilt !== null) {
-                if (tilt > 8) {
-                    this.player.setVelocityX(160);
+                const sensitivity = 1.5; // Adjust this value for desired sensitivity
+                const maxTilt = 30; // Maximum tilt angle
+                const clampedTilt = Math.max(-maxTilt, Math.min(maxTilt, tilt));
+    
+                if (clampedTilt > 8) {
+                    this.player.setVelocityX(160); // Move right
                     this.player.setFlipX(false);
                     this.player.play('walk', true);
-                } else if (tilt < -8) {
-                    this.player.setVelocityX(-160);
+                } else if (clampedTilt < -8) {
+                    this.player.setVelocityX(-160); // Move left
                     this.player.setFlipX(true);
                     this.player.play('walk', true);
                 } else {
-                    this.player.setVelocityX(0);
+                    this.player.setVelocityX(0); // Stop movement
                     this.player.play('idle', true);
                 }
             }
         });
-    }
+    }    
 
 }
