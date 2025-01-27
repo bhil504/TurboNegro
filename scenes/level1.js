@@ -477,55 +477,41 @@ export default class Level1 extends Phaser.Scene {
         document.getElementById('enemy-count').innerText = `Enemies Left: ${20 - this.totalEnemiesDefeated}`;
     }
 
-   enableTiltControls() {
+    enableTiltControls() {
         window.addEventListener('deviceorientation', (event) => {
             let tilt;
             const isLandscape = window.orientation === 90 || window.orientation === -90;
             const isClockwise = window.orientation === 90; // Determine clockwise or counterclockwise orientation
-
+    
             // Use gamma for portrait, beta for landscape
             tilt = isLandscape ? event.beta : event.gamma;
-
+    
             if (tilt !== null) {
-                const sensitivity = 8.0; // Higher sensitivity for faster movement
-                const maxTilt = 20; // Clamp tilt values for consistent gameplay
-                const deadZone = 1; // Smaller dead zone for precise control
-                const damping = 0.8; // Smoothing factor (closer to 1 = smoother)
-
-                // Clamp tilt values
-                tilt = Math.max(-maxTilt, Math.min(maxTilt, tilt));
-
+                const sensitivity = 160; // Velocity multiplier from the original code
+                const deadZone = 8; // Dead zone to match the original
+    
                 if (isLandscape) {
                     // Reverse tilt for counterclockwise landscape
                     tilt = isClockwise ? tilt : -tilt;
                 }
-
+    
                 if (tilt > deadZone) {
                     // Move right
-                    const targetVelocity = (tilt - deadZone) * sensitivity;
-                    this.player.setVelocityX(
-                        Phaser.Math.Interpolation.Linear([this.player.body.velocity.x, targetVelocity], damping)
-                    );
+                    this.player.setVelocityX((tilt - deadZone) * sensitivity / 20); // Adjusted to match the original 160 velocity
                     this.player.setFlipX(false);
                     this.player.play('walk', true);
                 } else if (tilt < -deadZone) {
                     // Move left
-                    const targetVelocity = (tilt + deadZone) * sensitivity;
-                    this.player.setVelocityX(
-                        Phaser.Math.Interpolation.Linear([this.player.body.velocity.x, targetVelocity], damping)
-                    );
+                    this.player.setVelocityX((tilt + deadZone) * sensitivity / 20); // Adjusted to match the original -160 velocity
                     this.player.setFlipX(true);
                     this.player.play('walk', true);
                 } else {
-                    // Smoothly transition to idle
-                    this.player.setVelocityX(
-                        Phaser.Math.Interpolation.Linear([this.player.body.velocity.x, 0], damping)
-                    );
+                    // Stay idle in the dead zone
+                    this.player.setVelocityX(0);
                     this.player.play('idle', true);
                 }
             }
         });
-    }
-
+    }    
 
 }
