@@ -511,34 +511,36 @@ export default class Level1 extends Phaser.Scene {
             tilt = isLandscape ? event.beta : event.gamma;
     
             if (tilt !== null) {
-                const maxTilt = isLandscape ? 30 : 90; // Normalize tilt ranges (beta vs gamma)
-                const deadZone = 8; // Match the original dead zone
-                const velocity = 160; // Match the original velocity for portrait mode
+                const maxTilt = isLandscape ? 30 : 90; // Normalize tilt ranges: beta (landscape) vs gamma (portrait)
+                const deadZone = 8; // Dead zone for movement initiation
+                const velocity = 160; // Match velocity for consistent gameplay feel
     
-                // Clamp tilt values for consistent responsiveness
+                // Clamp tilt values to ensure responsiveness within the defined range
                 tilt = Math.max(-maxTilt, Math.min(maxTilt, tilt));
     
-                // Reverse tilt for counterclockwise landscape
+                // Reverse tilt for counterclockwise landscape mode
                 if (isLandscape && !isClockwise) {
                     tilt = -tilt;
                 }
     
-                // Calculate velocity based on raw tilt
+                // Handle movement logic based on tilt
                 if (tilt > deadZone) {
+                    // Move right
                     this.player.setVelocityX((tilt - deadZone) / (maxTilt - deadZone) * velocity);
                     this.player.setFlipX(false);
                     this.player.play('walk', true);
                 } else if (tilt < -deadZone) {
+                    // Move left
                     this.player.setVelocityX((tilt + deadZone) / (maxTilt - deadZone) * velocity);
                     this.player.setFlipX(true);
                     this.player.play('walk', true);
                 } else {
+                    // Stay idle if tilt is within the dead zone
                     this.player.setVelocityX(0);
                     this.player.play('idle', true);
                 }
             }
         });
-    }
-    
+    }    
     
 }
