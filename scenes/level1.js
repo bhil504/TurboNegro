@@ -481,17 +481,17 @@ export default class Level1 extends Phaser.Scene {
     window.addEventListener('deviceorientation', (event) => {
         let tilt;
         const isLandscape = window.orientation === 90 || window.orientation === -90;
-        const isClockwise = window.orientation === 90; // Detect clockwise landscape
+        const isClockwise = window.orientation === 90; // Determine clockwise or counterclockwise orientation
 
         // Use gamma for portrait, beta for landscape
         tilt = isLandscape ? event.beta : event.gamma;
 
         if (tilt !== null) {
-            const sensitivity = 3.5; // Match portrait smoothness and responsiveness
-            const maxTilt = 20; // Limit tilt for consistent movement speed
-            const deadZone = 3; // Ignore slight tilts for stability
+            const sensitivity = 4.0; // Increased sensitivity for smoother response
+            const maxTilt = 20; // Clamp tilt values to a manageable range
+            const deadZone = 3; // Smaller dead zone for more accurate movement
 
-            // Clamp tilt within the allowed range
+            // Clamp tilt values
             tilt = Math.max(-maxTilt, Math.min(maxTilt, tilt));
 
             if (isLandscape) {
@@ -512,13 +512,14 @@ export default class Level1 extends Phaser.Scene {
                 this.player.setFlipX(true);
                 this.player.play('walk', true);
             } else {
-                // Stay idle within the dead zone
+                // Stay idle in the dead zone
                 this.player.setVelocityX(0);
                 this.player.play('idle', true);
             }
         }
     });
 }
+
 
 
 
