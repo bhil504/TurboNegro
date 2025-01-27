@@ -571,9 +571,9 @@ export default class Level1 extends Phaser.Scene {
         }
         window.removeEventListener('deviceorientation', this.tiltHandler);
     }
+
     destroy() {
         this.shutdown(); // Call shutdown when the scene is destroyed
     }
-    
-    
+     
 }

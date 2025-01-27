@@ -336,15 +336,16 @@
         }
 
         #fullscreen {
-            width: 100%;
-            height: 100%;
             display: flex;
             flex-direction: column;
             justify-content: center; /* Center vertically */
             align-items: center;    /* Center horizontally */
             background: black;
+            width: 100%;
+            height: 100%;
             transition: all 0.3s ease-in-out;
         }
+
 
         canvas {
             width: 100%;
@@ -508,17 +509,18 @@
         import Level4 from './scenes/level4.js';
         import Level5 from './scenes/level5.js';
         import BossFight from './scenes/bossFight.js';
-
+    
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         let controlMode = 'joystick'; // Default to joystick
-
+    
         // Hide joystick and attack button on non-mobile devices
-        if (!isMobile) {
-            document.getElementById('joystick-area').style.display = 'none';
-            document.getElementById('attack-button').style.display = 'none';
+        function setupUIForDevice() {
+            if (!isMobile) {
+                document.getElementById('joystick-area').style.display = 'none';
+                document.getElementById('attack-button').style.display = 'none';
+            }
         }
-
-
+    
         // Initialize Tilt Controls
         function initTiltControl() {
             const handleTilt = (event) => {
@@ -526,7 +528,7 @@
                     const sensitivity = 2;
                     const clampedGamma = Math.max(-30, Math.min(30, event.gamma));
                     const velocityX = clampedGamma * sensitivity;
-
+    
                     if (typeof player !== 'undefined' && player.setVelocityX) {
                         player.setVelocityX(velocityX);
                     }
@@ -534,7 +536,7 @@
             };
             window.addEventListener('deviceorientation', handleTilt);
         }
-
+    
         function initializeControls() {
             if (isMobile && /iPhone/i.test(navigator.userAgent)) {
                 const enableTilt = confirm(
@@ -560,9 +562,37 @@
                 }
             }
         }
-
-        document.addEventListener('DOMContentLoaded', initializeControls);
-
+    
+        // Adjust game screen centering in fullscreen
+        function adjustFullscreenCentering() {
+            const fullscreenElement = document.getElementById('fullscreen');
+            const gameContainer = document.getElementById('game-container');
+    
+            if (window.innerHeight > window.innerWidth) {
+                // Portrait mode
+                fullscreenElement.style.justifyContent = 'flex-start';
+            } else {
+                // Landscape mode
+                fullscreenElement.style.justifyContent = 'center';
+                fullscreenElement.style.alignItems = 'center';
+            }
+    
+            // Maintain aspect ratio for the game container
+            gameContainer.style.width = `${Math.min(window.innerWidth, 1100)}px`;
+            gameContainer.style.height = `${Math.min(window.innerHeight, 500)}px`;
+        }
+    
+        // Attach resize listener
+        window.addEventListener('resize', adjustFullscreenCentering);
+    
+        // Run setup functions on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            setupUIForDevice();
+            adjustFullscreenCentering();
+            initializeControls();
+        });
+    
+        // Phaser game configuration
         const config = {
             type: Phaser.AUTO,
             parent: 'game-container',
@@ -578,17 +608,21 @@
             },
             scene: [StartMenu, Level1, Level2, Level3, Level4, Level5, BossFight],
         };
-
+    
+        // Initialize Phaser game
         const game = new Phaser.Game(config);
+    
+        // Initialize tilt controls if enabled
         if (controlMode === 'tilt') initTiltControl();
     </script>
-
+    
     <div id="bhilliondollar">
         Made by Bhillion Dollar Productions. <br> An independent media company based in New Orleans, La, USA.<br> For more info, visit: 
         <button onclick="window.open('https://bhilliondollar.com/', '_blank')">
             www.bhilliondollar.com
         </button>
     </div>
+    
     <script>
         window.onload = function () {
             const gameHeight = document.body.scrollHeight; // Calculate the total height of the game
@@ -613,6 +647,8 @@
             fullscreenElement.style.justifyContent = 'center';
             fullscreenElement.style.alignItems = 'center';
         }
+
+        
 
     </script>
 
