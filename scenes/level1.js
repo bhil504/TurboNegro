@@ -477,36 +477,38 @@ export default class Level1 extends Phaser.Scene {
         document.getElementById('enemy-count').innerText = `Enemies Left: ${20 - this.totalEnemiesDefeated}`;
     }
 
-    enableTiltControls() {
+   enableTiltControls() {
     window.addEventListener('deviceorientation', (event) => {
         let tilt;
         const isLandscape = window.orientation === 90 || window.orientation === -90;
-        const isClockwise = window.orientation === 90; // Determine if the device is rotated clockwise
+        const isClockwise = window.orientation === 90; // Detect clockwise landscape
 
         // Use gamma for portrait, beta for landscape
         tilt = isLandscape ? event.beta : event.gamma;
 
         if (tilt !== null) {
-            const sensitivity = 2.5; // Higher sensitivity for faster response
-            const maxTilt = 30; // Clamp tilt to avoid excessive movement
-            const deadZone = 5; // Ignore small tilts (dead zone)
+            const sensitivity = 3.5; // Match portrait smoothness and responsiveness
+            const maxTilt = 20; // Limit tilt for consistent movement speed
+            const deadZone = 3; // Ignore slight tilts for stability
 
-            // Clamp tilt values to prevent excessive movement
-            const clampedTilt = Math.max(-maxTilt, Math.min(maxTilt, tilt));
+            // Clamp tilt within the allowed range
+            tilt = Math.max(-maxTilt, Math.min(maxTilt, tilt));
 
             if (isLandscape) {
                 // Reverse tilt for counterclockwise landscape
-                tilt = isClockwise ? clampedTilt : -clampedTilt;
+                tilt = isClockwise ? tilt : -tilt;
             }
 
             if (tilt > deadZone) {
                 // Move right
-                this.player.setVelocityX((tilt - deadZone) * sensitivity);
+                const velocity = (tilt - deadZone) * sensitivity;
+                this.player.setVelocityX(velocity);
                 this.player.setFlipX(false);
                 this.player.play('walk', true);
             } else if (tilt < -deadZone) {
                 // Move left
-                this.player.setVelocityX((tilt + deadZone) * sensitivity);
+                const velocity = (tilt + deadZone) * sensitivity;
+                this.player.setVelocityX(velocity);
                 this.player.setFlipX(true);
                 this.player.play('walk', true);
             } else {
@@ -517,6 +519,8 @@ export default class Level1 extends Phaser.Scene {
         }
     });
 }
+
+
 
 
 }
