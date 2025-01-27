@@ -86,17 +86,17 @@ export default class Level1 extends Phaser.Scene {
             });
         }
     
-        // Fullscreen logic with landscape mode
-        const fullscreenElement = document.getElementById('fullscreen');
-        if (fullscreenElement && !document.fullscreenElement) {
-            fullscreenElement.requestFullscreen().then(() => {
-                if (screen.orientation && screen.orientation.lock) {
-                    screen.orientation.lock('landscape').catch(err => {
-                        console.warn('Failed to lock orientation:', err);
-                    });
-                }
-            });
-        }
+        // // Fullscreen logic with landscape mode
+        // const fullscreenElement = document.getElementById('fullscreen');
+        // if (fullscreenElement && !document.fullscreenElement) {
+        //     fullscreenElement.requestFullscreen().then(() => {
+        //         if (screen.orientation && screen.orientation.lock) {
+        //             screen.orientation.lock('landscape').catch(err => {
+        //                 console.warn('Failed to lock orientation:', err);
+        //             });
+        //         }
+        //     });
+        // }
     
         // Mobile-specific controls
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
