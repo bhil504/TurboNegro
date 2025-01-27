@@ -487,8 +487,8 @@ export default class Level1 extends Phaser.Scene {
             tilt = isLandscape ? event.beta : event.gamma;
     
             if (tilt !== null) {
-                const deadZone = 8; // Dead zone for movement initiation
-                const velocity = 300; // Velocity for player movement
+                const deadZone = 6; // Dead zone for movement initiation
+                const velocity = 320; // Velocity for player movement
                 const maxTilt = isLandscape ? 30 : 90; // Normalize tilt ranges (beta vs gamma)
     
                 // Normalize tilt values to ensure similar responsiveness in both orientations
