@@ -481,15 +481,15 @@ export default class Level1 extends Phaser.Scene {
         window.addEventListener('deviceorientation', (event) => {
             let tilt;
             const isLandscape = window.orientation === 90 || window.orientation === -90;
-            const isClockwise = window.orientation === 90; // Determine clockwise or counterclockwise orientation
+            const isClockwise = window.orientation === 90; // Determine if in clockwise landscape mode
     
-            // Use gamma for portrait, beta for landscape
+            // Use gamma for portrait and beta for landscape
             tilt = isLandscape ? event.beta : event.gamma;
     
             if (tilt !== null) {
-                const sensitivity = isLandscape ? 2.0 : 1.5; // Adjust sensitivity for landscape
-                const maxTilt = 30; // Clamp tilt values to avoid erratic movement
-                const deadZone = 5; // Dead zone for small tilt angles
+                const sensitivity = isLandscape ? 2.0 : 1.5; // Adjust sensitivity for landscape and portrait
+                const maxTilt = 30; // Clamp tilt to avoid excessive movement
+                const deadZone = 5; // Dead zone for minor tilts
     
                 // Clamp tilt values to a defined range
                 tilt = Math.max(-maxTilt, Math.min(maxTilt, tilt));
@@ -501,23 +501,23 @@ export default class Level1 extends Phaser.Scene {
     
                 if (tilt > deadZone) {
                     // Move right
-                    const velocity = (tilt - deadZone) * sensitivity * 80; // Increased velocity multiplier
+                    const velocity = (tilt - deadZone) * sensitivity * 80; // Adjust multiplier for smooth yet responsive movement
                     this.player.setVelocityX(velocity);
                     this.player.setFlipX(false);
                     this.player.play('walk', true);
                 } else if (tilt < -deadZone) {
                     // Move left
-                    const velocity = (tilt + deadZone) * sensitivity * 80; // Increased velocity multiplier
+                    const velocity = (tilt + deadZone) * sensitivity * 80; // Adjust multiplier for smooth yet responsive movement
                     this.player.setVelocityX(velocity);
                     this.player.setFlipX(true);
                     this.player.play('walk', true);
                 } else {
-                    // Stay idle when within the dead zone
+                    // Stay idle when tilt is in the dead zone
                     this.player.setVelocityX(0);
                     this.player.play('idle', true);
                 }
             }
         });
-    }       
+    }          
 
 }
