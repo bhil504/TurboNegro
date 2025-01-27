@@ -502,9 +502,6 @@ export default class Level1 extends Phaser.Scene {
     }
 
     enableTiltControls() {
-        this.smoothedTilt = 0; // Store a smoothed tilt value
-        const smoothingFactor = 0.2; // Adjust for smoother or more responsive tilt input
-    
         window.addEventListener('deviceorientation', (event) => {
             let tilt;
             const isLandscape = window.orientation === 90 || window.orientation === -90;
@@ -526,16 +523,13 @@ export default class Level1 extends Phaser.Scene {
                     tilt = -tilt;
                 }
     
-                // Apply a low-pass filter for smoothing
-                this.smoothedTilt += (tilt - this.smoothedTilt) * smoothingFactor;
-    
-                // Calculate velocity based on smoothed tilt
-                if (this.smoothedTilt > deadZone) {
-                    this.player.setVelocityX((this.smoothedTilt - deadZone) / (maxTilt - deadZone) * velocity);
+                // Calculate velocity based on raw tilt
+                if (tilt > deadZone) {
+                    this.player.setVelocityX((tilt - deadZone) / (maxTilt - deadZone) * velocity);
                     this.player.setFlipX(false);
                     this.player.play('walk', true);
-                } else if (this.smoothedTilt < -deadZone) {
-                    this.player.setVelocityX((this.smoothedTilt + deadZone) / (maxTilt - deadZone) * velocity);
+                } else if (tilt < -deadZone) {
+                    this.player.setVelocityX((tilt + deadZone) / (maxTilt - deadZone) * velocity);
                     this.player.setFlipX(true);
                     this.player.play('walk', true);
                 } else {
@@ -545,5 +539,6 @@ export default class Level1 extends Phaser.Scene {
             }
         });
     }
+    
     
 }
