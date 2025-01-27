@@ -478,50 +478,46 @@ export default class Level1 extends Phaser.Scene {
     }
 
    enableTiltControls() {
-    window.addEventListener('deviceorientation', (event) => {
-        let tilt;
-        const isLandscape = window.orientation === 90 || window.orientation === -90;
-        const isClockwise = window.orientation === 90; // Determine clockwise or counterclockwise orientation
+        window.addEventListener('deviceorientation', (event) => {
+            let tilt;
+            const isLandscape = window.orientation === 90 || window.orientation === -90;
+            const isClockwise = window.orientation === 90; // Determine clockwise or counterclockwise orientation
 
-        // Use gamma for portrait, beta for landscape
-        tilt = isLandscape ? event.beta : event.gamma;
+            // Use gamma for portrait, beta for landscape
+            tilt = isLandscape ? event.beta : event.gamma;
 
-        if (tilt !== null) {
-            const sensitivity = 4.0; // Increased sensitivity for smoother response
-            const maxTilt = 20; // Clamp tilt values to a manageable range
-            const deadZone = 3; // Smaller dead zone for more accurate movement
+            if (tilt !== null) {
+                const sensitivity = 6.0; // Boost sensitivity for more responsive movement
+                const maxTilt = 25; // Clamp tilt values for consistent gameplay
+                const deadZone = 2; // Reduce dead zone for tighter control
 
-            // Clamp tilt values
-            tilt = Math.max(-maxTilt, Math.min(maxTilt, tilt));
+                // Clamp tilt values to avoid excessive movement
+                tilt = Math.max(-maxTilt, Math.min(maxTilt, tilt));
 
-            if (isLandscape) {
-                // Reverse tilt for counterclockwise landscape
-                tilt = isClockwise ? tilt : -tilt;
+                if (isLandscape) {
+                    // Reverse tilt for counterclockwise landscape
+                    tilt = isClockwise ? tilt : -tilt;
+                }
+
+                if (tilt > deadZone) {
+                    // Move right
+                    const velocity = (tilt - deadZone) * sensitivity;
+                    this.player.setVelocityX(velocity);
+                    this.player.setFlipX(false);
+                    this.player.play('walk', true);
+                } else if (tilt < -deadZone) {
+                    // Move left
+                    const velocity = (tilt + deadZone) * sensitivity;
+                    this.player.setVelocityX(velocity);
+                    this.player.setFlipX(true);
+                    this.player.play('walk', true);
+                } else {
+                    // Stay idle when within the dead zone
+                    this.player.setVelocityX(0);
+                    this.player.play('idle', true);
+                }
             }
-
-            if (tilt > deadZone) {
-                // Move right
-                const velocity = (tilt - deadZone) * sensitivity;
-                this.player.setVelocityX(velocity);
-                this.player.setFlipX(false);
-                this.player.play('walk', true);
-            } else if (tilt < -deadZone) {
-                // Move left
-                const velocity = (tilt + deadZone) * sensitivity;
-                this.player.setVelocityX(velocity);
-                this.player.setFlipX(true);
-                this.player.play('walk', true);
-            } else {
-                // Stay idle in the dead zone
-                this.player.setVelocityX(0);
-                this.player.play('idle', true);
-            }
-        }
-    });
-}
-
-
-
-
+        });
+    }
 
 }
