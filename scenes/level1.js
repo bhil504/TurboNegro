@@ -513,7 +513,7 @@ export default class Level1 extends Phaser.Scene {
             if (tilt !== null) {
                 const maxTilt = isLandscape ? 30 : 90; // Normalize tilt ranges: beta (landscape) vs gamma (portrait)
                 const deadZone = 8; // Dead zone for movement initiation
-                const velocity = 160; // Match velocity for consistent gameplay feel
+                const velocity = 320; // Match velocity for consistent gameplay feel
     
                 // Clamp tilt values to ensure responsiveness within the defined range
                 tilt = Math.max(-maxTilt, Math.min(maxTilt, tilt));
