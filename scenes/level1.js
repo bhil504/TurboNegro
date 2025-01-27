@@ -487,8 +487,12 @@ export default class Level1 extends Phaser.Scene {
             tilt = isLandscape ? event.beta : event.gamma;
     
             if (tilt !== null) {
-                const sensitivity = 160; // Velocity multiplier from the original code
-                const deadZone = 8; // Dead zone to match the original
+                const sensitivity = isLandscape ? 2.0 : 1.5; // Adjust sensitivity for landscape
+                const maxTilt = 30; // Clamp tilt values to avoid erratic movement
+                const deadZone = 5; // Dead zone for small tilt angles
+    
+                // Clamp tilt values to a defined range
+                tilt = Math.max(-maxTilt, Math.min(maxTilt, tilt));
     
                 if (isLandscape) {
                     // Reverse tilt for counterclockwise landscape
@@ -497,21 +501,23 @@ export default class Level1 extends Phaser.Scene {
     
                 if (tilt > deadZone) {
                     // Move right
-                    this.player.setVelocityX((tilt - deadZone) * sensitivity / 20); // Adjusted to match the original 160 velocity
+                    const velocity = (tilt - deadZone) * sensitivity * 80; // Increased velocity multiplier
+                    this.player.setVelocityX(velocity);
                     this.player.setFlipX(false);
                     this.player.play('walk', true);
                 } else if (tilt < -deadZone) {
                     // Move left
-                    this.player.setVelocityX((tilt + deadZone) * sensitivity / 20); // Adjusted to match the original -160 velocity
+                    const velocity = (tilt + deadZone) * sensitivity * 80; // Increased velocity multiplier
+                    this.player.setVelocityX(velocity);
                     this.player.setFlipX(true);
                     this.player.play('walk', true);
                 } else {
-                    // Stay idle in the dead zone
+                    // Stay idle when within the dead zone
                     this.player.setVelocityX(0);
                     this.player.play('idle', true);
                 }
             }
         });
-    }    
+    }       
 
 }
