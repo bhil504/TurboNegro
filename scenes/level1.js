@@ -480,8 +480,7 @@ export default class Level1 extends Phaser.Scene {
    enableTiltControls() {
         let tiltVelocity = 0; // Current tilt velocity
         const maxVelocity = 400; // Maximum player velocity
-        const accelerationFactor = 20; // How quickly the player accelerates
-        const decelerationFactor = 0.9; // How quickly the player decelerates
+        
 
         window.addEventListener('deviceorientation', (event) => {
             let tilt;
