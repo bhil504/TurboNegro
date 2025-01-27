@@ -503,7 +503,7 @@ export default class Level1 extends Phaser.Scene {
 
     enableTiltControls() {
         this.smoothedTilt = 0; // Store a smoothed tilt value
-        const smoothingFactor = 0.2; // Adjust this for smoother or more responsive tilt input (lower = smoother)
+        const smoothingFactor = 0.2; // Adjust for smoother or more responsive tilt input
     
         window.addEventListener('deviceorientation', (event) => {
             let tilt;
@@ -515,6 +515,8 @@ export default class Level1 extends Phaser.Scene {
     
             if (tilt !== null) {
                 const maxTilt = isLandscape ? 30 : 90; // Normalize tilt ranges (beta vs gamma)
+                const deadZone = 8; // Match the original dead zone
+                const velocity = 160; // Match the original velocity for portrait mode
     
                 // Clamp tilt values for consistent responsiveness
                 tilt = Math.max(-maxTilt, Math.min(maxTilt, tilt));
@@ -526,10 +528,22 @@ export default class Level1 extends Phaser.Scene {
     
                 // Apply a low-pass filter for smoothing
                 this.smoothedTilt += (tilt - this.smoothedTilt) * smoothingFactor;
+    
+                // Calculate velocity based on smoothed tilt
+                if (this.smoothedTilt > deadZone) {
+                    this.player.setVelocityX((this.smoothedTilt - deadZone) / (maxTilt - deadZone) * velocity);
+                    this.player.setFlipX(false);
+                    this.player.play('walk', true);
+                } else if (this.smoothedTilt < -deadZone) {
+                    this.player.setVelocityX((this.smoothedTilt + deadZone) / (maxTilt - deadZone) * velocity);
+                    this.player.setFlipX(true);
+                    this.player.play('walk', true);
+                } else {
+                    this.player.setVelocityX(0);
+                    this.player.play('idle', true);
+                }
             }
         });
     }
     
-          
-
 }
