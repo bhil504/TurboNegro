@@ -488,8 +488,8 @@ export default class Level1 extends Phaser.Scene {
 
             if (tilt !== null) {
                 const sensitivity = 6.0; // Adjust sensitivity for responsive gameplay
-                const maxTilt = 25; // Clamp tilt values for consistency
-                const deadZone = 2; // Ignore minor tilts within this range
+                const maxTilt = 20; // Clamp tilt values for consistency
+                const deadZone = 1; // Ignore minor tilts within this range
 
                 // Clamp tilt values
                 tilt = Math.max(-maxTilt, Math.min(maxTilt, tilt));
