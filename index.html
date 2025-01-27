@@ -336,16 +336,15 @@
         }
 
         #fullscreen {
+            width: 100%;
+            height: 100%;
             display: flex;
             flex-direction: column;
             justify-content: center; /* Center vertically */
             align-items: center;    /* Center horizontally */
             background: black;
-            width: 100%;
-            height: 100%;
             transition: all 0.3s ease-in-out;
         }
-
 
         canvas {
             width: 100%;
@@ -564,30 +563,6 @@
 
         document.addEventListener('DOMContentLoaded', initializeControls);
 
-        function adjustFullscreenCentering() {
-            const fullscreenElement = document.getElementById('fullscreen');
-            const gameContainer = document.getElementById('game-container');
-
-            if (window.innerHeight > window.innerWidth) {
-                // Portrait mode
-                fullscreenElement.style.justifyContent = 'flex-start'; // Adjust vertical alignment
-            } else {
-                // Landscape mode
-                fullscreenElement.style.justifyContent = 'center';
-                fullscreenElement.style.alignItems = 'center';
-            }
-
-            // Ensure the game container maintains its aspect ratio
-            gameContainer.style.width = `${Math.min(window.innerWidth, 1100)}px`;
-            gameContainer.style.height = `${Math.min(window.innerHeight, 500)}px`;
-        }
-
-        // Attach resize listener
-        window.addEventListener('resize', adjustFullscreenCentering);
-        // Run once on load
-        adjustFullscreenCentering();
-
-
         const config = {
             type: Phaser.AUTO,
             parent: 'game-container',
@@ -638,8 +613,6 @@
             fullscreenElement.style.justifyContent = 'center';
             fullscreenElement.style.alignItems = 'center';
         }
-
-        
 
     </script>
 
