@@ -487,9 +487,10 @@ export default class Level1 extends Phaser.Scene {
             tilt = isLandscape ? event.beta : event.gamma;
 
             if (tilt !== null) {
-                const sensitivity = 6.0; // Adjust sensitivity for responsive gameplay
-                const maxTilt = 20; // Clamp tilt values for consistency
-                const deadZone = 1; // Ignore minor tilts within this range
+                const sensitivity = 8.0; // Higher sensitivity for faster movement
+                const maxTilt = 20; // Clamp tilt values for consistent gameplay
+                const deadZone = 1; // Smaller dead zone for precise control
+                const damping = 0.8; // Smoothing factor (closer to 1 = smoother)
 
                 // Clamp tilt values
                 tilt = Math.max(-maxTilt, Math.min(maxTilt, tilt));
@@ -501,25 +502,30 @@ export default class Level1 extends Phaser.Scene {
 
                 if (tilt > deadZone) {
                     // Move right
-                    const velocity = (tilt - deadZone) * sensitivity;
-                    this.player.setVelocityX(velocity);
+                    const targetVelocity = (tilt - deadZone) * sensitivity;
+                    this.player.setVelocityX(
+                        Phaser.Math.Interpolation.Linear([this.player.body.velocity.x, targetVelocity], damping)
+                    );
                     this.player.setFlipX(false);
                     this.player.play('walk', true);
                 } else if (tilt < -deadZone) {
                     // Move left
-                    const velocity = (tilt + deadZone) * sensitivity;
-                    this.player.setVelocityX(velocity);
+                    const targetVelocity = (tilt + deadZone) * sensitivity;
+                    this.player.setVelocityX(
+                        Phaser.Math.Interpolation.Linear([this.player.body.velocity.x, targetVelocity], damping)
+                    );
                     this.player.setFlipX(true);
                     this.player.play('walk', true);
                 } else {
-                    // Stay idle in the dead zone
-                    this.player.setVelocityX(0);
+                    // Smoothly transition to idle
+                    this.player.setVelocityX(
+                        Phaser.Math.Interpolation.Linear([this.player.body.velocity.x, 0], damping)
+                    );
                     this.player.play('idle', true);
                 }
             }
         });
     }
-
 
 
 }
