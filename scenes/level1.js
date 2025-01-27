@@ -487,11 +487,11 @@ export default class Level1 extends Phaser.Scene {
             tilt = isLandscape ? event.beta : event.gamma;
     
             if (tilt !== null) {
-                const sensitivity = isLandscape ? 2.0 : 1.5; // Adjust sensitivity for landscape and portrait
-                const maxTilt = 30; // Clamp tilt to avoid excessive movement
-                const deadZone = 5; // Dead zone for minor tilts
+                const deadZone = 8; // Dead zone for movement initiation
+                const velocity = 160; // Velocity for player movement
+                const maxTilt = isLandscape ? 30 : 90; // Normalize tilt ranges (beta vs gamma)
     
-                // Clamp tilt values to a defined range
+                // Normalize tilt values to ensure similar responsiveness in both orientations
                 tilt = Math.max(-maxTilt, Math.min(maxTilt, tilt));
     
                 if (isLandscape) {
@@ -501,14 +501,12 @@ export default class Level1 extends Phaser.Scene {
     
                 if (tilt > deadZone) {
                     // Move right
-                    const velocity = (tilt - deadZone) * sensitivity * 80; // Adjust multiplier for smooth yet responsive movement
-                    this.player.setVelocityX(velocity);
+                    this.player.setVelocityX((tilt / maxTilt) * velocity);
                     this.player.setFlipX(false);
                     this.player.play('walk', true);
                 } else if (tilt < -deadZone) {
                     // Move left
-                    const velocity = (tilt + deadZone) * sensitivity * 80; // Adjust multiplier for smooth yet responsive movement
-                    this.player.setVelocityX(velocity);
+                    this.player.setVelocityX((tilt / maxTilt) * velocity);
                     this.player.setFlipX(true);
                     this.player.play('walk', true);
                 } else {
@@ -518,6 +516,6 @@ export default class Level1 extends Phaser.Scene {
                 }
             }
         });
-    }          
+    }       
 
 }
