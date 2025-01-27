@@ -478,33 +478,40 @@ export default class Level1 extends Phaser.Scene {
     }
 
     enableTiltControls() {
-        window.addEventListener('deviceorientation', (event) => {
-            let tilt = event.gamma; // Side-to-side tilt
-    
-            // Adjust for landscape mode
-            if (window.orientation === 90 || window.orientation === -90) {
-                tilt = event.beta; // Use beta for landscape mode
+    window.addEventListener('deviceorientation', (event) => {
+        let tilt;
+        const isLandscape = window.orientation === 90 || window.orientation === -90;
+
+        // Use gamma for portrait, beta for landscape
+        tilt = isLandscape ? event.beta : event.gamma;
+
+        if (tilt !== null) {
+            const sensitivity = 1.5; // Adjust this value for desired sensitivity
+            const maxTilt = 30; // Clamp tilt to a maximum range
+            const deadZone = 5; // Small tilt angles to ignore (dead zone)
+
+            // Clamp tilt values to prevent extreme movement
+            const clampedTilt = Math.max(-maxTilt, Math.min(maxTilt, tilt));
+
+            if (clampedTilt > deadZone) {
+                // Move right
+                this.player.setVelocityX((clampedTilt - deadZone) * sensitivity);
+                this.player.setFlipX(false);
+                this.player.play('walk', true);
+            } else if (clampedTilt < -deadZone) {
+                // Move left
+                this.player.setVelocityX((clampedTilt + deadZone) * sensitivity);
+                this.player.setFlipX(true);
+                this.player.play('walk', true);
+            } else {
+                // Stay idle when within the dead zone
+                this.player.setVelocityX(0);
+                this.player.play('idle', true);
             }
-    
-            if (tilt !== null) {
-                const sensitivity = 1.5; // Adjust this value for desired sensitivity
-                const maxTilt = 30; // Maximum tilt angle
-                const clampedTilt = Math.max(-maxTilt, Math.min(maxTilt, tilt));
-    
-                if (clampedTilt > 8) {
-                    this.player.setVelocityX(160); // Move right
-                    this.player.setFlipX(false);
-                    this.player.play('walk', true);
-                } else if (clampedTilt < -8) {
-                    this.player.setVelocityX(-160); // Move left
-                    this.player.setFlipX(true);
-                    this.player.play('walk', true);
-                } else {
-                    this.player.setVelocityX(0); // Stop movement
-                    this.player.play('idle', true);
-                }
-            }
-        });
-    }    
+        }
+    });
+}
+
+   
 
 }
