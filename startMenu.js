@@ -52,23 +52,11 @@ export default class StartMenu extends Phaser.Scene {
             startButton.setStyle({ fill: '#ff0000', backgroundColor: '#000000' });
         });
 
-        // Start the game on button click and enable fullscreen with landscape mode
         startButton.on('pointerdown', () => {
             this.sound.stopAll();
-            const fullscreenElement = document.getElementById('fullscreen');
-            if (fullscreenElement.requestFullscreen) {
-                fullscreenElement.requestFullscreen().then(() => {
-                    if (screen.orientation && screen.orientation.lock) {
-                        screen.orientation.lock('landscape').catch(err => {
-                            console.warn('Failed to lock orientation:', err);
-                        });
-                    }
-                    this.scene.start('Level1');
-                });
-            } else {
-                this.scene.start('Level1'); // Fallback for unsupported browsers
-            }
+            this.scene.start('Level1'); // Directly starts the game without requesting fullscreen
         });
+        
 
         const music = this.sound.add('menuMusic', { loop: true, volume: 0.6 });
         music.play();
