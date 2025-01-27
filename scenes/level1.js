@@ -478,6 +478,11 @@ export default class Level1 extends Phaser.Scene {
     }
 
    enableTiltControls() {
+        let tiltVelocity = 0; // Current tilt velocity
+        const maxVelocity = 400; // Maximum player velocity
+        const accelerationFactor = 20; // How quickly the player accelerates
+        const decelerationFactor = 0.9; // How quickly the player decelerates
+
         window.addEventListener('deviceorientation', (event) => {
             let tilt;
             const isLandscape = window.orientation === 90 || window.orientation === -90;
@@ -487,7 +492,6 @@ export default class Level1 extends Phaser.Scene {
             tilt = isLandscape ? event.beta : event.gamma;
 
             if (tilt !== null) {
-                const sensitivity = 6.0; // Boost sensitivity for more responsive movement
                 const maxTilt = 25; // Clamp tilt values for consistent gameplay
                 const deadZone = 2; // Reduce dead zone for tighter control
 
@@ -500,24 +504,35 @@ export default class Level1 extends Phaser.Scene {
                 }
 
                 if (tilt > deadZone) {
-                    // Move right
-                    const velocity = (tilt - deadZone) * sensitivity;
-                    this.player.setVelocityX(velocity);
+                    // Gradually increase velocity to the right
+                    tiltVelocity += (tilt - deadZone) * accelerationFactor * 0.01;
+                } else if (tilt < -deadZone) {
+                    // Gradually increase velocity to the left
+                    tiltVelocity += (tilt + deadZone) * accelerationFactor * 0.01;
+                } else {
+                    // Decelerate gradually when tilt is within the dead zone
+                    tiltVelocity *= decelerationFactor;
+                }
+
+                // Clamp velocity to maxVelocity
+                tiltVelocity = Math.max(-maxVelocity, Math.min(maxVelocity, tiltVelocity));
+
+                // Apply velocity to the player
+                this.player.setVelocityX(tiltVelocity);
+
+                // Set player animation and direction
+                if (tiltVelocity > 0) {
                     this.player.setFlipX(false);
                     this.player.play('walk', true);
-                } else if (tilt < -deadZone) {
-                    // Move left
-                    const velocity = (tilt + deadZone) * sensitivity;
-                    this.player.setVelocityX(velocity);
+                } else if (tiltVelocity < 0) {
                     this.player.setFlipX(true);
                     this.player.play('walk', true);
                 } else {
-                    // Stay idle when within the dead zone
-                    this.player.setVelocityX(0);
                     this.player.play('idle', true);
                 }
             }
         });
     }
+
 
 }
