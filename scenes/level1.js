@@ -503,7 +503,7 @@ export default class Level1 extends Phaser.Scene {
 
     enableTiltControls() {
         let smoothedTilt = 0; // Smoothed tilt value for stabilization
-        const smoothingFactor = 0.1; // Adjust for tilt responsiveness (higher is slower smoothing)
+        const smoothingFactor = 0.05; // Adjust for tilt responsiveness (higher is slower smoothing)
     
         window.addEventListener('deviceorientation', (event) => {
             let tilt;
@@ -515,7 +515,7 @@ export default class Level1 extends Phaser.Scene {
     
             if (tilt !== null) {
                 const maxTilt = isLandscape ? 20 : 90; // Normalize tilt ranges: beta (landscape) vs gamma (portrait)
-                const deadZone = 8; // Dead zone for movement initiation
+                const deadZone = 7; // Dead zone for movement initiation
                 const velocity = 320; // Match velocity for consistent gameplay feel
     
                 // Clamp tilt values to ensure responsiveness within the defined range
