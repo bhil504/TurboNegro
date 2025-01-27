@@ -481,30 +481,36 @@ export default class Level1 extends Phaser.Scene {
     window.addEventListener('deviceorientation', (event) => {
         let tilt;
         const isLandscape = window.orientation === 90 || window.orientation === -90;
+        const isClockwise = window.orientation === 90; // Determine if the device is rotated clockwise
 
         // Use gamma for portrait, beta for landscape
         tilt = isLandscape ? event.beta : event.gamma;
 
         if (tilt !== null) {
-            const sensitivity = 1.5; // Adjust this value for desired sensitivity
-            const maxTilt = 30; // Clamp tilt to a maximum range
-            const deadZone = 5; // Small tilt angles to ignore (dead zone)
+            const sensitivity = 2.5; // Higher sensitivity for faster response
+            const maxTilt = 30; // Clamp tilt to avoid excessive movement
+            const deadZone = 5; // Ignore small tilts (dead zone)
 
-            // Clamp tilt values to prevent extreme movement
+            // Clamp tilt values to prevent excessive movement
             const clampedTilt = Math.max(-maxTilt, Math.min(maxTilt, tilt));
 
-            if (clampedTilt > deadZone) {
+            if (isLandscape) {
+                // Reverse tilt for counterclockwise landscape
+                tilt = isClockwise ? clampedTilt : -clampedTilt;
+            }
+
+            if (tilt > deadZone) {
                 // Move right
-                this.player.setVelocityX((clampedTilt - deadZone) * sensitivity);
+                this.player.setVelocityX((tilt - deadZone) * sensitivity);
                 this.player.setFlipX(false);
                 this.player.play('walk', true);
-            } else if (clampedTilt < -deadZone) {
+            } else if (tilt < -deadZone) {
                 // Move left
-                this.player.setVelocityX((clampedTilt + deadZone) * sensitivity);
+                this.player.setVelocityX((tilt + deadZone) * sensitivity);
                 this.player.setFlipX(true);
                 this.player.play('walk', true);
             } else {
-                // Stay idle when within the dead zone
+                // Stay idle within the dead zone
                 this.player.setVelocityX(0);
                 this.player.play('idle', true);
             }
@@ -512,6 +518,5 @@ export default class Level1 extends Phaser.Scene {
     });
 }
 
-   
 
 }
