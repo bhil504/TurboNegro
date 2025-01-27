@@ -297,6 +297,7 @@ export default class Level1 extends Phaser.Scene {
     }
     
     update() {
+        // Handle keyboard movement
         if (this.cursors.left.isDown) {
             this.player.setVelocityX(-165);
             this.player.setFlipX(true);
@@ -309,16 +310,39 @@ export default class Level1 extends Phaser.Scene {
             this.player.setVelocityX(0);
             this.player.play('idle', true);
         }
-        
+    
+        // Handle jump with keyboard
         if (this.cursors.up.isDown && this.player.body.touching.down) {
             this.player.setVelocityY(-500);
             this.player.play('jump', true);
         }
-        
+    
+        // Handle firing projectiles
         if (Phaser.Input.Keyboard.JustDown(this.fireKey)) {
             this.fireProjectile();
         }
-    }
+    
+        // Handle tilt-based movement (for mobile)
+        if (this.smoothedTilt !== undefined) { // Ensure tilt is available
+            const velocity = 320; // Maximum velocity for tilt-based movement
+            const deadZone = 6; // Tilt dead zone
+            const maxTilt = 30; // Max tilt value (adjust based on your needs)
+    
+            // Calculate velocity based on smoothed tilt
+            if (this.smoothedTilt > deadZone) {
+                this.player.setVelocityX((this.smoothedTilt / maxTilt) * velocity);
+                this.player.setFlipX(false);
+                this.player.play('walk', true);
+            } else if (this.smoothedTilt < -deadZone) {
+                this.player.setVelocityX((this.smoothedTilt / maxTilt) * velocity);
+                this.player.setFlipX(true);
+                this.player.play('walk', true);
+            } else if (this.player.body.touching.down) {
+                this.player.setVelocityX(0);
+                this.player.play('idle', true);
+            }
+        }
+    }    
     
     fireProjectile() {
         const projectile = this.projectiles.create(this.player.x, this.player.y, 'projectileCD');
@@ -478,6 +502,9 @@ export default class Level1 extends Phaser.Scene {
     }
 
     enableTiltControls() {
+        this.smoothedTilt = 0; // Store a smoothed tilt value
+        const smoothingFactor = 0.2; // Adjust this for smoother or more responsive tilt input (lower = smoother)
+    
         window.addEventListener('deviceorientation', (event) => {
             let tilt;
             const isLandscape = window.orientation === 90 || window.orientation === -90;
@@ -487,35 +514,22 @@ export default class Level1 extends Phaser.Scene {
             tilt = isLandscape ? event.beta : event.gamma;
     
             if (tilt !== null) {
-                const deadZone = 6; // Dead zone for movement initiation
-                const velocity = 320; // Velocity for player movement
                 const maxTilt = isLandscape ? 30 : 90; // Normalize tilt ranges (beta vs gamma)
     
-                // Normalize tilt values to ensure similar responsiveness in both orientations
+                // Clamp tilt values for consistent responsiveness
                 tilt = Math.max(-maxTilt, Math.min(maxTilt, tilt));
     
-                if (isLandscape) {
-                    // Reverse tilt for counterclockwise landscape
-                    tilt = isClockwise ? tilt : -tilt;
+                // Reverse tilt for counterclockwise landscape
+                if (isLandscape && !isClockwise) {
+                    tilt = -tilt;
                 }
     
-                if (tilt > deadZone) {
-                    // Move right
-                    this.player.setVelocityX((tilt / maxTilt) * velocity);
-                    this.player.setFlipX(false);
-                    this.player.play('walk', true);
-                } else if (tilt < -deadZone) {
-                    // Move left
-                    this.player.setVelocityX((tilt / maxTilt) * velocity);
-                    this.player.setFlipX(true);
-                    this.player.play('walk', true);
-                } else {
-                    // Stay idle when tilt is in the dead zone
-                    this.player.setVelocityX(0);
-                    this.player.play('idle', true);
-                }
+                // Apply a low-pass filter for smoothing
+                this.smoothedTilt += (tilt - this.smoothedTilt) * smoothingFactor;
             }
         });
-    }       
+    }
+    
+          
 
 }
