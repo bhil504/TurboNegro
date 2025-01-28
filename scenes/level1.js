@@ -1,5 +1,6 @@
 import { addFullscreenButton } from '../utils/fullScreenUtils.js';
 import { setupJoystick } from '../utils/joystickUtils.js';
+import { enableTiltControls } from '../utils/tiltUtils.js';
 
 
 export default class Level1 extends Phaser.Scene {
@@ -38,23 +39,23 @@ export default class Level1 extends Phaser.Scene {
     
     create() {
         const { width, height } = this.scale;
-
+    
         // Background and music
         this.add.image(width / 2, height / 2, 'level1Background').setDisplaySize(width, height);
         this.levelMusic = this.sound.add('level1Music', { loop: true, volume: 0.5 });
         this.levelMusic.play();
-
+    
         // Platforms setup
         this.platforms = this.physics.add.staticGroup();
         this.platforms.create(width / 2, height - 20, null).setDisplaySize(width, 20).setVisible(false).refreshBody();
         const balcony = this.platforms.create(width / 2, height - 350, 'balcony').setScale(1).refreshBody();
         balcony.body.setSize(280, 10).setOffset((balcony.displayWidth - 280) / 2, balcony.displayHeight - 75);
-
+    
         // Player setup
         this.player = this.physics.add.sprite(100, height - 100, 'turboNegroStanding1');
         this.player.setCollideWorldBounds(true);
         this.physics.add.collider(this.player, this.platforms);
-
+    
         // Animations
         this.anims.create({
             key: 'idle',
@@ -69,30 +70,30 @@ export default class Level1 extends Phaser.Scene {
         });
         this.anims.create({ key: 'walk', frames: [{ key: 'turboNegroWalking' }], frameRate: 8, repeat: -1 });
         this.anims.create({ key: 'jump', frames: [{ key: 'turboNegroJump' }], frameRate: 1 });
-
+    
         // Input setup
         this.cursors = this.input.keyboard.createCursorKeys();
         this.fireKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
-
+    
         // Health and enemy setup
         this.playerHealth = 10;
         this.maxHealth = 10;
         this.totalEnemiesDefeated = 0;
         this.updateHealthUI();
         this.updateEnemyCountUI();
-
+    
         this.projectiles = this.physics.add.group({ defaultKey: 'projectileCD' });
         this.enemies = this.physics.add.group();
         this.enemySpawnTimer = this.time.addEvent({ delay: 1000, callback: this.spawnEnemy, callbackScope: this, loop: true });
-
+    
         this.healthPacks = this.physics.add.group();
         this.physics.add.collider(this.healthPacks, this.platforms);
         this.physics.add.overlap(this.player, this.healthPacks, this.handlePlayerHealthPackCollision, null, this);
-
+    
         this.physics.add.collider(this.player, this.enemies, this.handlePlayerEnemyCollision, null, this);
         this.physics.add.collider(this.projectiles, this.enemies, this.handleProjectileEnemyCollision, null, this);
         this.physics.add.collider(this.enemies, this.platforms);
-
+    
         // Attack button
         const attackButton = document.getElementById('attack-button');
         if (attackButton) {
@@ -100,14 +101,14 @@ export default class Level1 extends Phaser.Scene {
                 this.fireProjectile();
             });
         }
-
-        // Mobile controls
+    
+        // Mobile controls: Tilt and Joystick integration
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         if (isMobile) {
-            console.log("Mobile device detected. Initializing controls...");
-            this.joystickControls = setupJoystick(this.player);
-            this.enableTiltControls();
-
+            console.log("Mobile device detected. Initializing tilt and joystick controls...");
+            enableTiltControls(this, this.player); // Tilt controls
+            setupJoystick(this, this.player); // Joystick as fallback or supplement
+    
             const mobileFullscreenButton = document.getElementById('mobile-fullscreen-button');
             if (mobileFullscreenButton) {
                 mobileFullscreenButton.addEventListener('click', () => {
@@ -124,19 +125,18 @@ export default class Level1 extends Phaser.Scene {
         } else {
             console.log("Desktop detected. Skipping mobile-specific controls.");
         }
-
+    
         // Tap anywhere to attack
         this.input.on('pointerdown', (pointer) => {
             if (!pointer.wasTouch) return;
             this.fireProjectile();
         });
-
+    
         // Swipe up to jump
         let startY = null;
         this.input.on('pointerdown', (pointer) => {
             startY = pointer.y;
         });
-
         this.input.on('pointerup', (pointer) => {
             if (startY !== null && pointer.y < startY - 50 && this.player.body.touching.down) {
                 this.player.setVelocityY(-500);
@@ -144,7 +144,7 @@ export default class Level1 extends Phaser.Scene {
             }
             startY = null;
         });
-
+    
         // Desktop fullscreen button
         const fullscreenButton = this.add.text(20, 20, '[ fullscreen ]', {
             fontSize: '20px',
@@ -153,7 +153,7 @@ export default class Level1 extends Phaser.Scene {
             padding: { left: 10, right: 10, top: 5, bottom: 5 },
             borderRadius: '5px',
         }).setInteractive();
-
+    
         fullscreenButton.on('pointerdown', () => {
             const fullscreenElement = document.getElementById('fullscreen');
             if (!document.fullscreenElement && !document.webkitFullscreenElement) {
@@ -165,16 +165,14 @@ export default class Level1 extends Phaser.Scene {
             }
         });
     }
-
+    
     update() {
         let tiltVelocity = 0;
         let joystickVelocity = 0;
     
         // Handle tilt-based movement
-        if (typeof this.smoothedTilt !== 'undefined' && this.smoothedTilt !== null) {
-            const maxTilt = 30; // Maximum tilt angle for movement
-            const velocityFactor = 320 / maxTilt; // Scale tilt to velocity
-            tiltVelocity = Phaser.Math.Clamp(this.smoothedTilt * velocityFactor, -320, 320);
+        if (this.tiltX !== undefined) {
+            tiltVelocity = this.tiltX * 5; // Adjust sensitivity
         }
     
         // Handle joystick-based movement
@@ -182,23 +180,22 @@ export default class Level1 extends Phaser.Scene {
             joystickVelocity = this.joystickForceX * 160;
         }
     
-        // Determine the final velocity based on inputs
+        // Combine tilt and joystick forces
         let finalVelocity = tiltVelocity;
-    
         if (joystickVelocity !== 0) {
             if (Math.sign(joystickVelocity) === Math.sign(tiltVelocity)) {
-                // If joystick and tilt are in the same direction, add a slight boost
+                // Combine forces in the same direction
                 finalVelocity += joystickVelocity * 0.5;
             } else {
-                // If joystick and tilt are in opposite directions, prioritize tilt
-                finalVelocity = tiltVelocity;
+                // Prioritize joystick for opposite directions
+                finalVelocity = joystickVelocity;
             }
         }
     
         // Apply the final velocity to the player
         this.player.setVelocityX(finalVelocity);
     
-        // Update animations based on movement direction and state
+        // Update animations based on movement
         if (finalVelocity > 0) {
             this.player.setFlipX(false);
             if (this.player.body.touching.down) this.player.play('walk', true);
@@ -209,11 +206,8 @@ export default class Level1 extends Phaser.Scene {
             this.player.play('idle', true);
         }
     
-        // Handle jump with keyboard, joystick, or swipe
-        if (this.cursors.up.isDown && this.player.body.touching.down) {
-            this.player.setVelocityY(-500);
-            this.player.play('jump', true);
-        } else if (this.joystickForceY < -0.5 && this.player.body.touching.down) {
+        // Handle jumping with joystick or swipe
+        if (this.joystickForceY < -0.5 && this.player.body.touching.down) {
             this.player.setVelocityY(-500);
             this.player.play('jump', true);
         }
@@ -222,7 +216,7 @@ export default class Level1 extends Phaser.Scene {
         if (Phaser.Input.Keyboard.JustDown(this.fireKey)) {
             this.fireProjectile();
         }
-    }    
+    }   
 
     fireProjectile() {
         const projectile = this.projectiles.create(this.player.x, this.player.y, 'projectileCD');
