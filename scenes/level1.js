@@ -1,7 +1,5 @@
-import { addFullscreenButton } from './utils/fullScreenUtils.js';
-import { setupMobileControls } from './utils/mobileControls.js';
-
-
+import { addFullscreenButton } from '/utils/fullScreenUtils.js';
+import { setupMobileControls } from '/utils/mobileControls.js';
 
 export default class Level1 extends Phaser.Scene {
     constructor() {
