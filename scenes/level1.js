@@ -1,6 +1,6 @@
-import { setupJoystick } from './joystickUtils.js';
-import { enableTiltControls } from './tiltUtils.js';
-import { addFullscreenButton } from './fullScreenUtils.js';
+import { setupJoystick } from './utils/joystickUtils.js';
+import { enableTiltControls } from './utils/tiltUtils.js';
+import { addFullscreenButton } from './utils/fullScreenUtils.js';
 
 
 
