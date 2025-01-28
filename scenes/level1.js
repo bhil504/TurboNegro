@@ -122,27 +122,26 @@ export default class Level1 extends Phaser.Scene {
         }
     
         // Fullscreen button for desktop
-        const fullscreenButton = this.add.text(20, 20, '[ Fullscreen ]', {
+        const fullscreenButton = this.add.text(20, 20, 'Fullscreen', {
             fontSize: '20px',
             fill: '#ffffff',
             backgroundColor: '#000000',
             padding: { left: 10, right: 10, top: 5, bottom: 5 },
-            borderRadius: 5,
+            borderRadius: '5px',
         }).setInteractive();
-    
+        
         fullscreenButton.on('pointerdown', () => {
-            if (this.scale.isFullscreen) {
-                this.scale.stopFullscreen();
-            } else {
-                this.scale.startFullscreen();
+            const fullscreenElement = document.getElementById('fullscreen');
+            if (document.fullscreenElement) {
+                document.exitFullscreen(); // Exit fullscreen mode
+            } else if (fullscreenElement) {
+                fullscreenElement.requestFullscreen().catch(err => {
+                    console.error('Error attempting to enable fullscreen mode:', err.message);
+                });
             }
         });
-    
-        // Tap anywhere to attack
-        this.input.on('pointerdown', (pointer) => {
-            if (!pointer.wasTouch) return;
-            this.fireProjectile();
-        });
+        
+        
     
         // Swipe up to jump
         let startY = null;
@@ -339,23 +338,7 @@ export default class Level1 extends Phaser.Scene {
         }
     }      
 
-    enableTiltControls() {
-        let smoothedTilt = 0;
-        const smoothingFactor = 0.2;
-
-        window.addEventListener('deviceorientation', (event) => {
-            let tilt = window.orientation === 90 || window.orientation === -90 ? event.beta : event.gamma;
-
-            if (tilt !== null) {
-                const maxTilt = 30;
-                const deadZone = 6;
-                tilt = Math.max(-maxTilt, Math.min(maxTilt, tilt));
-                smoothedTilt += (tilt - smoothedTilt) * smoothingFactor;
-
-                this.smoothedTilt = Math.abs(smoothedTilt) > deadZone ? smoothedTilt : 0;
-            }
-        });
-    }   
+      
 
     shutdown() {
         if (this.levelMusic) {
