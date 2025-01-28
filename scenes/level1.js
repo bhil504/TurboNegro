@@ -292,7 +292,7 @@ export default class Level1 extends Phaser.Scene {
             this.player.play('idle', true);
         }
     
-        // Handle jump with keyboard
+        // Handle jumping with keyboard
         if (this.cursors.up.isDown && this.player.body.touching.down) {
             this.player.setVelocityY(-500);
             this.player.play('jump', true);
@@ -302,7 +302,33 @@ export default class Level1 extends Phaser.Scene {
         if (Phaser.Input.Keyboard.JustDown(this.fireKey)) {
             this.fireProjectile();
         }
-    }       
+    
+        // Combine joystick and tilt inputs for movement
+        const joystickForce = this.joystick?.getForce ? this.joystick.getForce() : { x: 0, y: 0 };
+        const tiltForce = this.tilt?.getForce ? this.tilt.getForce() : { x: 0, y: 0 };
+    
+        let finalForceX = joystickForce.x + tiltForce.x;
+    
+        // Apply the combined forces
+        if (finalForceX > 0) {
+            this.player.setVelocityX(finalForceX * 160);
+            this.player.setFlipX(false);
+            if (this.player.body.touching.down) this.player.play('walk', true);
+        } else if (finalForceX < 0) {
+            this.player.setVelocityX(finalForceX * 160);
+            this.player.setFlipX(true);
+            if (this.player.body.touching.down) this.player.play('walk', true);
+        } else if (this.player.body.touching.down) {
+            this.player.setVelocityX(0);
+            this.player.play('idle', true);
+        }
+    
+        // Handle jumping based on joystick input
+        if (joystickForce.y < -0.5 && this.player.body.touching.down) {
+            this.player.setVelocityY(-500);
+            this.player.play('jump', true);
+        }
+    }         
     
     fireProjectile() {
         const projectile = this.projectiles.create(this.player.x, this.player.y, 'projectileCD');
