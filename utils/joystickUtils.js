@@ -44,3 +44,36 @@ export function setupJoystick(player) {
         getForce: () => ({ x: joystickForceX, y: joystickForceY }),
     };
 }
+
+export function integrateControls(player, config = {}) {
+    const joystick = setupJoystick(player);
+    const tiltCleanup = enableTiltControls(player, config);
+
+    const updatePlayerMovement = () => {
+        const joystickForce = joystick.getForce(); // { x: joystickForceX, y: joystickForceY }
+
+        // Apply joystick force directly
+        if (joystickForce.x !== 0) {
+            player.setVelocityX(joystickForce.x * 320); // Adjust sensitivity as needed
+            player.setFlipX(joystickForce.x < 0);
+            if (player.body.touching.down) player.play('walk', true);
+        } else {
+            player.setVelocityX(0);
+            if (player.body.touching.down) player.play('idle', true);
+        }
+
+        // Handle jump via joystick
+        if (joystickForce.y < -0.5 && player.body.touching.down) {
+            player.setVelocityY(-500); // Jump
+        }
+    };
+
+    const movementInterval = setInterval(updatePlayerMovement, 16); // Update at ~60 FPS
+
+    return () => {
+        clearInterval(movementInterval);
+        tiltCleanup();
+    };
+}
+
+
