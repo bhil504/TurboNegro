@@ -82,11 +82,15 @@ export function setupJoystick(player) {
     joystickArea.addEventListener('touchend', handleTouchEnd);
 
     // Cleanup function to remove event listeners
-    return () => {
-        joystickArea.removeEventListener('touchstart', handleTouchStart);
-        joystickArea.removeEventListener('touchmove', handleTouchMove);
-        joystickArea.removeEventListener('touchend', handleTouchEnd);
+    return {
+        getForce: () => ({ x: joystickForceX, y: joystickForceY }),
+        cleanup: () => {
+            joystickArea.removeEventListener('touchstart', handleTouchStart);
+            joystickArea.removeEventListener('touchmove', handleTouchMove);
+            joystickArea.removeEventListener('touchend', handleTouchEnd);
+        },
     };
+    
 }
 
 
