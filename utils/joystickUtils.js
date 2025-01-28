@@ -9,12 +9,19 @@ export function setupJoystick(player) {
 
     let joystickForceX = 0;
     let joystickForceY = 0;
+    let targetJoystickForceX = 0;
+    let targetJoystickForceY = 0;
     let isActive = false;
 
     const maxDistance = 50; // Maximum distance for the joystick knob to move
+    const smoothingFactor = 0.1; // Adjust for smoother transitions (lower = smoother)
 
     const updatePlayerMovement = () => {
         if (player) {
+            // Apply smoothing to joystick forces
+            joystickForceX += (targetJoystickForceX - joystickForceX) * smoothingFactor;
+            joystickForceY += (targetJoystickForceY - joystickForceY) * smoothingFactor;
+
             const velocityX = joystickForceX * 160; // Adjust sensitivity as needed
             player.setVelocityX(velocityX);
 
@@ -33,6 +40,8 @@ export function setupJoystick(player) {
                 player.play('jump', true);
             }
         }
+
+        requestAnimationFrame(updatePlayerMovement);
     };
 
     const calculateJoystickForces = (touch) => {
@@ -47,8 +56,9 @@ export function setupJoystick(player) {
         const clampedX = (deltaX / distance) * Math.min(distance, maxDistance);
         const clampedY = (deltaY / distance) * Math.min(distance, maxDistance);
 
-        joystickForceX = clampedX / maxDistance;
-        joystickForceY = clampedY / maxDistance;
+        // Update target forces
+        targetJoystickForceX = clampedX / maxDistance;
+        targetJoystickForceY = clampedY / maxDistance;
 
         joystickKnob.style.transform = `translate(calc(${clampedX}px - 50%), calc(${clampedY}px - 50%))`;
     };
@@ -56,19 +66,17 @@ export function setupJoystick(player) {
     const handleTouchStart = (event) => {
         isActive = true;
         calculateJoystickForces(event.touches[0]);
-        updatePlayerMovement();
     };
 
     const handleTouchMove = (event) => {
         if (!isActive) return;
         calculateJoystickForces(event.touches[0]);
-        updatePlayerMovement();
     };
 
     const handleTouchEnd = () => {
         isActive = false;
-        joystickForceX = 0;
-        joystickForceY = 0;
+        targetJoystickForceX = 0;
+        targetJoystickForceY = 0;
         joystickKnob.style.transform = `translate(-50%, -50%)`;
 
         if (player) {
@@ -81,18 +89,18 @@ export function setupJoystick(player) {
     joystickArea.addEventListener('touchmove', handleTouchMove);
     joystickArea.addEventListener('touchend', handleTouchEnd);
 
+    // Start the update loop
+    updatePlayerMovement();
+
     // Cleanup function to remove event listeners
     return {
-        getForce: () => ({ x: joystickForceX, y: joystickForceY }),
         cleanup: () => {
             joystickArea.removeEventListener('touchstart', handleTouchStart);
             joystickArea.removeEventListener('touchmove', handleTouchMove);
             joystickArea.removeEventListener('touchend', handleTouchEnd);
         },
     };
-    
 }
-
 
 export function integrateControls(player, config = {}) {
     const joystickCleanup = setupJoystick(player);
