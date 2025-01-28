@@ -94,7 +94,7 @@ export default class Level1 extends Phaser.Scene {
         this.physics.add.collider(this.projectiles, this.enemies, this.handleProjectileEnemyCollision, null, this);
         this.physics.add.collider(this.enemies, this.platforms);
     
-        // Attack button
+        // Hook up the attack button to fireProjectile
         const attackButton = document.getElementById('attack-button');
         if (attackButton) {
             attackButton.addEventListener('click', () => {
@@ -106,8 +106,8 @@ export default class Level1 extends Phaser.Scene {
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         if (isMobile) {
             console.log("Mobile device detected. Initializing tilt and joystick controls...");
-            enableTiltControls.call(this); // Tilt controls
-            setupJoystick(this, this.player); // Joystick controls
+            enableTiltControls.call(this); // Enable tilt controls
+            setupJoystick(this, this.player); // Setup joystick
     
             const mobileFullscreenButton = document.getElementById('mobile-fullscreen-button');
             if (mobileFullscreenButton) {
@@ -122,43 +122,8 @@ export default class Level1 extends Phaser.Scene {
         }
     
         // Fullscreen button for desktop
-        const fullscreenButton = this.add.text(20, 20, 'Fullscreen', {
-            fontSize: '20px',
-            fill: '#ffffff',
-            backgroundColor: '#000000',
-            padding: { left: 10, right: 10, top: 5, bottom: 5 },
-            borderRadius: '5px',
-        }).setInteractive();
-        
-        fullscreenButton.on('pointerdown', () => {
-            const fullscreenElement = document.getElementById('fullscreen');
-            if (document.fullscreenElement) {
-                document.exitFullscreen(); // Exit fullscreen mode
-            } else if (fullscreenElement) {
-                fullscreenElement.requestFullscreen().catch(err => {
-                    console.error('Error attempting to enable fullscreen mode:', err.message);
-                });
-            }
-        });
-
-        const mobileFullscreenButton = document.getElementById('mobile-fullscreen-button');
-            if (mobileFullscreenButton) {
-                mobileFullscreenButton.addEventListener('click', () => {
-                    const fullscreenElement = document.getElementById('fullscreen');
-                    if (fullscreenElement) {
-                        if (!document.fullscreenElement) {
-                            fullscreenElement.requestFullscreen().catch((err) => {
-                                console.error('Error attempting fullscreen:', err.message);
-                            });
-                        } else {
-                            document.exitFullscreen();
-                        }
-                    } else {
-                        console.error('Fullscreen element not found!');
-                    }
-                });
-            }
-
+        addFullscreenButton(this);
+    
         // Swipe up to jump
         let startY = null;
         this.input.on('pointerdown', (pointer) => {
@@ -172,12 +137,12 @@ export default class Level1 extends Phaser.Scene {
             startY = null;
         });
     
-        console.log("Level 1 setup complete.");
-    }        
-    
+        console.log("Level setup complete.");
+    }
+           
     update() {
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-        let finalVelocity = 0;
+        let finalVelocityX = 0;
     
         if (isMobile) {
             // Combine tilt and joystick velocities
@@ -185,43 +150,43 @@ export default class Level1 extends Phaser.Scene {
             const joystickVelocity = this.joystickForceX !== undefined ? this.joystickForceX * 160 : 0;
     
             if (joystickVelocity !== 0 && Math.sign(joystickVelocity) === Math.sign(tiltVelocity)) {
-                finalVelocity = tiltVelocity + joystickVelocity * 0.5; // Combine same-direction forces
+                finalVelocityX = tiltVelocity + joystickVelocity * 0.5; // Combine same-direction forces
             } else {
-                finalVelocity = joystickVelocity || tiltVelocity; // Prioritize joystick when active
+                finalVelocityX = joystickVelocity || tiltVelocity; // Prioritize joystick when active
             }
         } else {
             // Desktop-specific controls using keyboard
             if (this.cursors.left.isDown) {
-                finalVelocity = -160;
+                finalVelocityX = -165;
                 this.player.setFlipX(true);
             } else if (this.cursors.right.isDown) {
-                finalVelocity = 160;
+                finalVelocityX = 165;
                 this.player.setFlipX(false);
-            }
-    
-            // Handle jump
-            if (this.cursors.up.isDown && this.player.body.touching.down) {
-                this.player.setVelocityY(-500);
-                this.player.play('jump', true);
             }
         }
     
         // Apply the final velocity
-        this.player.setVelocityX(finalVelocity);
+        this.player.setVelocityX(finalVelocityX);
     
         // Update animations
-        if (finalVelocity !== 0) {
-            if (this.player.body.touching.down) this.player.play('walk', true);
+        if (finalVelocityX !== 0 && this.player.body.touching.down) {
+            this.player.play('walk', true);
         } else if (this.player.body.touching.down) {
             this.player.play('idle', true);
         }
     
-        // Firing projectiles (desktop only)
-        if (!isMobile && Phaser.Input.Keyboard.JustDown(this.fireKey)) {
+        // Jump controls
+        if (this.cursors.up.isDown && this.player.body.touching.down) {
+            this.player.setVelocityY(-500);
+            this.player.play('jump', true);
+        }
+    
+        // Firing projectiles
+        if (Phaser.Input.Keyboard.JustDown(this.fireKey)) {
             this.fireProjectile();
         }
-    }          
-
+    }
+              
     fireProjectile() {
         const projectile = this.projectiles.create(this.player.x, this.player.y, 'projectileCD');
         if (projectile) {
