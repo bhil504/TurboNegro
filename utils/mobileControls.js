@@ -1,5 +1,5 @@
-import { setupJoystick } from './utils/joystickUtils.js';
-import { enableTiltControls } from './utils/tiltUtils.js';
+import { setupJoystick } from '/utils/joystickUtils.js';
+import { enableTiltControls } from '/utils/tiltUtils.js';
 
 export function setupMobileControls(scene, player) {
     if (window.DeviceOrientationEvent) {
