@@ -278,24 +278,33 @@ export default class Level1 extends Phaser.Scene {
     }
     
     update() {
-        // Handle keyboard movement
+        let isMoving = false; // To track if the player is moving
+    
+        // Handle desktop (keyboard) movement
         if (this.cursors.left.isDown) {
-            this.player.setVelocityX(-165);
-            this.player.setFlipX(true);
-            this.player.play('walk', true);
+            this.player.setVelocityX(-165); // Move left
+            this.player.setFlipX(true); // Flip sprite to face left
+            this.player.play('walk', true); // Play walk animation
+            isMoving = true;
         } else if (this.cursors.right.isDown) {
-            this.player.setVelocityX(165);
-            this.player.setFlipX(false);
-            this.player.play('walk', true);
-        } else if (this.player.body.touching.down) {
-            this.player.setVelocityX(0);
-            this.player.play('idle', true);
+            this.player.setVelocityX(165); // Move right
+            this.player.setFlipX(false); // Ensure sprite faces right
+            this.player.play('walk', true); // Play walk animation
+            isMoving = true;
         }
     
-        // Handle jumping with keyboard
+        // Stop horizontal movement if no keys are pressed
+        if (!isMoving) {
+            this.player.setVelocityX(0); // Stop movement
+            if (this.player.body.touching.down) {
+                this.player.play('idle', true); // Play idle animation only when grounded
+            }
+        }
+    
+        // Handle jump (keyboard)
         if (this.cursors.up.isDown && this.player.body.touching.down) {
-            this.player.setVelocityY(-500);
-            this.player.play('jump', true);
+            this.player.setVelocityY(-500); // Jump upward
+            this.player.play('jump', true); // Play jump animation
         }
     
         // Handle firing projectiles
@@ -303,32 +312,20 @@ export default class Level1 extends Phaser.Scene {
             this.fireProjectile();
         }
     
-        // Combine joystick and tilt inputs for movement
+        // Handle mobile controls (joystick and tilt)
         const joystickForce = this.joystick?.getForce ? this.joystick.getForce() : { x: 0, y: 0 };
         const tiltForce = this.tilt?.getForce ? this.tilt.getForce() : { x: 0, y: 0 };
     
+        // Combine joystick and tilt forces for mobile
         let finalForceX = joystickForce.x + tiltForce.x;
     
-        // Apply the combined forces
-        if (finalForceX > 0) {
-            this.player.setVelocityX(finalForceX * 160);
-            this.player.setFlipX(false);
+        if (finalForceX !== 0) {
+            // Apply movement from mobile input
+            this.player.setVelocityX(finalForceX * 160); // Adjust multiplier as needed
+            this.player.setFlipX(finalForceX < 0); // Flip sprite if moving left
             if (this.player.body.touching.down) this.player.play('walk', true);
-        } else if (finalForceX < 0) {
-            this.player.setVelocityX(finalForceX * 160);
-            this.player.setFlipX(true);
-            if (this.player.body.touching.down) this.player.play('walk', true);
-        } else if (this.player.body.touching.down) {
-            this.player.setVelocityX(0);
-            this.player.play('idle', true);
         }
-    
-        // Handle jumping based on joystick input
-        if (joystickForce.y < -0.5 && this.player.body.touching.down) {
-            this.player.setVelocityY(-500);
-            this.player.play('jump', true);
-        }
-    }         
+    }             
     
     fireProjectile() {
         const projectile = this.projectiles.create(this.player.x, this.player.y, 'projectileCD');
