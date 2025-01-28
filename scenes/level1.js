@@ -140,7 +140,25 @@ export default class Level1 extends Phaser.Scene {
                 });
             }
         });
-        
+
+        const mobileFullscreenButton = document.getElementById('mobile-fullscreen-button');
+            if (mobileFullscreenButton) {
+                mobileFullscreenButton.addEventListener('click', () => {
+                    const fullscreenElement = document.getElementById('fullscreen');
+                    if (fullscreenElement) {
+                        if (!document.fullscreenElement) {
+                            fullscreenElement.requestFullscreen().catch((err) => {
+                                console.error('Error attempting fullscreen:', err.message);
+                            });
+                        } else {
+                            document.exitFullscreen();
+                        }
+                    } else {
+                        console.error('Fullscreen element not found!');
+                    }
+                });
+            }
+
         
     
         // Swipe up to jump
