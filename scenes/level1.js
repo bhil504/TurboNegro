@@ -181,7 +181,6 @@ export default class Level1 extends Phaser.Scene {
         });
     }
 
-
     update() {
         // Handle keyboard movement
         if (this.cursors.left.isDown) {
