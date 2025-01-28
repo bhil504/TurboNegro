@@ -1,4 +1,6 @@
 import { addFullscreenButton } from '../utils/fullScreenUtils.js';
+import { setupMobileControls } from '../utils/mobileControls.js';
+
 
 
 export default class Level1 extends Phaser.Scene {
@@ -78,93 +80,11 @@ export default class Level1 extends Phaser.Scene {
         this.physics.add.collider(this.projectiles, this.enemies, this.handleProjectileEnemyCollision, null, this);
         this.physics.add.collider(this.enemies, this.platforms);
     
-        // Hook up the attack button to fireProjectile
-        const attackButton = document.getElementById('attack-button');
-        if (attackButton) {
-            attackButton.addEventListener('click', () => {
-                this.fireProjectile();
-            });
-        }
-    
-        // Mobile-specific controls
-        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-        if (isMobile) {
-            console.log("Mobile device detected. Initializing controls...");
-            this.setupJoystick();
-    
-            const mobileFullscreenButton = document.getElementById('mobile-fullscreen-button');
-            if (mobileFullscreenButton) {
-                mobileFullscreenButton.addEventListener('click', () => {
-                    const fullscreenElement = document.getElementById('fullscreen');
-                    if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-                        fullscreenElement.requestFullscreen().catch((err) => {
-                            console.error('Failed to enable fullscreen:', err);
-                        });
-                    } else {
-                        document.exitFullscreen();
-                    }
-                });
-            }
-    
-            if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-                DeviceOrientationEvent.requestPermission()
-                    .then((permissionState) => {
-                        if (permissionState === 'granted') {
-                            this.enableTiltControls();
-                        } else {
-                            console.warn("Motion access denied. Joystick is available.");
-                        }
-                    })
-                    .catch((error) => {
-                        console.error("Error requesting motion permission:", error);
-                    });
-            } else {
-                this.enableTiltControls();
-            }
-        } else {
-            console.log("Desktop detected. Skipping mobile-specific controls.");
-        }
-    
-        // Tap anywhere to attack
-        this.input.on('pointerdown', (pointer) => {
-            if (!pointer.wasTouch) return;
-            this.fireProjectile();
-        });
-    
-        // Swipe up to jump
-        let startY = null;
-        this.input.on('pointerdown', (pointer) => {
-            startY = pointer.y;
-        });
-    
-        this.input.on('pointerup', (pointer) => {
-            if (startY !== null && pointer.y < startY - 50 && this.player.body.touching.down) {
-                this.player.setVelocityY(-500);
-                this.player.play('jump', true);
-            }
-            startY = null;
-        });
-    
-        // Desktop fullscreen button
-        const fullscreenButton = this.add.text(20, 20, '[ fullscreen ]', {
-            fontSize: '20px',
-            fill: '#ffffff',
-            backgroundColor: '#000000',
-            padding: { left: 10, right: 10, top: 5, bottom: 5 },
-            borderRadius: '5px',
-        }).setInteractive();
-    
-        fullscreenButton.on('pointerdown', () => {
-            const fullscreenElement = document.getElementById('fullscreen');
-            if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-                fullscreenElement.requestFullscreen().catch((err) => {
-                    console.error('Error attempting to enable fullscreen:', err);
-                });
-            } else {
-                document.exitFullscreen();
-            }
-        });
-    }           
+        // Add utilities
+        addFullscreenButton(this);
+        setupMobileControls(this, this.player); // Handles tilt and joystick setup automatically
+    }
+               
     
     spawnEnemy() {
         const { width, height } = this.scale;
@@ -371,118 +291,6 @@ export default class Level1 extends Phaser.Scene {
         
     }
     
-    setupMobileControls() {
-        if (window.DeviceOrientationEvent) {
-            if (typeof DeviceOrientationEvent.requestPermission === 'function') {
-                // Request permission for iOS devices
-                DeviceOrientationEvent.requestPermission()
-                    .then(permissionState => {
-                        if (permissionState === 'granted') {
-                            this.enableTiltControls();
-                        } else {
-                            console.warn("Motion access denied. Enabling joystick as fallback.");
-                            this.setupJoystick(); // Fallback to joystick
-                        }
-                    })
-                    .catch(error => {
-                        console.error("Error requesting motion permission:", error);
-                        this.setupJoystick(); // Fallback to joystick
-                    });
-            } else {
-                // Non-iOS or older versions
-                this.enableTiltControls();
-            }
-        } else {
-            console.warn("Tilt controls unavailable. Enabling joystick as fallback.");
-            this.setupJoystick();
-        }
-    }
-    
-    setupJoystick() {
-        const joystickArea = document.getElementById('joystick-area');
-        let joystickKnob = document.getElementById('joystick-knob');
-    
-        // Add the knob dynamically if it doesn't exist
-        if (!joystickKnob) {
-            joystickKnob = document.createElement('div');
-            joystickKnob.id = 'joystick-knob';
-            joystickArea.appendChild(joystickKnob);
-        }
-    
-        let joystickStartX = 0;
-        let joystickStartY = 0;
-        let activeInterval;
-    
-        joystickArea.addEventListener('touchstart', (event) => {
-            const touch = event.touches[0];
-            joystickStartX = touch.clientX;
-            joystickStartY = touch.clientY;
-            joystickKnob.style.transform = `translate(-50%, -50%)`; // Reset to center
-    
-            // Start a continuous movement interval
-            activeInterval = setInterval(() => this.applyJoystickForce(), 16); // Run every ~16ms (60 FPS)
-        });
-    
-        joystickArea.addEventListener('touchmove', (event) => {
-            const touch = event.touches[0];
-            const deltaX = touch.clientX - joystickStartX;
-            const deltaY = touch.clientY - joystickStartY;
-    
-            const distance = Math.sqrt(deltaX ** 2 + deltaY ** 2);
-            const maxDistance = 50; // Joystick radius limit
-    
-            // Clamp the knob's movement to the max distance
-            const clampedX = (deltaX / distance) * Math.min(distance, maxDistance);
-            const clampedY = (deltaY / distance) * Math.min(distance, maxDistance);
-    
-            // Move the knob visually
-            joystickKnob.style.transform = `translate(calc(${clampedX}px - 50%), calc(${clampedY}px - 50%))`;
-    
-            // Store the clamped values for force application
-            this.joystickForceX = clampedX / maxDistance;
-            this.joystickForceY = clampedY / maxDistance;
-        });
-    
-        joystickArea.addEventListener('touchend', () => {
-            joystickKnob.style.transform = `translate(-50%, -50%)`; // Reset knob position
-            this.joystickForceX = 0; // Reset forces
-            this.joystickForceY = 0;
-    
-            if (this.player) {
-                this.player.setVelocityX(0); // Stop horizontal movement
-                this.player.anims.play('idle', true);
-            }
-    
-            clearInterval(activeInterval); // Stop continuous movement
-        });
-    
-        // Initialize joystick force values
-        this.joystickForceX = 0;
-        this.joystickForceY = 0;
-    }
-    
-    applyJoystickForce() {
-        if (this.player) {
-            // Apply X-axis movement
-            this.player.setVelocityX(this.joystickForceX * 160); // Adjust multiplier for sensitivity
-    
-            if (this.joystickForceX > 0) this.player.setFlipX(false);
-            if (this.joystickForceX < 0) this.player.setFlipX(true);
-    
-            // Jump if joystick is pushed upwards
-            if (this.joystickForceY < -0.5 && this.player.body.touching.down) {
-                this.player.setVelocityY(-500); // Jump
-            }
-    
-            // Change animation based on movement
-            if (Math.abs(this.joystickForceX) > 0.1 && this.player.body.touching.down) {
-                this.player.play('walk', true);
-            } else if (this.player.body.touching.down) {
-                this.player.play('idle', true);
-            }
-        }
-    }           
-    
     updateHealthUI() {
         const healthPercentage = (this.playerHealth / this.maxHealth) * 100;
         document.getElementById('health-bar-inner').style.width = `${healthPercentage}%`;
@@ -490,67 +298,7 @@ export default class Level1 extends Phaser.Scene {
     
     updateEnemyCountUI() {
         document.getElementById('enemy-count').innerText = `Enemies Left: ${20 - this.totalEnemiesDefeated}`;
-    }
-
-    enableTiltControls() {
-        let smoothedTilt = 0; // Smoothed tilt value for stabilization
-        const smoothingFactor = 0.2; // Adjust for tilt responsiveness (higher is slower smoothing)
-    
-        window.addEventListener('deviceorientation', (event) => {
-            let tilt;
-            const isLandscape = window.orientation === 90 || window.orientation === -90;
-            const isClockwise = window.orientation === 90; // Determine if in clockwise landscape mode
-    
-            // Use gamma for portrait and beta for landscape
-            tilt = isLandscape ? event.beta : event.gamma;
-    
-            if (tilt !== null) {
-                const maxTilt = isLandscape ? 20 : 90; // Normalize tilt ranges: beta (landscape) vs gamma (portrait)
-                const deadZone = 6; // Dead zone for movement initiation
-                const velocity = 320; // Match velocity for consistent gameplay feel
-    
-                // Clamp tilt values to ensure responsiveness within the defined range
-                tilt = Math.max(-maxTilt, Math.min(maxTilt, tilt));
-    
-                // Reverse tilt for counterclockwise landscape mode
-                if (isLandscape && !isClockwise) {
-                    tilt = -tilt;
-                }
-    
-                // Apply smoothing to the tilt value
-                smoothedTilt += (tilt - smoothedTilt) * smoothingFactor;
-    
-                // Handle movement logic based on smoothed tilt
-                if (smoothedTilt > deadZone) {
-                    // Move right
-                    this.player.setVelocityX((smoothedTilt - deadZone) / (maxTilt - deadZone) * velocity);
-                    this.player.setFlipX(false);
-    
-                    // Trigger animation only if it has changed
-                    if (this.player.anims.currentAnim?.key !== 'walk') {
-                        this.player.play('walk', true);
-                    }
-                } else if (smoothedTilt < -deadZone) {
-                    // Move left
-                    this.player.setVelocityX((smoothedTilt + deadZone) / (maxTilt - deadZone) * velocity);
-                    this.player.setFlipX(true);
-    
-                    // Trigger animation only if it has changed
-                    if (this.player.anims.currentAnim?.key !== 'walk') {
-                        this.player.play('walk', true);
-                    }
-                } else {
-                    // Stay idle if tilt is within the dead zone
-                    this.player.setVelocityX(0);
-    
-                    // Trigger animation only if it has changed
-                    if (this.player.anims.currentAnim?.key !== 'idle') {
-                        this.player.play('idle', true);
-                    }
-                }
-            }
-        });
-    }       
+    }     
 
     shutdown() {
         if (this.levelMusic) {

@@ -1,30 +1,29 @@
 import { setupJoystick } from './utils/joystickUtils.js';
 import { enableTiltControls } from './utils/tiltUtils.js';
 
-export function setupMobileControls() {
+export function setupMobileControls(scene, player) {
     if (window.DeviceOrientationEvent) {
         if (typeof DeviceOrientationEvent.requestPermission === 'function') {
-            // Request permission for iOS devices
+            // iOS-specific permission request
             DeviceOrientationEvent.requestPermission()
                 .then(permissionState => {
                     if (permissionState === 'granted') {
-                        this.enableTiltControls();
+                        enableTiltControls(scene, player);
                     } else {
                         console.warn("Motion access denied. Enabling joystick as fallback.");
-                        this.setupJoystick(); // Fallback to joystick
+                        setupJoystick(scene, player);
                     }
                 })
                 .catch(error => {
                     console.error("Error requesting motion permission:", error);
-                    this.setupJoystick(); // Fallback to joystick
+                    setupJoystick(scene, player);
                 });
         } else {
             // Non-iOS or older versions
-            this.enableTiltControls();
+            enableTiltControls(scene, player);
         }
     } else {
         console.warn("Tilt controls unavailable. Enabling joystick as fallback.");
-        this.setupJoystick();
+        setupJoystick(scene, player);
     }
 }
-
