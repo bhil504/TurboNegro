@@ -1,4 +1,3 @@
-// joystickUtils.js
 export function setupJoystick(scene, player) {
     const joystickArea = document.getElementById('joystick-area');
     let joystickKnob = document.getElementById('joystick-knob');

@@ -11,6 +11,9 @@ export function setupMobileControls(scene, player) {
 
     // Add tap-to-attack functionality
     setupTapAttack(scene, player);
+
+    // Add attack button functionality
+    setupAttackButton(scene, player);
 }
 
 function initializeTiltControls(scene, player) {
@@ -81,6 +84,17 @@ function setupTapAttack(scene, player) {
         if (!pointer.wasTouch) return; // Ensure it's a touch event
         fireProjectile(scene, player);
     });
+}
+
+function setupAttackButton(scene, player) {
+    const attackButton = document.getElementById('attack-button');
+    if (attackButton) {
+        attackButton.addEventListener('click', () => {
+            fireProjectile(scene, player);
+        });
+    } else {
+        console.warn("Attack button not found in DOM.");
+    }
 }
 
 function fireProjectile(scene, player) {
