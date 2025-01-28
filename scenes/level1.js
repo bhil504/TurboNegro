@@ -1,10 +1,12 @@
 import { addFullscreenButton } from '../utils/fullScreenUtils.js';
 import { setupJoystick } from '../utils/joystickUtils.js';
+import { enableTiltControls } from '../utils/tiltUtils.js';
 
 
 export default class Level1 extends Phaser.Scene {
     constructor() {
         super({ key: 'Level1' });
+        this.tiltCleanup = null;
     }
 
     preload() {
@@ -49,7 +51,12 @@ export default class Level1 extends Phaser.Scene {
         // Animations
         this.anims.create({
             key: 'idle',
-            frames: [{ key: 'turboNegroStanding1' }, { key: 'turboNegroStanding2' }, { key: 'turboNegroStanding3' }, { key: 'turboNegroStanding4' }],
+            frames: [
+                { key: 'turboNegroStanding1' },
+                { key: 'turboNegroStanding2' },
+                { key: 'turboNegroStanding3' },
+                { key: 'turboNegroStanding4' },
+            ],
             frameRate: 4,
             repeat: -1,
         });
@@ -95,6 +102,19 @@ export default class Level1 extends Phaser.Scene {
             // Modularized joystick setup
             setupJoystick(this.player);
     
+            // Tilt controls setup
+            const cleanupTiltControls = enableTiltControls(this.player, {
+                smoothingFactor: 0.2,
+                deadZone: 6,
+                maxTiltPortrait: 90,
+                maxTiltLandscape: 20,
+                velocity: 320,
+            });
+    
+            // Clean up tilt controls on shutdown
+            this.events.once(Phaser.Scenes.Events.SHUTDOWN, cleanupTiltControls);
+    
+            // Modularized mobile fullscreen button
             const mobileFullscreenButton = document.getElementById('mobile-fullscreen-button');
             if (mobileFullscreenButton) {
                 mobileFullscreenButton.addEventListener('click', () => {
@@ -107,22 +127,6 @@ export default class Level1 extends Phaser.Scene {
                         document.exitFullscreen();
                     }
                 });
-            }
-    
-            if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-                DeviceOrientationEvent.requestPermission()
-                    .then((permissionState) => {
-                        if (permissionState === 'granted') {
-                            this.enableTiltControls();
-                        } else {
-                            console.warn("Motion access denied. Joystick is available.");
-                        }
-                    })
-                    .catch((error) => {
-                        console.error("Error requesting motion permission:", error);
-                    });
-            } else {
-                this.enableTiltControls();
             }
         } else {
             console.log("Desktop detected. Skipping mobile-specific controls.");
@@ -148,26 +152,9 @@ export default class Level1 extends Phaser.Scene {
             startY = null;
         });
     
-        // Desktop fullscreen button
-        const fullscreenButton = this.add.text(20, 20, '[ fullscreen ]', {
-            fontSize: '20px',
-            fill: '#ffffff',
-            backgroundColor: '#000000',
-            padding: { left: 10, right: 10, top: 5, bottom: 5 },
-            borderRadius: '5px',
-        }).setInteractive();
-    
-        fullscreenButton.on('pointerdown', () => {
-            const fullscreenElement = document.getElementById('fullscreen');
-            if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-                fullscreenElement.requestFullscreen().catch((err) => {
-                    console.error('Error attempting to enable fullscreen:', err);
-                });
-            } else {
-                document.exitFullscreen();
-            }
-        });
-    }
+        // Modularized desktop fullscreen button
+        addFullscreenButton(this);
+    }       
     
     spawnEnemy() {
         const { width, height } = this.scale;
@@ -408,69 +395,12 @@ export default class Level1 extends Phaser.Scene {
     
     updateEnemyCountUI() {
         document.getElementById('enemy-count').innerText = `Enemies Left: ${20 - this.totalEnemiesDefeated}`;
-    }
-
-    enableTiltControls() {
-        let smoothedTilt = 0; // Smoothed tilt value for stabilization
-        const smoothingFactor = 0.2; // Adjust for tilt responsiveness (higher is slower smoothing)
-    
-        window.addEventListener('deviceorientation', (event) => {
-            let tilt;
-            const isLandscape = window.orientation === 90 || window.orientation === -90;
-            const isClockwise = window.orientation === 90; // Determine if in clockwise landscape mode
-    
-            // Use gamma for portrait and beta for landscape
-            tilt = isLandscape ? event.beta : event.gamma;
-    
-            if (tilt !== null) {
-                const maxTilt = isLandscape ? 20 : 90; // Normalize tilt ranges: beta (landscape) vs gamma (portrait)
-                const deadZone = 6; // Dead zone for movement initiation
-                const velocity = 320; // Match velocity for consistent gameplay feel
-    
-                // Clamp tilt values to ensure responsiveness within the defined range
-                tilt = Math.max(-maxTilt, Math.min(maxTilt, tilt));
-    
-                // Reverse tilt for counterclockwise landscape mode
-                if (isLandscape && !isClockwise) {
-                    tilt = -tilt;
-                }
-    
-                // Apply smoothing to the tilt value
-                smoothedTilt += (tilt - smoothedTilt) * smoothingFactor;
-    
-                // Handle movement logic based on smoothed tilt
-                if (smoothedTilt > deadZone) {
-                    // Move right
-                    this.player.setVelocityX((smoothedTilt - deadZone) / (maxTilt - deadZone) * velocity);
-                    this.player.setFlipX(false);
-    
-                    // Trigger animation only if it has changed
-                    if (this.player.anims.currentAnim?.key !== 'walk') {
-                        this.player.play('walk', true);
-                    }
-                } else if (smoothedTilt < -deadZone) {
-                    // Move left
-                    this.player.setVelocityX((smoothedTilt + deadZone) / (maxTilt - deadZone) * velocity);
-                    this.player.setFlipX(true);
-    
-                    // Trigger animation only if it has changed
-                    if (this.player.anims.currentAnim?.key !== 'walk') {
-                        this.player.play('walk', true);
-                    }
-                } else {
-                    // Stay idle if tilt is within the dead zone
-                    this.player.setVelocityX(0);
-    
-                    // Trigger animation only if it has changed
-                    if (this.player.anims.currentAnim?.key !== 'idle') {
-                        this.player.play('idle', true);
-                    }
-                }
-            }
-        });
-    }       
+    }      
 
     shutdown() {
+        if (this.tiltCleanup) {
+            this.tiltCleanup(); // Clean up tilt controls
+        }
         if (this.levelMusic) {
             this.levelMusic.stop();
             this.levelMusic.destroy();
