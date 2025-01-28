@@ -2,60 +2,42 @@ import { setupJoystick } from './joystickUtils.js';
 import { enableTiltControls } from './tiltUtils.js';
 
 export function setupMobileControls(player, config = {}) {
-    // Initialize joystick and tilt controls
-    const joystick = setupJoystick(player);
-    const tilt = enableTiltControls(player, config);
+    const {
+        smoothingFactor = 0.2,
+        deadZone = 6,
+        maxTiltPortrait = 90,
+        maxTiltLandscape = 20,
+        velocity = 320,
+    } = config;
 
-    if (!joystick || !tilt) {
-        console.error("Joystick or tilt controls failed to initialize.");
-        return () => {}; // Return a no-op cleanup function
-    }
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
-    const updatePlayerMovement = () => {
-        const joystickForce = joystick.getForce ? joystick.getForce() : { x: 0, y: 0 }; // Safely get joystick force
-        const tiltForce = tilt.getForce ? tilt.getForce() : { x: 0, y: 0 }; // Safely get tilt force
+    if (isMobile) {
+        console.log("Mobile device detected. Initializing controls...");
 
-        let finalForceX = 0;
+        // Setup Joystick
+        setupJoystick(player);
 
-        // Combine joystick and tilt forces
-        if (joystickForce.x * tiltForce.x < 0) {
-            // Opposite directions: prioritize tilt
-            finalForceX = tiltForce.x;
+        // Setup Tilt Controls if supported
+        if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
+            DeviceOrientationEvent.requestPermission()
+                .then((permissionState) => {
+                    if (permissionState === 'granted') {
+                        console.log("Tilt controls granted.");
+                        return enableTiltControls(player, { smoothingFactor, deadZone, maxTiltPortrait, maxTiltLandscape, velocity });
+                    } else {
+                        console.warn("Tilt controls denied. Using joystick only.");
+                    }
+                })
+                .catch((error) => {
+                    console.error("Error requesting tilt controls permission:", error);
+                });
         } else {
-            // Same direction or no conflict: combine forces
-            const boostMultiplier = joystickForce.x !== 0 && tiltForce.x !== 0 ? 1.2 : 1; // Boost if both active
-            finalForceX = (joystickForce.x + tiltForce.x * 0.001) * boostMultiplier; // Scale tilt appropriately
+            console.log("Tilt controls not supported. Using joystick only.");
+            return setupJoystick(player);
         }
-
-        // Apply horizontal movement to the player
-        player.setVelocityX(finalForceX * config.velocity);
-
-        // Handle animations
-        if (finalForceX > 0) {
-            player.setFlipX(false);
-            if (player.body.touching.down) player.play('walk', true);
-        } else if (finalForceX < 0) {
-            player.setFlipX(true);
-            if (player.body.touching.down) player.play('walk', true);
-        } else if (player.body.touching.down) {
-            player.play('idle', true);
-        }
-
-        // Handle jumping (joystick only)
-        if (joystickForce.y < -0.5 && player.body.touching.down) {
-            player.setVelocityY(-500); // Jump
-            player.play('jump', true);
-        }
-    };
-
-    // Update movement every frame (60 FPS)
-    const movementInterval = setInterval(updatePlayerMovement, 16);
-
-    // Return cleanup function to remove listeners and stop intervals
-    return () => {
-        clearInterval(movementInterval);
-        if (joystick.cleanup) joystick.cleanup();
-        if (tilt.cleanup) tilt.cleanup();
-    };
+    } else {
+        console.log("Non-mobile device detected. Skipping mobile-specific controls.");
+        return null;
+    }
 }
-
