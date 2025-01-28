@@ -106,6 +106,12 @@ export default class Level1 extends Phaser.Scene {
         if (isMobile) {
             console.log("Mobile device detected. Initializing controls...");
             this.joystickControls = setupJoystick(this.player);
+            enableTiltControls(this.player, {
+                smoothingFactor: 0.2,
+                maxTilt: 30,
+                deadZone: 6,
+                velocity: 320,
+            });
     
             const mobileFullscreenButton = document.getElementById('mobile-fullscreen-button');
             if (mobileFullscreenButton) {
@@ -119,22 +125,6 @@ export default class Level1 extends Phaser.Scene {
                         document.exitFullscreen();
                     }
                 });
-            }
-    
-            if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-                DeviceOrientationEvent.requestPermission()
-                    .then((permissionState) => {
-                        if (permissionState === 'granted') {
-                            this.enableTiltControls();
-                        } else {
-                            console.warn("Motion access denied. Joystick is available.");
-                        }
-                    })
-                    .catch((error) => {
-                        console.error("Error requesting motion permission:", error);
-                    });
-            } else {
-                this.enableTiltControls();
             }
         } else {
             console.log("Desktop detected. Skipping mobile-specific controls.");
@@ -182,23 +172,52 @@ export default class Level1 extends Phaser.Scene {
     }
 
     update() {
-        // Handle keyboard movement
-        if (this.cursors.left.isDown) {
-            this.player.setVelocityX(-165);
-            this.player.setFlipX(true);
-            this.player.play('walk', true);
-        } else if (this.cursors.right.isDown) {
-            this.player.setVelocityX(165);
+        const tiltVelocity = this.smoothedTilt !== undefined
+            ? (this.smoothedTilt / 30) * 320 // Calculate tilt velocity
+            : 0;
+    
+        const joystickForce = this.joystickControls ? this.joystickControls.getForce() : { x: 0, y: 0 };
+        const joystickVelocity = joystickForce.x * 160; // Calculate joystick velocity
+    
+        let finalVelocity = 0;
+    
+        // Determine final velocity based on tilt and joystick inputs
+        if (this.smoothedTilt !== undefined) {
+            if (Math.sign(joystickVelocity) === Math.sign(tiltVelocity)) {
+                // Same direction: Boost speed
+                finalVelocity = tiltVelocity + joystickVelocity * 0.5; // Boost joystick influence slightly
+            } else {
+                // Opposite direction: Ignore joystick
+                finalVelocity = tiltVelocity;
+            }
+        } else {
+            // Tilt not enabled, use only joystick
+            finalVelocity = joystickVelocity;
+        }
+    
+        // Apply the final velocity to the player
+        this.player.setVelocityX(finalVelocity);
+    
+        // Update player direction and animation
+        if (finalVelocity > 0) {
             this.player.setFlipX(false);
-            this.player.play('walk', true);
+            if (this.player.body.touching.down) this.player.play('walk', true);
+        } else if (finalVelocity < 0) {
+            this.player.setFlipX(true);
+            if (this.player.body.touching.down) this.player.play('walk', true);
         } else if (this.player.body.touching.down) {
-            this.player.setVelocityX(0);
             this.player.play('idle', true);
         }
     
-        // Handle jump with keyboard
+        // Handle jump with joystick or tilt
+        if (joystickForce.y < -0.5 && this.player.body.touching.down) {
+            this.player.setVelocityY(-500); // Jump from joystick
+            this.player.play('jump', true);
+        }
+    
+        // Handle keyboard jump
         if (this.cursors.up.isDown && this.player.body.touching.down) {
-            this.player.setVelocityY(-500);
+            this.player.setVelocityY(-500); // Jump from keyboard
             this.player.play('jump', true);
         }
     
@@ -206,28 +225,8 @@ export default class Level1 extends Phaser.Scene {
         if (Phaser.Input.Keyboard.JustDown(this.fireKey)) {
             this.fireProjectile();
         }
+    }
     
-        // Handle tilt-based movement (for mobile)
-        if (this.smoothedTilt !== undefined) { // Ensure tilt is available
-            const velocity = 320; // Maximum velocity for tilt-based movement
-            const deadZone = 6; // Tilt dead zone
-            const maxTilt = 30; // Max tilt value (adjust based on your needs)
-    
-            // Calculate velocity based on smoothed tilt
-            if (this.smoothedTilt > deadZone) {
-                this.player.setVelocityX((this.smoothedTilt / maxTilt) * velocity);
-                this.player.setFlipX(false);
-                this.player.play('walk', true);
-            } else if (this.smoothedTilt < -deadZone) {
-                this.player.setVelocityX((this.smoothedTilt / maxTilt) * velocity);
-                this.player.setFlipX(true);
-                this.player.play('walk', true);
-            } else if (this.player.body.touching.down) {
-                this.player.setVelocityX(0);
-                this.player.play('idle', true);
-            }
-        }
-    }   
 
     fireProjectile() {
         const projectile = this.projectiles.create(this.player.x, this.player.y, 'projectileCD');
@@ -361,9 +360,12 @@ export default class Level1 extends Phaser.Scene {
         }
     }      
 
-    enableTiltControls() {
+    enableTiltControls(player, config = {}) {
         let smoothedTilt = 0; // Smoothed tilt value for stabilization
-        const smoothingFactor = 0.2; // Adjust for tilt responsiveness (higher is slower smoothing)
+        const smoothingFactor = config.smoothingFactor || 0.2; // Adjust for tilt responsiveness
+        const maxTilt = config.maxTilt || 30; // Maximum tilt value for movement
+        const deadZone = config.deadZone || 6; // Dead zone for movement initiation
+        const velocity = config.velocity || 320; // Maximum movement velocity
     
         window.addEventListener('deviceorientation', (event) => {
             let tilt;
@@ -374,11 +376,7 @@ export default class Level1 extends Phaser.Scene {
             tilt = isLandscape ? event.beta : event.gamma;
     
             if (tilt !== null) {
-                const maxTilt = isLandscape ? 20 : 90; // Normalize tilt ranges: beta (landscape) vs gamma (portrait)
-                const deadZone = 6; // Dead zone for movement initiation
-                const velocity = 320; // Match velocity for consistent gameplay feel
-    
-                // Clamp tilt values to ensure responsiveness within the defined range
+                // Clamp tilt to the allowed range
                 tilt = Math.max(-maxTilt, Math.min(maxTilt, tilt));
     
                 // Reverse tilt for counterclockwise landscape mode
@@ -392,34 +390,29 @@ export default class Level1 extends Phaser.Scene {
                 // Handle movement logic based on smoothed tilt
                 if (smoothedTilt > deadZone) {
                     // Move right
-                    this.player.setVelocityX((smoothedTilt - deadZone) / (maxTilt - deadZone) * velocity);
-                    this.player.setFlipX(false);
-    
-                    // Trigger animation only if it has changed
-                    if (this.player.anims.currentAnim?.key !== 'walk') {
-                        this.player.play('walk', true);
+                    player.setVelocityX((smoothedTilt - deadZone) / (maxTilt - deadZone) * velocity);
+                    if (!player.flipX) player.setFlipX(false); // Update direction
+                    if (player.body.touching.down && player.anims.currentAnim?.key !== 'walk') {
+                        player.play('walk', true);
                     }
                 } else if (smoothedTilt < -deadZone) {
                     // Move left
-                    this.player.setVelocityX((smoothedTilt + deadZone) / (maxTilt - deadZone) * velocity);
-                    this.player.setFlipX(true);
-    
-                    // Trigger animation only if it has changed
-                    if (this.player.anims.currentAnim?.key !== 'walk') {
-                        this.player.play('walk', true);
+                    player.setVelocityX((smoothedTilt + deadZone) / (maxTilt - deadZone) * velocity);
+                    if (player.flipX === false) player.setFlipX(true); // Update direction
+                    if (player.body.touching.down && player.anims.currentAnim?.key !== 'walk') {
+                        player.play('walk', true);
                     }
                 } else {
                     // Stay idle if tilt is within the dead zone
-                    this.player.setVelocityX(0);
-    
-                    // Trigger animation only if it has changed
-                    if (this.player.anims.currentAnim?.key !== 'idle') {
-                        this.player.play('idle', true);
+                    player.setVelocityX(0);
+                    if (player.body.touching.down && player.anims.currentAnim?.key !== 'idle') {
+                        player.play('idle', true);
                     }
                 }
             }
         });
-    }       
+    }
+          
 
     shutdown() {
         if (this.levelMusic) {
