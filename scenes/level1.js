@@ -1,6 +1,4 @@
 import { addFullscreenButton } from '../utils/fullScreenUtils.js';
-import { setupJoystick } from '../utils/joystickUtils.js';
-import { enableTiltControls } from '../utils/tiltUtils.js';
 
 
 export default class Level1 extends Phaser.Scene {
@@ -8,15 +6,6 @@ export default class Level1 extends Phaser.Scene {
         super({ key: 'Level1' });
     }
 
-    updateHealthUI() {
-        const healthPercentage = (this.playerHealth / this.maxHealth) * 100;
-        document.getElementById('health-bar-inner').style.width = `${healthPercentage}%`;
-    }
-    
-    updateEnemyCountUI() {
-        document.getElementById('enemy-count').innerText = `Enemies Left: ${20 - this.totalEnemiesDefeated}`;
-    }
-    
     preload() {
         console.log("Preloading assets...");
         this.load.image('level1Background', 'assets/Levels/BackGrounds/Level1.png');
@@ -45,7 +34,7 @@ export default class Level1 extends Phaser.Scene {
         this.levelMusic = this.sound.add('level1Music', { loop: true, volume: 0.5 });
         this.levelMusic.play();
     
-        // Platforms
+        // Platforms setup
         this.platforms = this.physics.add.staticGroup();
         this.platforms.create(width / 2, height - 20, null).setDisplaySize(width, 20).setVisible(false).refreshBody();
         const balcony = this.platforms.create(width / 2, height - 350, 'balcony').setScale(1).refreshBody();
@@ -59,12 +48,7 @@ export default class Level1 extends Phaser.Scene {
         // Animations
         this.anims.create({
             key: 'idle',
-            frames: [
-                { key: 'turboNegroStanding1' },
-                { key: 'turboNegroStanding2' },
-                { key: 'turboNegroStanding3' },
-                { key: 'turboNegroStanding4' }
-            ],
+            frames: [{ key: 'turboNegroStanding1' }, { key: 'turboNegroStanding2' }, { key: 'turboNegroStanding3' }, { key: 'turboNegroStanding4' }],
             frameRate: 4,
             repeat: -1,
         });
@@ -107,7 +91,7 @@ export default class Level1 extends Phaser.Scene {
         if (isMobile) {
             console.log("Mobile device detected. Initializing controls...");
             this.setupJoystick();
-
+    
             const mobileFullscreenButton = document.getElementById('mobile-fullscreen-button');
             if (mobileFullscreenButton) {
                 mobileFullscreenButton.addEventListener('click', () => {
@@ -121,7 +105,7 @@ export default class Level1 extends Phaser.Scene {
                     }
                 });
             }
-
+    
             if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
                 DeviceOrientationEvent.requestPermission()
                     .then((permissionState) => {
@@ -140,106 +124,47 @@ export default class Level1 extends Phaser.Scene {
         } else {
             console.log("Desktop detected. Skipping mobile-specific controls.");
         }
-        
-            // Tap anywhere to attack (Mobile or Desktop)
-            this.input.on('pointerdown', (pointer) => {
-                if (!pointer.wasTouch) return; // Ensures it's not triggered by a mouse
-                this.fireProjectile();
-            });
-        
-            // Swipe up to jump
-            let startY = null;
-            this.input.on('pointerdown', (pointer) => {
-                startY = pointer.y;
-            });
-        
-            this.input.on('pointerup', (pointer) => {
-                if (startY !== null && pointer.y < startY - 50 && this.player.body.touching.down) {
-                    this.player.setVelocityY(-500);
-                    this.player.play('jump', true);
-                }
-                startY = null;
-            });
     
-        // Fullscreen button for desktop
-        addFullscreenButton(this);
-    
-    
-        console.log("Level setup complete.");
-    }
-    
-           
-    update() {
-        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-        let finalVelocityX = 0;
-    
-        if (isMobile) {
-            // Combine tilt and joystick velocities
-            const tiltVelocity = this.tiltX !== undefined ? this.tiltX * 5 : 0; // Adjust sensitivity
-            const joystickVelocity = this.joystickForceX !== undefined ? this.joystickForceX * 160 : 0;
-    
-            if (joystickVelocity !== 0 && Math.sign(joystickVelocity) === Math.sign(tiltVelocity)) {
-                finalVelocityX = tiltVelocity + joystickVelocity * 0.5; // Combine same-direction forces
-            } else {
-                finalVelocityX = joystickVelocity || tiltVelocity; // Prioritize joystick when active
-            }
-        } else {
-            // Desktop-specific controls using keyboard
-            if (this.cursors.left.isDown) {
-                finalVelocityX = -165;
-                this.player.setFlipX(true);
-            } else if (this.cursors.right.isDown) {
-                finalVelocityX = 165;
-                this.player.setFlipX(false);
-            }
-        }
-    
-        // Apply the final velocity
-        this.player.setVelocityX(finalVelocityX);
-    
-        // Update animations
-        if (finalVelocityX !== 0 && this.player.body.touching.down) {
-            this.player.play('walk', true);
-        } else if (this.player.body.touching.down) {
-            this.player.play('idle', true);
-        }
-    
-        // Jump controls
-        if (this.cursors.up.isDown && this.player.body.touching.down) {
-            this.player.setVelocityY(-500);
-            this.player.play('jump', true);
-        }
-    
-        // Firing projectiles
-        if (Phaser.Input.Keyboard.JustDown(this.fireKey)) {
+        // Tap anywhere to attack
+        this.input.on('pointerdown', (pointer) => {
+            if (!pointer.wasTouch) return;
             this.fireProjectile();
-        }
-    }
-              
-    fireProjectile() {
-        const projectile = this.projectiles.create(this.player.x, this.player.y, 'projectileCD');
-        if (projectile) {
-            projectile.setActive(true);
-            projectile.setVisible(true);
-            projectile.body.setAllowGravity(false);
-            projectile.setVelocityX(this.player.flipX ? -500 : 500);
-        }
-    }
+        });
     
-    spawnHealthPack() {
-        const { width } = this.scale;
-        
-        // Random horizontal position for the health pack
-        const x = Phaser.Math.Between(50, width - 50);
-        
-        // Create the health pack slightly above the ground so it falls naturally
-        const healthPack = this.healthPacks.create(x, 50, 'healthPack'); // Start at a higher y position
-        healthPack.setBounce(0.5); // Add a bounce for visual effect
-        healthPack.setCollideWorldBounds(true);
-        
-        // Add collision with platforms so the health pack lands on them
-        this.physics.add.collider(healthPack, this.platforms);
-    }
+        // Swipe up to jump
+        let startY = null;
+        this.input.on('pointerdown', (pointer) => {
+            startY = pointer.y;
+        });
+    
+        this.input.on('pointerup', (pointer) => {
+            if (startY !== null && pointer.y < startY - 50 && this.player.body.touching.down) {
+                this.player.setVelocityY(-500);
+                this.player.play('jump', true);
+            }
+            startY = null;
+        });
+    
+        // Desktop fullscreen button
+        const fullscreenButton = this.add.text(20, 20, '[ fullscreen ]', {
+            fontSize: '20px',
+            fill: '#ffffff',
+            backgroundColor: '#000000',
+            padding: { left: 10, right: 10, top: 5, bottom: 5 },
+            borderRadius: '5px',
+        }).setInteractive();
+    
+        fullscreenButton.on('pointerdown', () => {
+            const fullscreenElement = document.getElementById('fullscreen');
+            if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+                fullscreenElement.requestFullscreen().catch((err) => {
+                    console.error('Error attempting to enable fullscreen:', err);
+                });
+            } else {
+                document.exitFullscreen();
+            }
+        });
+    }           
     
     spawnEnemy() {
         const { width, height } = this.scale;
@@ -310,61 +235,6 @@ export default class Level1 extends Phaser.Scene {
         }
     }
     
-    handlePlayerHealthPackCollision(player, healthPack) {
-        healthPack.destroy(); // Remove the health pack
-        
-        // Increase player's health by 5, but not beyond the maximum
-        this.playerHealth = Math.min(this.playerHealth + 5, this.maxHealth);
-        
-        // Update health bar
-        this.updateHealthUI();
-        
-    }
-    
-    setupMobileControls() {
-        if (window.DeviceOrientationEvent) {
-            if (typeof DeviceOrientationEvent.requestPermission === 'function') {
-                // Request permission for iOS devices
-                DeviceOrientationEvent.requestPermission()
-                    .then(permissionState => {
-                        if (permissionState === 'granted') {
-                            this.enableTiltControls();
-                        } else {
-                            console.warn("Motion access denied. Enabling joystick as fallback.");
-                            this.setupJoystick(); // Fallback to joystick
-                        }
-                    })
-                    .catch(error => {
-                        console.error("Error requesting motion permission:", error);
-                        this.setupJoystick(); // Fallback to joystick
-                    });
-            } else {
-                // Non-iOS or older versions
-                this.enableTiltControls();
-            }
-        } else {
-            console.warn("Tilt controls unavailable. Enabling joystick as fallback.");
-            this.setupJoystick();
-        }
-    }      
-
-      
-
-    shutdown() {
-        if (this.levelMusic) {
-            this.levelMusic.stop();
-            this.levelMusic.destroy();
-        }
-        if (this.enemySpawnTimer) {
-            this.enemySpawnTimer.remove();
-        }
-        window.removeEventListener('deviceorientation', this.tiltHandler);
-    }
-
-    destroy() {
-        this.shutdown(); // Call shutdown when the scene is destroyed
-    }
-
     gameOver() {
         // Stop background music
         if (this.levelMusic) this.levelMusic.stop();
@@ -415,6 +285,286 @@ export default class Level1 extends Phaser.Scene {
     
         // For Mobile (tap anywhere)
         this.input.once('pointerdown', proceedToNextLevel);
+    }
+    
+    update() {
+        // Handle keyboard movement
+        if (this.cursors.left.isDown) {
+            this.player.setVelocityX(-165);
+            this.player.setFlipX(true);
+            this.player.play('walk', true);
+        } else if (this.cursors.right.isDown) {
+            this.player.setVelocityX(165);
+            this.player.setFlipX(false);
+            this.player.play('walk', true);
+        } else if (this.player.body.touching.down) {
+            this.player.setVelocityX(0);
+            this.player.play('idle', true);
+        }
+    
+        // Handle jump with keyboard
+        if (this.cursors.up.isDown && this.player.body.touching.down) {
+            this.player.setVelocityY(-500);
+            this.player.play('jump', true);
+        }
+    
+        // Handle firing projectiles
+        if (Phaser.Input.Keyboard.JustDown(this.fireKey)) {
+            this.fireProjectile();
+        }
+    
+        // Handle tilt-based movement (for mobile)
+        if (this.smoothedTilt !== undefined) { // Ensure tilt is available
+            const velocity = 320; // Maximum velocity for tilt-based movement
+            const deadZone = 6; // Tilt dead zone
+            const maxTilt = 30; // Max tilt value (adjust based on your needs)
+    
+            // Calculate velocity based on smoothed tilt
+            if (this.smoothedTilt > deadZone) {
+                this.player.setVelocityX((this.smoothedTilt / maxTilt) * velocity);
+                this.player.setFlipX(false);
+                this.player.play('walk', true);
+            } else if (this.smoothedTilt < -deadZone) {
+                this.player.setVelocityX((this.smoothedTilt / maxTilt) * velocity);
+                this.player.setFlipX(true);
+                this.player.play('walk', true);
+            } else if (this.player.body.touching.down) {
+                this.player.setVelocityX(0);
+                this.player.play('idle', true);
+            }
+        }
+    }    
+    
+    fireProjectile() {
+        const projectile = this.projectiles.create(this.player.x, this.player.y, 'projectileCD');
+        if (projectile) {
+            projectile.setActive(true);
+            projectile.setVisible(true);
+            projectile.body.setAllowGravity(false);
+            projectile.setVelocityX(this.player.flipX ? -500 : 500);
+        }
+    }
+    
+    spawnHealthPack() {
+        const { width } = this.scale;
+        
+        // Random horizontal position for the health pack
+        const x = Phaser.Math.Between(50, width - 50);
+        
+        // Create the health pack slightly above the ground so it falls naturally
+        const healthPack = this.healthPacks.create(x, 50, 'healthPack'); // Start at a higher y position
+        healthPack.setBounce(0.5); // Add a bounce for visual effect
+        healthPack.setCollideWorldBounds(true);
+        
+        // Add collision with platforms so the health pack lands on them
+        this.physics.add.collider(healthPack, this.platforms);
+    }
+    
+    handlePlayerHealthPackCollision(player, healthPack) {
+        healthPack.destroy(); // Remove the health pack
+        
+        // Increase player's health by 5, but not beyond the maximum
+        this.playerHealth = Math.min(this.playerHealth + 5, this.maxHealth);
+        
+        // Update health bar
+        this.updateHealthUI();
+        
+    }
+    
+    setupMobileControls() {
+        if (window.DeviceOrientationEvent) {
+            if (typeof DeviceOrientationEvent.requestPermission === 'function') {
+                // Request permission for iOS devices
+                DeviceOrientationEvent.requestPermission()
+                    .then(permissionState => {
+                        if (permissionState === 'granted') {
+                            this.enableTiltControls();
+                        } else {
+                            console.warn("Motion access denied. Enabling joystick as fallback.");
+                            this.setupJoystick(); // Fallback to joystick
+                        }
+                    })
+                    .catch(error => {
+                        console.error("Error requesting motion permission:", error);
+                        this.setupJoystick(); // Fallback to joystick
+                    });
+            } else {
+                // Non-iOS or older versions
+                this.enableTiltControls();
+            }
+        } else {
+            console.warn("Tilt controls unavailable. Enabling joystick as fallback.");
+            this.setupJoystick();
+        }
+    }
+    
+    setupJoystick() {
+        const joystickArea = document.getElementById('joystick-area');
+        let joystickKnob = document.getElementById('joystick-knob');
+    
+        // Add the knob dynamically if it doesn't exist
+        if (!joystickKnob) {
+            joystickKnob = document.createElement('div');
+            joystickKnob.id = 'joystick-knob';
+            joystickArea.appendChild(joystickKnob);
+        }
+    
+        let joystickStartX = 0;
+        let joystickStartY = 0;
+        let activeInterval;
+    
+        joystickArea.addEventListener('touchstart', (event) => {
+            const touch = event.touches[0];
+            joystickStartX = touch.clientX;
+            joystickStartY = touch.clientY;
+            joystickKnob.style.transform = `translate(-50%, -50%)`; // Reset to center
+    
+            // Start a continuous movement interval
+            activeInterval = setInterval(() => this.applyJoystickForce(), 16); // Run every ~16ms (60 FPS)
+        });
+    
+        joystickArea.addEventListener('touchmove', (event) => {
+            const touch = event.touches[0];
+            const deltaX = touch.clientX - joystickStartX;
+            const deltaY = touch.clientY - joystickStartY;
+    
+            const distance = Math.sqrt(deltaX ** 2 + deltaY ** 2);
+            const maxDistance = 50; // Joystick radius limit
+    
+            // Clamp the knob's movement to the max distance
+            const clampedX = (deltaX / distance) * Math.min(distance, maxDistance);
+            const clampedY = (deltaY / distance) * Math.min(distance, maxDistance);
+    
+            // Move the knob visually
+            joystickKnob.style.transform = `translate(calc(${clampedX}px - 50%), calc(${clampedY}px - 50%))`;
+    
+            // Store the clamped values for force application
+            this.joystickForceX = clampedX / maxDistance;
+            this.joystickForceY = clampedY / maxDistance;
+        });
+    
+        joystickArea.addEventListener('touchend', () => {
+            joystickKnob.style.transform = `translate(-50%, -50%)`; // Reset knob position
+            this.joystickForceX = 0; // Reset forces
+            this.joystickForceY = 0;
+    
+            if (this.player) {
+                this.player.setVelocityX(0); // Stop horizontal movement
+                this.player.anims.play('idle', true);
+            }
+    
+            clearInterval(activeInterval); // Stop continuous movement
+        });
+    
+        // Initialize joystick force values
+        this.joystickForceX = 0;
+        this.joystickForceY = 0;
+    }
+    
+    applyJoystickForce() {
+        if (this.player) {
+            // Apply X-axis movement
+            this.player.setVelocityX(this.joystickForceX * 160); // Adjust multiplier for sensitivity
+    
+            if (this.joystickForceX > 0) this.player.setFlipX(false);
+            if (this.joystickForceX < 0) this.player.setFlipX(true);
+    
+            // Jump if joystick is pushed upwards
+            if (this.joystickForceY < -0.5 && this.player.body.touching.down) {
+                this.player.setVelocityY(-500); // Jump
+            }
+    
+            // Change animation based on movement
+            if (Math.abs(this.joystickForceX) > 0.1 && this.player.body.touching.down) {
+                this.player.play('walk', true);
+            } else if (this.player.body.touching.down) {
+                this.player.play('idle', true);
+            }
+        }
+    }           
+    
+    updateHealthUI() {
+        const healthPercentage = (this.playerHealth / this.maxHealth) * 100;
+        document.getElementById('health-bar-inner').style.width = `${healthPercentage}%`;
+    }
+    
+    updateEnemyCountUI() {
+        document.getElementById('enemy-count').innerText = `Enemies Left: ${20 - this.totalEnemiesDefeated}`;
+    }
+
+    enableTiltControls() {
+        let smoothedTilt = 0; // Smoothed tilt value for stabilization
+        const smoothingFactor = 0.2; // Adjust for tilt responsiveness (higher is slower smoothing)
+    
+        window.addEventListener('deviceorientation', (event) => {
+            let tilt;
+            const isLandscape = window.orientation === 90 || window.orientation === -90;
+            const isClockwise = window.orientation === 90; // Determine if in clockwise landscape mode
+    
+            // Use gamma for portrait and beta for landscape
+            tilt = isLandscape ? event.beta : event.gamma;
+    
+            if (tilt !== null) {
+                const maxTilt = isLandscape ? 20 : 90; // Normalize tilt ranges: beta (landscape) vs gamma (portrait)
+                const deadZone = 6; // Dead zone for movement initiation
+                const velocity = 320; // Match velocity for consistent gameplay feel
+    
+                // Clamp tilt values to ensure responsiveness within the defined range
+                tilt = Math.max(-maxTilt, Math.min(maxTilt, tilt));
+    
+                // Reverse tilt for counterclockwise landscape mode
+                if (isLandscape && !isClockwise) {
+                    tilt = -tilt;
+                }
+    
+                // Apply smoothing to the tilt value
+                smoothedTilt += (tilt - smoothedTilt) * smoothingFactor;
+    
+                // Handle movement logic based on smoothed tilt
+                if (smoothedTilt > deadZone) {
+                    // Move right
+                    this.player.setVelocityX((smoothedTilt - deadZone) / (maxTilt - deadZone) * velocity);
+                    this.player.setFlipX(false);
+    
+                    // Trigger animation only if it has changed
+                    if (this.player.anims.currentAnim?.key !== 'walk') {
+                        this.player.play('walk', true);
+                    }
+                } else if (smoothedTilt < -deadZone) {
+                    // Move left
+                    this.player.setVelocityX((smoothedTilt + deadZone) / (maxTilt - deadZone) * velocity);
+                    this.player.setFlipX(true);
+    
+                    // Trigger animation only if it has changed
+                    if (this.player.anims.currentAnim?.key !== 'walk') {
+                        this.player.play('walk', true);
+                    }
+                } else {
+                    // Stay idle if tilt is within the dead zone
+                    this.player.setVelocityX(0);
+    
+                    // Trigger animation only if it has changed
+                    if (this.player.anims.currentAnim?.key !== 'idle') {
+                        this.player.play('idle', true);
+                    }
+                }
+            }
+        });
+    }       
+
+    shutdown() {
+        if (this.levelMusic) {
+            this.levelMusic.stop();
+            this.levelMusic.destroy();
+        }
+        if (this.enemySpawnTimer) {
+            this.enemySpawnTimer.remove();
+        }
+        window.removeEventListener('deviceorientation', this.tiltHandler);
+    }
+
+    destroy() {
+        this.shutdown(); // Call shutdown when the scene is destroyed
     }
      
 }
