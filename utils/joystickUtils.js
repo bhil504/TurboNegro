@@ -25,6 +25,7 @@ export function setupJoystick(player) {
             const velocityX = joystickForceX * 160; // Adjust sensitivity as needed
             player.setVelocityX(velocityX);
 
+            // Update player animation and direction
             if (velocityX > 0) {
                 player.setFlipX(false);
                 if (player.body.touching.down) player.play('walk', true);
@@ -40,6 +41,10 @@ export function setupJoystick(player) {
                 player.play('jump', true);
             }
         }
+
+        // Reset joystick forces after processing movement
+        targetJoystickForceX = 0;
+        targetJoystickForceY = 0;
 
         requestAnimationFrame(updatePlayerMovement);
     };
