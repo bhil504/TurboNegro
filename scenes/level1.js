@@ -99,11 +99,8 @@ export default class Level1 extends Phaser.Scene {
         if (isMobile) {
             console.log("Mobile device detected. Initializing controls...");
     
-            // Modularized joystick setup
-            setupJoystick(this.player);
-    
-            // Tilt controls setup
-            const cleanupTiltControls = enableTiltControls(this.player, {
+            // Setup mobile controls using the modularized function
+            const cleanupMobileControls = setupMobileControls(this.player, {
                 smoothingFactor: 0.2,
                 deadZone: 6,
                 maxTiltPortrait: 90,
@@ -111,10 +108,10 @@ export default class Level1 extends Phaser.Scene {
                 velocity: 320,
             });
     
-            // Clean up tilt controls on shutdown
-            this.events.once(Phaser.Scenes.Events.SHUTDOWN, cleanupTiltControls);
+            // Clean up on shutdown
+            this.events.once(Phaser.Scenes.Events.SHUTDOWN, cleanupMobileControls);
     
-            // Modularized mobile fullscreen button
+            // Mobile fullscreen button logic
             const mobileFullscreenButton = document.getElementById('mobile-fullscreen-button');
             if (mobileFullscreenButton) {
                 mobileFullscreenButton.addEventListener('click', () => {
@@ -154,7 +151,7 @@ export default class Level1 extends Phaser.Scene {
     
         // Modularized desktop fullscreen button
         addFullscreenButton(this);
-    }       
+    }             
     
     spawnEnemy() {
         const { width, height } = this.scale;
@@ -302,28 +299,7 @@ export default class Level1 extends Phaser.Scene {
         if (Phaser.Input.Keyboard.JustDown(this.fireKey)) {
             this.fireProjectile();
         }
-    
-        // Handle tilt-based movement (for mobile)
-        if (this.smoothedTilt !== undefined) { // Ensure tilt is available
-            const velocity = 320; // Maximum velocity for tilt-based movement
-            const deadZone = 6; // Tilt dead zone
-            const maxTilt = 30; // Max tilt value (adjust based on your needs)
-    
-            // Calculate velocity based on smoothed tilt
-            if (this.smoothedTilt > deadZone) {
-                this.player.setVelocityX((this.smoothedTilt / maxTilt) * velocity);
-                this.player.setFlipX(false);
-                this.player.play('walk', true);
-            } else if (this.smoothedTilt < -deadZone) {
-                this.player.setVelocityX((this.smoothedTilt / maxTilt) * velocity);
-                this.player.setFlipX(true);
-                this.player.play('walk', true);
-            } else if (this.player.body.touching.down) {
-                this.player.setVelocityX(0);
-                this.player.play('idle', true);
-            }
-        }
-    }    
+    }       
     
     fireProjectile() {
         const projectile = this.projectiles.create(this.player.x, this.player.y, 'projectileCD');
@@ -359,33 +335,6 @@ export default class Level1 extends Phaser.Scene {
         // Update health bar
         this.updateHealthUI();
         
-    }
-    
-    setupMobileControls() {
-        if (window.DeviceOrientationEvent) {
-            if (typeof DeviceOrientationEvent.requestPermission === 'function') {
-                // Request permission for iOS devices
-                DeviceOrientationEvent.requestPermission()
-                    .then(permissionState => {
-                        if (permissionState === 'granted') {
-                            this.enableTiltControls();
-                        } else {
-                            console.warn("Motion access denied. Falling back to joystick.");
-                            setupJoystick(this.player); // Use the modularized joystick
-                        }
-                    })
-                    .catch(error => {
-                        console.error("Error requesting motion permission:", error);
-                        setupJoystick(this.player); // Use the modularized joystick
-                    });
-            } else {
-                // Non-iOS or older versions
-                this.enableTiltControls();
-            }
-        } else {
-            console.warn("Tilt controls unavailable. Falling back to joystick.");
-            setupJoystick(this.player); // Use the modularized joystick
-        }
     }               
     
     updateHealthUI() {
@@ -399,16 +348,10 @@ export default class Level1 extends Phaser.Scene {
 
     shutdown() {
         if (this.tiltCleanup) {
-            this.tiltCleanup(); // Clean up tilt controls
+            this.tiltCleanup();
         }
-        if (this.levelMusic) {
-            this.levelMusic.stop();
-            this.levelMusic.destroy();
-        }
-        if (this.enemySpawnTimer) {
-            this.enemySpawnTimer.remove();
-        }
-        window.removeEventListener('deviceorientation', this.tiltHandler);
+        if (this.levelMusic) this.levelMusic.stop();
+        if (this.enemySpawnTimer) this.enemySpawnTimer.remove();
     }
 
     destroy() {

@@ -4,72 +4,43 @@ export function setupJoystick(player) {
 
     if (!joystickArea || !joystickKnob) {
         console.error("Joystick elements not found in the DOM.");
-        return;
+        return { getForce: () => ({ x: 0, y: 0 }) }; // Return default forces
     }
 
-    let joystickStartX = 0;
-    let joystickStartY = 0;
     let joystickForceX = 0;
     let joystickForceY = 0;
-    let activeInterval;
 
     joystickArea.addEventListener('touchstart', (event) => {
-        const touch = event.touches[0];
-        joystickStartX = touch.clientX;
-        joystickStartY = touch.clientY;
-
-        joystickKnob.style.transform = `translate(-50%, -50%)`; // Reset to center
-
-        activeInterval = setInterval(() => applyJoystickForce(player, joystickForceX, joystickForceY), 16);
+        joystickKnob.style.transform = `translate(-50%, -50%)`; // Reset knob position
     });
 
     joystickArea.addEventListener('touchmove', (event) => {
         const touch = event.touches[0];
-        const deltaX = touch.clientX - joystickStartX;
-        const deltaY = touch.clientY - joystickStartY;
-
+        const deltaX = touch.clientX - joystickArea.offsetLeft;
+        const deltaY = touch.clientY - joystickArea.offsetTop;
+        const maxDistance = 50; // Max distance the joystick can move
         const distance = Math.sqrt(deltaX ** 2 + deltaY ** 2);
-        const maxDistance = 50;
 
-        const clampedX = (deltaX / distance) * Math.min(distance, maxDistance);
-        const clampedY = (deltaY / distance) * Math.min(distance, maxDistance);
+        // Calculate normalized joystick forces
+        joystickForceX = (deltaX / maxDistance) * Math.min(distance, maxDistance) / maxDistance;
+        joystickForceY = (deltaY / maxDistance) * Math.min(distance, maxDistance) / maxDistance;
 
-        joystickKnob.style.transform = `translate(calc(${clampedX}px - 50%), calc(${clampedY}px - 50%))`;
-
-        joystickForceX = clampedX / maxDistance;
-        joystickForceY = clampedY / maxDistance;
+        // Move the knob visually
+        const limitedX = Math.min(maxDistance, Math.max(-maxDistance, deltaX));
+        const limitedY = Math.min(maxDistance, Math.max(-maxDistance, deltaY));
+        joystickKnob.style.transform = `translate(${limitedX}px, ${limitedY}px)`;
     });
 
     joystickArea.addEventListener('touchend', () => {
-        joystickKnob.style.transform = `translate(-50%, -50%)`;
         joystickForceX = 0;
         joystickForceY = 0;
 
-        if (player) {
-            player.setVelocityX(0);
-            player.anims.play('idle', true);
-        }
-
-        clearInterval(activeInterval);
+        // Reset knob position visually
+        joystickKnob.style.transform = `translate(-50%, -50%)`;
     });
-}
 
-function applyJoystickForce(player, forceX, forceY) {
-    if (!player) return;
-
-    const velocityMultiplier = 160;
-    player.setVelocityX(forceX * velocityMultiplier);
-
-    if (forceX > 0) player.setFlipX(false);
-    if (forceX < 0) player.setFlipX(true);
-
-    if (forceY < -0.5 && player.body.touching.down) {
-        player.setVelocityY(-500); // Jump
-    }
-
-    if (Math.abs(forceX) > 0.1 && player.body.touching.down) {
-        player.play('walk', true);
-    } else if (player.body.touching.down) {
-        player.play('idle', true);
-    }
+    return {
+        // Expose joystick forces to external logic
+        getForce: () => ({ x: joystickForceX, y: joystickForceY }),
+    };
 }
