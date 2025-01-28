@@ -45,7 +45,7 @@ export default class Level1 extends Phaser.Scene {
         this.levelMusic = this.sound.add('level1Music', { loop: true, volume: 0.5 });
         this.levelMusic.play();
     
-        // Platforms setup
+        // Platforms
         this.platforms = this.physics.add.staticGroup();
         this.platforms.create(width / 2, height - 20, null).setDisplaySize(width, 20).setVisible(false).refreshBody();
         const balcony = this.platforms.create(width / 2, height - 350, 'balcony').setScale(1).refreshBody();
@@ -71,7 +71,7 @@ export default class Level1 extends Phaser.Scene {
         this.anims.create({ key: 'walk', frames: [{ key: 'turboNegroWalking' }], frameRate: 8, repeat: -1 });
         this.anims.create({ key: 'jump', frames: [{ key: 'turboNegroJump' }], frameRate: 1 });
     
-        // Input setup for desktop
+        // Input setup
         this.cursors = this.input.keyboard.createCursorKeys();
         this.fireKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
     
@@ -106,25 +106,37 @@ export default class Level1 extends Phaser.Scene {
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         if (isMobile) {
             console.log("Mobile device detected. Initializing tilt and joystick controls...");
-            enableTiltControls.call(this); // Set up tilt controls
-            setupJoystick(this, this.player); // Set up joystick controls
+            enableTiltControls.call(this); // Tilt controls
+            setupJoystick(this, this.player); // Joystick controls
     
             const mobileFullscreenButton = document.getElementById('mobile-fullscreen-button');
             if (mobileFullscreenButton) {
                 mobileFullscreenButton.addEventListener('click', () => {
-                    const fullscreenElement = document.getElementById('fullscreen');
-                    if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-                        fullscreenElement.requestFullscreen().catch((err) => {
-                            console.error('Failed to enable fullscreen:', err);
-                        });
+                    if (this.scale.isFullscreen) {
+                        this.scale.stopFullscreen();
                     } else {
-                        document.exitFullscreen();
+                        this.scale.startFullscreen();
                     }
                 });
             }
-        } else {
-            console.log("Desktop detected. Initializing keyboard controls...");
         }
+    
+        // Fullscreen button for desktop
+        const fullscreenButton = this.add.text(20, 20, '[ Fullscreen ]', {
+            fontSize: '20px',
+            fill: '#ffffff',
+            backgroundColor: '#000000',
+            padding: { left: 10, right: 10, top: 5, bottom: 5 },
+            borderRadius: 5,
+        }).setInteractive();
+    
+        fullscreenButton.on('pointerdown', () => {
+            if (this.scale.isFullscreen) {
+                this.scale.stopFullscreen();
+            } else {
+                this.scale.startFullscreen();
+            }
+        });
     
         // Tap anywhere to attack
         this.input.on('pointerdown', (pointer) => {
@@ -146,7 +158,7 @@ export default class Level1 extends Phaser.Scene {
         });
     
         console.log("Level 1 setup complete.");
-    }    
+    }        
     
     update() {
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
@@ -193,7 +205,7 @@ export default class Level1 extends Phaser.Scene {
         if (!isMobile && Phaser.Input.Keyboard.JustDown(this.fireKey)) {
             this.fireProjectile();
         }
-    }       
+    }          
 
     fireProjectile() {
         const projectile = this.projectiles.create(this.player.x, this.player.y, 'projectileCD');
