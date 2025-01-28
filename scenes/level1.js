@@ -167,17 +167,38 @@ export default class Level1 extends Phaser.Scene {
     }
 
     update() {
-        const tiltVelocity = this.smoothedTilt !== undefined ? (this.smoothedTilt / 30) * 320 : 0;
-        const joystickForce = this.joystickControls ? this.joystickControls.getForce() : { x: 0, y: 0 };
-        const joystickVelocity = joystickForce.x * 160;
-
-        let finalVelocity = tiltVelocity;
-        if (Math.sign(joystickVelocity) === Math.sign(tiltVelocity)) {
-            finalVelocity += joystickVelocity * 0.5;
+        let tiltVelocity = 0;
+        let joystickVelocity = 0;
+    
+        // Handle tilt-based movement
+        if (typeof this.smoothedTilt !== 'undefined' && this.smoothedTilt !== null) {
+            const maxTilt = 30; // Maximum tilt angle for movement
+            const velocityFactor = 320 / maxTilt; // Scale tilt to velocity
+            tiltVelocity = Phaser.Math.Clamp(this.smoothedTilt * velocityFactor, -320, 320);
         }
-
+    
+        // Handle joystick-based movement
+        if (this.joystickForceX !== undefined) {
+            joystickVelocity = this.joystickForceX * 160;
+        }
+    
+        // Determine the final velocity based on inputs
+        let finalVelocity = tiltVelocity;
+    
+        if (joystickVelocity !== 0) {
+            if (Math.sign(joystickVelocity) === Math.sign(tiltVelocity)) {
+                // If joystick and tilt are in the same direction, add a slight boost
+                finalVelocity += joystickVelocity * 0.5;
+            } else {
+                // If joystick and tilt are in opposite directions, prioritize tilt
+                finalVelocity = tiltVelocity;
+            }
+        }
+    
+        // Apply the final velocity to the player
         this.player.setVelocityX(finalVelocity);
-
+    
+        // Update animations based on movement direction and state
         if (finalVelocity > 0) {
             this.player.setFlipX(false);
             if (this.player.body.touching.down) this.player.play('walk', true);
@@ -187,21 +208,21 @@ export default class Level1 extends Phaser.Scene {
         } else if (this.player.body.touching.down) {
             this.player.play('idle', true);
         }
-
-        if (joystickForce.y < -0.5 && this.player.body.touching.down) {
-            this.player.setVelocityY(-500);
-            this.player.play('jump', true);
-        }
-
+    
+        // Handle jump with keyboard, joystick, or swipe
         if (this.cursors.up.isDown && this.player.body.touching.down) {
             this.player.setVelocityY(-500);
             this.player.play('jump', true);
+        } else if (this.joystickForceY < -0.5 && this.player.body.touching.down) {
+            this.player.setVelocityY(-500);
+            this.player.play('jump', true);
         }
-
+    
+        // Handle firing projectiles
         if (Phaser.Input.Keyboard.JustDown(this.fireKey)) {
             this.fireProjectile();
         }
-    }
+    }    
 
     fireProjectile() {
         const projectile = this.projectiles.create(this.player.x, this.player.y, 'projectileCD');
