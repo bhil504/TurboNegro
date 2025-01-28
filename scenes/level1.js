@@ -38,23 +38,23 @@ export default class Level1 extends Phaser.Scene {
     
     create() {
         const { width, height } = this.scale;
-    
+
         // Background and music
         this.add.image(width / 2, height / 2, 'level1Background').setDisplaySize(width, height);
         this.levelMusic = this.sound.add('level1Music', { loop: true, volume: 0.5 });
         this.levelMusic.play();
-    
+
         // Platforms setup
         this.platforms = this.physics.add.staticGroup();
         this.platforms.create(width / 2, height - 20, null).setDisplaySize(width, 20).setVisible(false).refreshBody();
         const balcony = this.platforms.create(width / 2, height - 350, 'balcony').setScale(1).refreshBody();
         balcony.body.setSize(280, 10).setOffset((balcony.displayWidth - 280) / 2, balcony.displayHeight - 75);
-    
+
         // Player setup
         this.player = this.physics.add.sprite(100, height - 100, 'turboNegroStanding1');
         this.player.setCollideWorldBounds(true);
         this.physics.add.collider(this.player, this.platforms);
-    
+
         // Animations
         this.anims.create({
             key: 'idle',
@@ -69,50 +69,45 @@ export default class Level1 extends Phaser.Scene {
         });
         this.anims.create({ key: 'walk', frames: [{ key: 'turboNegroWalking' }], frameRate: 8, repeat: -1 });
         this.anims.create({ key: 'jump', frames: [{ key: 'turboNegroJump' }], frameRate: 1 });
-    
+
         // Input setup
         this.cursors = this.input.keyboard.createCursorKeys();
         this.fireKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
-    
+
         // Health and enemy setup
         this.playerHealth = 10;
         this.maxHealth = 10;
         this.totalEnemiesDefeated = 0;
         this.updateHealthUI();
         this.updateEnemyCountUI();
-    
+
         this.projectiles = this.physics.add.group({ defaultKey: 'projectileCD' });
         this.enemies = this.physics.add.group();
         this.enemySpawnTimer = this.time.addEvent({ delay: 1000, callback: this.spawnEnemy, callbackScope: this, loop: true });
-    
+
         this.healthPacks = this.physics.add.group();
         this.physics.add.collider(this.healthPacks, this.platforms);
         this.physics.add.overlap(this.player, this.healthPacks, this.handlePlayerHealthPackCollision, null, this);
-    
+
         this.physics.add.collider(this.player, this.enemies, this.handlePlayerEnemyCollision, null, this);
         this.physics.add.collider(this.projectiles, this.enemies, this.handleProjectileEnemyCollision, null, this);
         this.physics.add.collider(this.enemies, this.platforms);
-    
-        // Hook up the attack button to fireProjectile
+
+        // Attack button
         const attackButton = document.getElementById('attack-button');
         if (attackButton) {
             attackButton.addEventListener('click', () => {
                 this.fireProjectile();
             });
         }
-    
-        // Mobile-specific controls
+
+        // Mobile controls
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
         if (isMobile) {
             console.log("Mobile device detected. Initializing controls...");
             this.joystickControls = setupJoystick(this.player);
-            enableTiltControls(this.player, {
-                smoothingFactor: 0.2,
-                maxTilt: 30,
-                deadZone: 6,
-                velocity: 320,
-            });
-    
+            this.enableTiltControls();
+
             const mobileFullscreenButton = document.getElementById('mobile-fullscreen-button');
             if (mobileFullscreenButton) {
                 mobileFullscreenButton.addEventListener('click', () => {
@@ -129,19 +124,19 @@ export default class Level1 extends Phaser.Scene {
         } else {
             console.log("Desktop detected. Skipping mobile-specific controls.");
         }
-    
+
         // Tap anywhere to attack
         this.input.on('pointerdown', (pointer) => {
             if (!pointer.wasTouch) return;
             this.fireProjectile();
         });
-    
+
         // Swipe up to jump
         let startY = null;
         this.input.on('pointerdown', (pointer) => {
             startY = pointer.y;
         });
-    
+
         this.input.on('pointerup', (pointer) => {
             if (startY !== null && pointer.y < startY - 50 && this.player.body.touching.down) {
                 this.player.setVelocityY(-500);
@@ -149,7 +144,7 @@ export default class Level1 extends Phaser.Scene {
             }
             startY = null;
         });
-    
+
         // Desktop fullscreen button
         const fullscreenButton = this.add.text(20, 20, '[ fullscreen ]', {
             fontSize: '20px',
@@ -158,7 +153,7 @@ export default class Level1 extends Phaser.Scene {
             padding: { left: 10, right: 10, top: 5, bottom: 5 },
             borderRadius: '5px',
         }).setInteractive();
-    
+
         fullscreenButton.on('pointerdown', () => {
             const fullscreenElement = document.getElementById('fullscreen');
             if (!document.fullscreenElement && !document.webkitFullscreenElement) {
@@ -172,33 +167,17 @@ export default class Level1 extends Phaser.Scene {
     }
 
     update() {
-        const tiltVelocity = this.smoothedTilt !== undefined
-            ? (this.smoothedTilt / 30) * 320 // Calculate tilt velocity
-            : 0;
-    
+        const tiltVelocity = this.smoothedTilt !== undefined ? (this.smoothedTilt / 30) * 320 : 0;
         const joystickForce = this.joystickControls ? this.joystickControls.getForce() : { x: 0, y: 0 };
-        const joystickVelocity = joystickForce.x * 160; // Calculate joystick velocity
-    
-        let finalVelocity = 0;
-    
-        // Determine final velocity based on tilt and joystick inputs
-        if (this.smoothedTilt !== undefined) {
-            if (Math.sign(joystickVelocity) === Math.sign(tiltVelocity)) {
-                // Same direction: Boost speed
-                finalVelocity = tiltVelocity + joystickVelocity * 0.5; // Boost joystick influence slightly
-            } else {
-                // Opposite direction: Ignore joystick
-                finalVelocity = tiltVelocity;
-            }
-        } else {
-            // Tilt not enabled, use only joystick
-            finalVelocity = joystickVelocity;
+        const joystickVelocity = joystickForce.x * 160;
+
+        let finalVelocity = tiltVelocity;
+        if (Math.sign(joystickVelocity) === Math.sign(tiltVelocity)) {
+            finalVelocity += joystickVelocity * 0.5;
         }
-    
-        // Apply the final velocity to the player
+
         this.player.setVelocityX(finalVelocity);
-    
-        // Update player direction and animation
+
         if (finalVelocity > 0) {
             this.player.setFlipX(false);
             if (this.player.body.touching.down) this.player.play('walk', true);
@@ -208,25 +187,21 @@ export default class Level1 extends Phaser.Scene {
         } else if (this.player.body.touching.down) {
             this.player.play('idle', true);
         }
-    
-        // Handle jump with joystick or tilt
+
         if (joystickForce.y < -0.5 && this.player.body.touching.down) {
-            this.player.setVelocityY(-500); // Jump from joystick
+            this.player.setVelocityY(-500);
             this.player.play('jump', true);
         }
-    
-        // Handle keyboard jump
+
         if (this.cursors.up.isDown && this.player.body.touching.down) {
-            this.player.setVelocityY(-500); // Jump from keyboard
+            this.player.setVelocityY(-500);
             this.player.play('jump', true);
         }
-    
-        // Handle firing projectiles
+
         if (Phaser.Input.Keyboard.JustDown(this.fireKey)) {
             this.fireProjectile();
         }
     }
-    
 
     fireProjectile() {
         const projectile = this.projectiles.create(this.player.x, this.player.y, 'projectileCD');
@@ -360,59 +335,23 @@ export default class Level1 extends Phaser.Scene {
         }
     }      
 
-    enableTiltControls(player, config = {}) {
-        let smoothedTilt = 0; // Smoothed tilt value for stabilization
-        const smoothingFactor = config.smoothingFactor || 0.2; // Adjust for tilt responsiveness
-        const maxTilt = config.maxTilt || 30; // Maximum tilt value for movement
-        const deadZone = config.deadZone || 6; // Dead zone for movement initiation
-        const velocity = config.velocity || 320; // Maximum movement velocity
-    
+    enableTiltControls() {
+        let smoothedTilt = 0;
+        const smoothingFactor = 0.2;
+
         window.addEventListener('deviceorientation', (event) => {
-            let tilt;
-            const isLandscape = window.orientation === 90 || window.orientation === -90;
-            const isClockwise = window.orientation === 90; // Determine if in clockwise landscape mode
-    
-            // Use gamma for portrait and beta for landscape
-            tilt = isLandscape ? event.beta : event.gamma;
-    
+            let tilt = window.orientation === 90 || window.orientation === -90 ? event.beta : event.gamma;
+
             if (tilt !== null) {
-                // Clamp tilt to the allowed range
+                const maxTilt = 30;
+                const deadZone = 6;
                 tilt = Math.max(-maxTilt, Math.min(maxTilt, tilt));
-    
-                // Reverse tilt for counterclockwise landscape mode
-                if (isLandscape && !isClockwise) {
-                    tilt = -tilt;
-                }
-    
-                // Apply smoothing to the tilt value
                 smoothedTilt += (tilt - smoothedTilt) * smoothingFactor;
-    
-                // Handle movement logic based on smoothed tilt
-                if (smoothedTilt > deadZone) {
-                    // Move right
-                    player.setVelocityX((smoothedTilt - deadZone) / (maxTilt - deadZone) * velocity);
-                    if (!player.flipX) player.setFlipX(false); // Update direction
-                    if (player.body.touching.down && player.anims.currentAnim?.key !== 'walk') {
-                        player.play('walk', true);
-                    }
-                } else if (smoothedTilt < -deadZone) {
-                    // Move left
-                    player.setVelocityX((smoothedTilt + deadZone) / (maxTilt - deadZone) * velocity);
-                    if (player.flipX === false) player.setFlipX(true); // Update direction
-                    if (player.body.touching.down && player.anims.currentAnim?.key !== 'walk') {
-                        player.play('walk', true);
-                    }
-                } else {
-                    // Stay idle if tilt is within the dead zone
-                    player.setVelocityX(0);
-                    if (player.body.touching.down && player.anims.currentAnim?.key !== 'idle') {
-                        player.play('idle', true);
-                    }
-                }
+
+                this.smoothedTilt = Math.abs(smoothedTilt) > deadZone ? smoothedTilt : 0;
             }
         });
-    }
-          
+    }   
 
     shutdown() {
         if (this.levelMusic) {
