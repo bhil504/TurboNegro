@@ -1,4 +1,3 @@
-
 function setupJoystick(player) {
     const joystickArea = document.getElementById('joystick-area');
     const joystickKnob = document.getElementById('joystick-knob');
