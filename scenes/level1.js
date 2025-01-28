@@ -159,8 +159,6 @@ export default class Level1 extends Phaser.Scene {
                 });
             }
 
-        
-    
         // Swipe up to jump
         let startY = null;
         this.input.on('pointerdown', (pointer) => {
