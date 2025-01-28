@@ -6,6 +6,15 @@ export default class Level1 extends Phaser.Scene {
         super({ key: 'Level1' });
     }
 
+    updateHealthUI() {
+        const healthPercentage = (this.playerHealth / this.maxHealth) * 100;
+        document.getElementById('health-bar-inner').style.width = `${healthPercentage}%`;
+    }
+    
+    updateEnemyCountUI() {
+        document.getElementById('enemy-count').innerText = `Enemies Left: ${20 - this.totalEnemiesDefeated}`;
+    } 
+
     preload() {
         console.log("Preloading assets...");
         this.load.image('level1Background', 'assets/Levels/BackGrounds/Level1.png');
@@ -82,129 +91,7 @@ export default class Level1 extends Phaser.Scene {
         addFullscreenButton(this);
         setupMobileControls(this, this.player); // Handles tilt and joystick setup automatically
     }
-               
-    
-    spawnEnemy() {
-        const { width, height } = this.scale;
-        const spawnLocation = Phaser.Math.Between(0, 2);
-        const x = spawnLocation === 0 ? Phaser.Math.Between(50, width - 50) : spawnLocation === 1 ? 0 : width;
-        const y = spawnLocation === 0 ? 0 : Phaser.Math.Between(50, height - 100);
-        
-        const enemy = this.enemies.create(x, y, 'skeleton');
-        enemy.setCollideWorldBounds(true);
-        enemy.setBounce(0.2);
-        enemy.isJumping = false;
-        
-        this.time.addEvent({
-            delay: 500,
-            callback: () => this.enemyAI(enemy),
-            loop: true,
-        });
-    }
-    
-    enemyAI(enemy) {
-        if (!enemy.body || !this.player.body) return;
-        const playerX = this.player.x;
-        
-        if (enemy.x < playerX - 10) {
-            enemy.setVelocityX(100);
-            enemy.setFlipX(false);
-        } else if (enemy.x > playerX + 10) {
-            enemy.setVelocityX(-100);
-            enemy.setFlipX(true);
-        } else {
-            enemy.setVelocityX(0);
-        }
-        
-        if (Phaser.Math.Between(0, 100) < 20 && enemy.body.touching.down && Math.abs(enemy.x - playerX) < 200) {
-            enemy.setVelocityY(-300);
-        }
-    }
-    
-    handlePlayerEnemyCollision(player, enemy) {
-        enemy.destroy();
-        this.playerHealth--;
-        
-        // Update health bar
-        this.updateHealthUI();
-        
-        
-        if (this.playerHealth <= 0) {
-            this.gameOver();
-        }
-    }
-    
-    handleProjectileEnemyCollision(projectile, enemy) {
-        projectile.destroy();
-        enemy.destroy();
-        this.totalEnemiesDefeated++;
-        
-        // Spawn a health pack after 12 enemies are defeated
-        if (this.totalEnemiesDefeated === 12) {
-            this.spawnHealthPack();
-        }
-        
-        // Update enemy countdown
-        this.updateEnemyCountUI();
-        
-        
-        if (this.totalEnemiesDefeated >= 20) {
-            this.levelComplete();
-        }
-    }
-    
-    gameOver() {
-        // Stop background music
-        if (this.levelMusic) this.levelMusic.stop();
-    
-        // Stop spawning enemies
-        if (this.enemySpawnTimer) this.enemySpawnTimer.remove();
-    
-        // Safely clear enemies and projectiles
-        this.enemies.clear(true, true); // Destroys all active enemies
-        this.projectiles.clear(true, true); // Destroys all active projectiles
-    
-        // Display game over screen
-        this.add.image(this.scale.width / 2, this.scale.height / 2, 'gameOver').setOrigin(0.5);
-    
-        // Add input event listeners for desktop and mobile
-        const restartLevel = () => {
-            this.scene.restart();
-        };
-    
-        // For Desktop
-        this.input.keyboard.once('keydown-SPACE', restartLevel);
-    
-        // For Mobile (tap anywhere)
-        this.input.once('pointerdown', restartLevel);
-    }
-    
-    levelComplete() {
-        // Stop background music
-        if (this.levelMusic) this.levelMusic.stop();
-    
-        // Stop spawning enemies
-        if (this.enemySpawnTimer) this.enemySpawnTimer.remove();
-    
-        // Safely clear enemies and projectiles
-        this.enemies.clear(true, true); // Destroys all active enemies
-        this.projectiles.clear(true, true); // Destroys all active projectiles
-    
-        // Display level complete screen
-        this.add.image(this.scale.width / 2, this.scale.height / 2, 'levelComplete').setOrigin(0.5);
-    
-        // Add input event listeners for desktop and mobile
-        const proceedToNextLevel = () => {
-            this.scene.start('Level2'); // Assuming 'Level2' is the next level
-        };
-    
-        // For Desktop
-        this.input.keyboard.once('keydown-SPACE', proceedToNextLevel);
-    
-        // For Mobile (tap anywhere)
-        this.input.once('pointerdown', proceedToNextLevel);
-    }
-    
+
     update() {
         // Handle keyboard movement
         if (this.cursors.left.isDown) {
@@ -251,7 +138,44 @@ export default class Level1 extends Phaser.Scene {
                 this.player.play('idle', true);
             }
         }
-    }    
+    }  
+
+    enemyAI(enemy) {
+        if (!enemy.body || !this.player.body) return;
+        const playerX = this.player.x;
+        
+        if (enemy.x < playerX - 10) {
+            enemy.setVelocityX(100);
+            enemy.setFlipX(false);
+        } else if (enemy.x > playerX + 10) {
+            enemy.setVelocityX(-100);
+            enemy.setFlipX(true);
+        } else {
+            enemy.setVelocityX(0);
+        }
+        
+        if (Phaser.Math.Between(0, 100) < 20 && enemy.body.touching.down && Math.abs(enemy.x - playerX) < 200) {
+            enemy.setVelocityY(-300);
+        }
+    }
+               
+    spawnEnemy() {
+        const { width, height } = this.scale;
+        const spawnLocation = Phaser.Math.Between(0, 2);
+        const x = spawnLocation === 0 ? Phaser.Math.Between(50, width - 50) : spawnLocation === 1 ? 0 : width;
+        const y = spawnLocation === 0 ? 0 : Phaser.Math.Between(50, height - 100);
+        
+        const enemy = this.enemies.create(x, y, 'skeleton');
+        enemy.setCollideWorldBounds(true);
+        enemy.setBounce(0.2);
+        enemy.isJumping = false;
+        
+        this.time.addEvent({
+            delay: 500,
+            callback: () => this.enemyAI(enemy),
+            loop: true,
+        });
+    }
     
     fireProjectile() {
         const projectile = this.projectiles.create(this.player.x, this.player.y, 'projectileCD');
@@ -277,6 +201,38 @@ export default class Level1 extends Phaser.Scene {
         // Add collision with platforms so the health pack lands on them
         this.physics.add.collider(healthPack, this.platforms);
     }
+
+    handlePlayerEnemyCollision(player, enemy) {
+        enemy.destroy();
+        this.playerHealth--;
+        
+        // Update health bar
+        this.updateHealthUI();
+        
+        
+        if (this.playerHealth <= 0) {
+            this.gameOver();
+        }
+    }
+    
+    handleProjectileEnemyCollision(projectile, enemy) {
+        projectile.destroy();
+        enemy.destroy();
+        this.totalEnemiesDefeated++;
+        
+        // Spawn a health pack after 12 enemies are defeated
+        if (this.totalEnemiesDefeated === 12) {
+            this.spawnHealthPack();
+        }
+        
+        // Update enemy countdown
+        this.updateEnemyCountUI();
+        
+        
+        if (this.totalEnemiesDefeated >= 20) {
+            this.levelComplete();
+        }
+    }
     
     handlePlayerHealthPackCollision(player, healthPack) {
         healthPack.destroy(); // Remove the health pack
@@ -289,14 +245,57 @@ export default class Level1 extends Phaser.Scene {
         
     }
     
-    updateHealthUI() {
-        const healthPercentage = (this.playerHealth / this.maxHealth) * 100;
-        document.getElementById('health-bar-inner').style.width = `${healthPercentage}%`;
-    }
+    levelComplete() {
+        // Stop background music
+        if (this.levelMusic) this.levelMusic.stop();
     
-    updateEnemyCountUI() {
-        document.getElementById('enemy-count').innerText = `Enemies Left: ${20 - this.totalEnemiesDefeated}`;
-    }     
+        // Stop spawning enemies
+        if (this.enemySpawnTimer) this.enemySpawnTimer.remove();
+    
+        // Safely clear enemies and projectiles
+        this.enemies.clear(true, true); // Destroys all active enemies
+        this.projectiles.clear(true, true); // Destroys all active projectiles
+    
+        // Display level complete screen
+        this.add.image(this.scale.width / 2, this.scale.height / 2, 'levelComplete').setOrigin(0.5);
+    
+        // Add input event listeners for desktop and mobile
+        const proceedToNextLevel = () => {
+            this.scene.start('Level2'); // Assuming 'Level2' is the next level
+        };
+    
+        // For Desktop
+        this.input.keyboard.once('keydown-SPACE', proceedToNextLevel);
+    
+        // For Mobile (tap anywhere)
+        this.input.once('pointerdown', proceedToNextLevel);
+    }
+
+    gameOver() {
+        // Stop background music
+        if (this.levelMusic) this.levelMusic.stop();
+    
+        // Stop spawning enemies
+        if (this.enemySpawnTimer) this.enemySpawnTimer.remove();
+    
+        // Safely clear enemies and projectiles
+        this.enemies.clear(true, true); // Destroys all active enemies
+        this.projectiles.clear(true, true); // Destroys all active projectiles
+    
+        // Display game over screen
+        this.add.image(this.scale.width / 2, this.scale.height / 2, 'gameOver').setOrigin(0.5);
+    
+        // Add input event listeners for desktop and mobile
+        const restartLevel = () => {
+            this.scene.restart();
+        };
+    
+        // For Desktop
+        this.input.keyboard.once('keydown-SPACE', restartLevel);
+    
+        // For Mobile (tap anywhere)
+        this.input.once('pointerdown', restartLevel);
+    }
 
     shutdown() {
         if (this.levelMusic) {

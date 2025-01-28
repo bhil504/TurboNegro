@@ -84,9 +84,25 @@ function setupTapAttack(scene, player) {
 }
 
 function fireProjectile(scene, player) {
-    const projectile = scene.physics.add.sprite(player.x, player.y, 'projectileCD');
+    const projectile = scene.projectiles.create(player.x, player.y, 'projectileCD');
     if (projectile) {
         projectile.setVelocityX(player.flipX ? -500 : 500); // Fire direction
         projectile.body.setAllowGravity(false);
+
+        // Ensure projectiles collide with enemies
+        scene.physics.add.collider(projectile, scene.enemies, (proj, enemy) => {
+            proj.destroy();
+            enemy.destroy();
+            scene.totalEnemiesDefeated++;
+            scene.updateEnemyCountUI();
+
+            if (scene.totalEnemiesDefeated === 12) {
+                scene.spawnHealthPack();
+            }
+
+            if (scene.totalEnemiesDefeated >= 20) {
+                scene.levelComplete();
+            }
+        });
     }
 }
