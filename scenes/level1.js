@@ -1,7 +1,8 @@
 import { addFullscreenButton } from '../utils/fullScreenUtils.js';
 import { setupJoystick } from '../utils/joystickUtils.js';
 import { enableTiltControls } from '../utils/tiltUtils.js';
-import { setupMobileControls } from '../utils/mobileControls.js';
+import { setupJoystick } from '../utils/joystickUtils.js';
+
 
 
 export default class Level1 extends Phaser.Scene {
