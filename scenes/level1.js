@@ -235,6 +235,11 @@ export default class Level1 extends Phaser.Scene {
         if (enemy.texture.key === 'skeleton') {
             this.mardiGrasZombieHitSFX.play();
         }
+
+        // Spawn a health pack after 12 enemies are defeated
+        if (this.totalEnemiesDefeated === 12) {
+            this.spawnHealthPack();
+        }
     
         this.updateEnemyCountUI();
     
