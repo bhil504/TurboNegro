@@ -33,9 +33,9 @@ export default class Level1 extends Phaser.Scene {
         this.load.audio('level1Music', 'assets/Audio/BlownMoneyAudubonPark.mp3');
 
          // Load sound effects
-         this.load.audio('playerHit', 'assets/Audio/SoundFX/playerHit.mp3');
-         this.load.audio('playerProjectileFire', 'assets/Audio/SoundFX/playerprojectilefire.mp3');
-         this.load.audio('mardiGrasZombieHit', 'assets/Audio/SoundFX/MardiGrasZombieHit.mp3');
+         this.load.audio('playerHit', 'assets/Audio/SoundFX/ogg/playerHit.ogg');
+         this.load.audio('playerProjectileFire', 'assets/Audio/SoundFX/ogg/playerprojectilefire.ogg');
+         this.load.audio('mardiGrasZombieHit', 'assets/Audio/SoundFX/ogg/MardiGrasZombieHit.ogg');
      
         
         console.log("Assets preloaded successfully.");
@@ -51,7 +51,7 @@ export default class Level1 extends Phaser.Scene {
 
         // Sound Effects
         this.playerHitSFX = this.sound.add('playerHit', { volume: 0.5 });
-        this.playerProjectileFireSFX = this.sound.add('playerProjectileFire', { volume: 0.4 });
+        this.playerProjectileFireSFX = this.sound.add('playerProjectileFire', { volume: 0.6 });
         this.mardiGrasZombieHitSFX = this.sound.add('mardiGrasZombieHit', { volume: 0.6 });
 
         // Platforms setup
