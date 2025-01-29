@@ -7,7 +7,7 @@ export default class StartMenu extends Phaser.Scene {
         // Load the background image, logo, and music
         this.load.image('startBackground', 'assets/levels/BackGrounds/StartMenu.webp');
         this.load.image('turboNegroLogo', 'assets/Logo/Turbo Negro.png');
-        this.load.audio('menuMusic', 'assets/Audio/LevelMusci/TurboNegroShortVersion.ogg');
+        this.load.audio('menuMusic', 'assets/Audio/LevelMusic/TurboNegroShortVersion.ogg');
     }
 
     create() {
