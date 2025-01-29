@@ -31,6 +31,12 @@ export default class Level1 extends Phaser.Scene {
         this.load.image('levelComplete', 'assets/UI/levelComplete.png');
         this.load.image('healthPack', 'assets/Characters/Pickups/HealthPack.png');
         this.load.audio('level1Music', 'assets/Audio/BlownMoneyAudubonPark.mp3');
+
+         // Load sound effects
+         this.load.audio('playerHit', 'assets/Audio/SoundFX/playerHit.mp3');
+         this.load.audio('playerProjectileFire', 'assets/Audio/SoundFX/playerprojectilefire.mp3');
+         this.load.audio('mardiGrasZombieHit', 'assets/Audio/SoundFX/MardiGrasZombieHit.mp3');
+     
         
         console.log("Assets preloaded successfully.");
     }
@@ -42,7 +48,12 @@ export default class Level1 extends Phaser.Scene {
         this.add.image(width / 2, height / 2, 'level1Background').setDisplaySize(width, height);
         this.levelMusic = this.sound.add('level1Music', { loop: true, volume: 0.5 });
         this.levelMusic.play();
-    
+
+        // Sound Effects
+        this.playerHitSFX = this.sound.add('playerHit', { volume: 0.5 });
+        this.playerProjectileFireSFX = this.sound.add('playerProjectileFire', { volume: 0.4 });
+        this.mardiGrasZombieHitSFX = this.sound.add('mardiGrasZombieHit', { volume: 0.6 });
+
         // Platforms setup
         this.platforms = this.physics.add.staticGroup();
         this.platforms.create(width / 2, height - 20, null).setDisplaySize(width, 20).setVisible(false).refreshBody();
@@ -184,6 +195,7 @@ export default class Level1 extends Phaser.Scene {
             projectile.setVisible(true);
             projectile.body.setAllowGravity(false);
             projectile.setVelocityX(this.player.flipX ? -500 : 500);
+            this.playerProjectileFireSFX.play();
         }
     }
     
@@ -208,7 +220,7 @@ export default class Level1 extends Phaser.Scene {
         
         // Update health bar
         this.updateHealthUI();
-        
+        this.playerHitSFX.play();
         
         if (this.playerHealth <= 0) {
             this.gameOver();
@@ -219,16 +231,13 @@ export default class Level1 extends Phaser.Scene {
         projectile.destroy();
         enemy.destroy();
         this.totalEnemiesDefeated++;
-        
-        // Spawn a health pack after 12 enemies are defeated
-        if (this.totalEnemiesDefeated === 12) {
-            this.spawnHealthPack();
+    
+        if (enemy.texture.key === 'skeleton') {
+            this.mardiGrasZombieHitSFX.play();
         }
-        
-        // Update enemy countdown
+    
         this.updateEnemyCountUI();
-        
-        
+    
         if (this.totalEnemiesDefeated >= 20) {
             this.levelComplete();
         }
