@@ -4,30 +4,10 @@ export default class StartMenu extends Phaser.Scene {
     }
 
     preload() {
-
-        // Detect if the device is iOS
-            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-
-            // Load the correct audio format based on the device
-            if (isIOS) {
-                console.log("iOS detected. Loading MP3 only.");
-                this.load.audio('level1Music', 'assets/Audio/LevelMusic/BlownMoneyAudubonPark.mp3'); // iOS Safari
-            } else {
-                console.log("Non-iOS device detected. Loading both MP3 and OGG.");
-                this.load.audio('level1Music', [
-                    'assets/Audio/LevelMusic/BlownMoneyAudubonPark.mp3', // Universal support
-                    'assets/Audio/LevelMusic/BlownMoneyAudubonPark.ogg'  // Preferred for Android/Desktop
-                ]);
-            }
-
         // Load the background image, logo, and music
         this.load.image('startBackground', 'assets/levels/BackGrounds/StartMenu.webp');
         this.load.image('turboNegroLogo', 'assets/Logo/Turbo Negro.png');
-        this.load.audio('menuMusic', [
-            'assets/Audio/TurboNegroShortVersion.mp3',
-            'assets/Audio/TurboNegroShortVersion.ogg'
-        ]);
-        
+        this.load.audio('menuMusic', 'assets/Audio/LevelMusic/mp3/TurboNegroShortVersion.mp3');
     }
 
     create() {

@@ -17,22 +17,6 @@ export default class Level1 extends Phaser.Scene {
 
     preload() {
         console.log("Preloading assets...");
-
-        // Detect if the device is iOS
-            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
-
-            // Load the correct audio format based on the device
-            if (isIOS) {
-                console.log("iOS detected. Loading MP3 only.");
-                this.load.audio('level1Music', 'assets/Audio/LevelMusic/BlownMoneyAudubonPark.mp3'); // iOS Safari
-            } else {
-                console.log("Non-iOS device detected. Loading both MP3 and OGG.");
-                this.load.audio('level1Music', [
-                    'assets/Audio/LevelMusic/BlownMoneyAudubonPark.mp3', // Universal support
-                    'assets/Audio/LevelMusic/BlownMoneyAudubonPark.ogg'  // Preferred for Android/Desktop
-                ]);
-            }
-
         this.load.image('level1Background', 'assets/Levels/BackGrounds/Level1.png');
         this.load.image('turboNegroWalking', 'assets/Characters/Character1/TurboNegroWalking/TurboNegroWalking.png');
         this.load.image('turboNegroJump', 'assets/Characters/Character1/TurboNegroJump.png');
@@ -46,15 +30,9 @@ export default class Level1 extends Phaser.Scene {
         this.load.image('gameOver', 'assets/UI/gameOver.png');
         this.load.image('levelComplete', 'assets/UI/levelComplete.png');
         this.load.image('healthPack', 'assets/Characters/Pickups/HealthPack.png');
-        this.load.audio('level1Music', [
-            'assets/Audio/LevelMusic/BlownMoneyAudubonPark.mp3', // iOS Safari
-            'assets/Audio/LevelMusic/BlownMoneyAudubonPark.ogg'  // Android, Desktop
-        ]);
-        
+        this.load.audio('level1Music', 'assets/Audio/LevelMusic/BlownMoneyAudubonPark.mp3');
+
          // Load sound effects
-         this.load.audio('playerHit', 'assets/Audio/SoundFX/ogg/playerHit.ogg');
-         this.load.audio('playerProjectileFire', 'assets/Audio/SoundFX/ogg/playerprojectilefire.ogg');
-         this.load.audio('mardiGrasZombieHit', 'assets/Audio/SoundFX/ogg/MardiGrasZombieHit.ogg');
          this.load.audio('playerHit', 'assets/Audio/SoundFX/mp3/playerHit.mp3');
          this.load.audio('playerProjectileFire', 'assets/Audio/SoundFX/mp3/playerprojectilefire.mp3');
          this.load.audio('mardiGrasZombieHit', 'assets/Audio/SoundFX/mp3/MardiGrasZombieHit.mp3');
@@ -256,11 +234,6 @@ export default class Level1 extends Phaser.Scene {
     
         if (enemy.texture.key === 'skeleton') {
             this.mardiGrasZombieHitSFX.play();
-        }
-
-        // Spawn a health pack after 12 enemies are defeated
-        if (this.totalEnemiesDefeated === 12) {
-            this.spawnHealthPack();
         }
     
         this.updateEnemyCountUI();
