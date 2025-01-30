@@ -1,3 +1,5 @@
+import { addFullscreenButton } from './fullScreenUtils.js';
+
 export default class StartMenu extends Phaser.Scene {
     constructor() {
         super({ key: 'StartMenu' });
@@ -13,12 +15,12 @@ export default class StartMenu extends Phaser.Scene {
     create() {
         const width = 1100;
         const height = 500;
-
+    
         const background = this.add.image(width / 2, height / 2, 'startBackground');
         background.setDisplaySize(width, height).setOrigin(0.5);
-
+    
         const logo = this.add.image(width / 2, height / 2.8, 'turboNegroLogo').setOrigin(0.5).setScale(0.6);
-
+    
         const subtitle = this.add.text(width / 3, height / 1.9, 'Saves The French Quarter!!!', {
             fontSize: '30px',
             fontFamily: 'Bangers',
@@ -32,7 +34,7 @@ export default class StartMenu extends Phaser.Scene {
                 fill: true,
             },
         }).setOrigin(-0.1);
-
+    
         const startButton = this.add.text(width / 2, height / 1.5, 'Start Game', {
             fontSize: '30px',
             fontStyle: 'bold',
@@ -43,22 +45,25 @@ export default class StartMenu extends Phaser.Scene {
         })
             .setOrigin(0.5)
             .setInteractive();
-
+    
         startButton.on('pointerover', () => {
             startButton.setStyle({ fill: '#ffffff', backgroundColor: '#ff0000' });
         });
-
+    
         startButton.on('pointerout', () => {
             startButton.setStyle({ fill: '#ff0000', backgroundColor: '#000000' });
         });
-
+    
         startButton.on('pointerdown', () => {
             this.sound.stopAll();
-            this.scene.start('Level1'); // Directly starts the game without requesting fullscreen
+            this.scene.start('Level1');
         });
-        
-
+    
         const music = this.sound.add('menuMusic', { loop: true, volume: 0.6 });
         music.play();
+    
+        // Add Fullscreen Button
+        addFullscreenButton(this);
     }
+    
 }
