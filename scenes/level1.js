@@ -30,12 +30,18 @@ export default class Level1 extends Phaser.Scene {
         this.load.image('gameOver', 'assets/UI/gameOver.png');
         this.load.image('levelComplete', 'assets/UI/levelComplete.png');
         this.load.image('healthPack', 'assets/Characters/Pickups/HealthPack.png');
-        this.load.audio('level1Music', 'assets/Audio/LevelMusic/BlownMoneyAudubonPark.ogg');
-
+        this.load.audio('level1Music', [
+            'assets/Audio/LevelMusic/BlownMoneyAudubonPark.mp3', // iOS Safari
+            'assets/Audio/LevelMusic/BlownMoneyAudubonPark.ogg'  // Android, Desktop
+        ]);
+        
          // Load sound effects
          this.load.audio('playerHit', 'assets/Audio/SoundFX/ogg/playerHit.ogg');
          this.load.audio('playerProjectileFire', 'assets/Audio/SoundFX/ogg/playerprojectilefire.ogg');
          this.load.audio('mardiGrasZombieHit', 'assets/Audio/SoundFX/ogg/MardiGrasZombieHit.ogg');
+         this.load.audio('playerHit', 'assets/Audio/SoundFX/mp3/playerHit.mp3');
+         this.load.audio('playerProjectileFire', 'assets/Audio/SoundFX/mp3/playerprojectilefire.mp3');
+         this.load.audio('mardiGrasZombieHit', 'assets/Audio/SoundFX/mp3/MardiGrasZombieHit.mp3');
      
         
         console.log("Assets preloaded successfully.");
