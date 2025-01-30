@@ -1,4 +1,4 @@
-import { addFullscreenButton } from './fullScreenUtils.js';
+import { addFullscreenButton } from '/utils/fullScreenUtils.js';
 
 export default class StartMenu extends Phaser.Scene {
     constructor() {
@@ -64,6 +64,6 @@ export default class StartMenu extends Phaser.Scene {
     
         // Add Fullscreen Button
         addFullscreenButton(this);
-    }
+    }    
     
 }
