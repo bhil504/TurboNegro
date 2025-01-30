@@ -30,11 +30,11 @@ export default class Level1 extends Phaser.Scene {
         this.load.image('gameOver', 'assets/UI/gameOver.png');
         this.load.image('levelComplete', 'assets/UI/levelComplete.png');
         this.load.image('healthPack', 'assets/Characters/Pickups/HealthPack.png');
-        this.load.audio('level1Music', 'assets/Audio/LevelMusic/BlownMoneyAudubonPark.mp3');
+        this.load.audio('level1Music', 'assets/Audio/mp3/BlownMoneyAudubonPark.mp3');
 
          // Load sound effects
          this.load.audio('playerHit', 'assets/Audio/SoundFX/mp3/playerHit.mp3');
-         this.load.audio('playerProjectileFire', 'assets/Audio/SoundFX/mp3/playerprojectilefire.mp3');
+         this.load.audio('playerProjectileFire', 'assets/Audio/mp3/SoundFX/playerprojectilefire.mp3');
          this.load.audio('mardiGrasZombieHit', 'assets/Audio/SoundFX/mp3/MardiGrasZombieHit.mp3');
      
         
@@ -50,9 +50,9 @@ export default class Level1 extends Phaser.Scene {
         this.levelMusic.play();
 
         // Sound Effects
-        this.playerHitSFX = this.sound.add('playerHit', { volume: 0.7 });
-        this.playerProjectileFireSFX = this.sound.add('playerProjectileFire', { volume: 0.7 });
-        this.mardiGrasZombieHitSFX = this.sound.add('mardiGrasZombieHit', { volume: 0.7 });
+        this.playerHitSFX = this.sound.add('playerHit', { volume: 0.5 });
+        this.playerProjectileFireSFX = this.sound.add('playerProjectileFire', { volume: 0.4 });
+        this.mardiGrasZombieHitSFX = this.sound.add('mardiGrasZombieHit', { volume: 0.6 });
 
         // Platforms setup
         this.platforms = this.physics.add.staticGroup();
