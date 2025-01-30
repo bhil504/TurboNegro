@@ -17,6 +17,22 @@ export default class Level1 extends Phaser.Scene {
 
     preload() {
         console.log("Preloading assets...");
+
+        // Detect if the device is iOS
+            const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
+            // Load the correct audio format based on the device
+            if (isIOS) {
+                console.log("iOS detected. Loading MP3 only.");
+                this.load.audio('level1Music', 'assets/Audio/LevelMusic/BlownMoneyAudubonPark.mp3'); // iOS Safari
+            } else {
+                console.log("Non-iOS device detected. Loading both MP3 and OGG.");
+                this.load.audio('level1Music', [
+                    'assets/Audio/LevelMusic/BlownMoneyAudubonPark.mp3', // Universal support
+                    'assets/Audio/LevelMusic/BlownMoneyAudubonPark.ogg'  // Preferred for Android/Desktop
+                ]);
+            }
+
         this.load.image('level1Background', 'assets/Levels/BackGrounds/Level1.png');
         this.load.image('turboNegroWalking', 'assets/Characters/Character1/TurboNegroWalking/TurboNegroWalking.png');
         this.load.image('turboNegroJump', 'assets/Characters/Character1/TurboNegroJump.png');
