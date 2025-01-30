@@ -195,12 +195,7 @@ export default class Level1 extends Phaser.Scene {
             projectile.setVisible(true);
             projectile.body.setAllowGravity(false);
             projectile.setVelocityX(this.player.flipX ? -500 : 500);
-    
-            console.log("🔊 Attempting to play playerProjectileFire on iOS");
-    
-            // Play sound without .catch()
-            const isPlaying = this.playerProjectileFireSFX.play();
-            console.log(isPlaying ? "🔊 Sound played successfully!" : "⚠️ Sound did NOT play!");
+            this.playerProjectileFireSFX.play();
         }
     }
     
