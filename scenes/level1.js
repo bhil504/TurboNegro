@@ -197,12 +197,12 @@ export default class Level1 extends Phaser.Scene {
             projectile.setVelocityX(this.player.flipX ? -500 : 500);
     
             console.log("🔊 Attempting to play playerProjectileFire on iOS");
-            
-            setTimeout(() => {
-                this.playerProjectileFireSFX.play().catch(err => console.error("iOS Audio Blocked:", err));
-            }, 50); // Small delay to allow iOS to process it
+    
+            // Play sound without .catch()
+            const isPlaying = this.playerProjectileFireSFX.play();
+            console.log(isPlaying ? "🔊 Sound played successfully!" : "⚠️ Sound did NOT play!");
         }
-    }    
+    }
     
     spawnHealthPack() {
         const { width } = this.scale;
