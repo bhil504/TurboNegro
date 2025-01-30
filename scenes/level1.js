@@ -50,8 +50,8 @@ export default class Level1 extends Phaser.Scene {
         this.levelMusic.play();
 
         // Sound Effects
-        this.playerHitSFX = this.sound.add('playerHit', { volume: 0.5 });
-        this.playerProjectileFireSFX = this.sound.add('playerProjectileFire', { volume: 0.4 });
+        this.playerHitSFX = this.sound.add('playerHit', { volume: 0.6 });
+        this.playerProjectileFireSFX = this.sound.add('playerProjectileFire', { volume: 0.6 });
         this.mardiGrasZombieHitSFX = this.sound.add('mardiGrasZombieHit', { volume: 0.6 });
 
         // Platforms setup
