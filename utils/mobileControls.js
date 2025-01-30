@@ -103,6 +103,16 @@ function fireProjectile(scene, player) {
         projectile.setVelocityX(player.flipX ? -500 : 500); // Fire direction
         projectile.body.setAllowGravity(false);
 
+        // Log if the sound is loaded
+        if (scene.cache.audio.exists('playerProjectileFire')) {
+            console.log("✅ Sound is loaded!");
+        } else {
+            console.log("❌ Sound is NOT loaded!");
+        }
+
+        // Play the sound after triggering the projectile
+        scene.playerProjectileFireSFX.play();
+        
         // Ensure projectiles collide with enemies
         scene.physics.add.collider(projectile, scene.enemies, (proj, enemy) => {
             proj.destroy();
