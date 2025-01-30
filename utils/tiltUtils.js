@@ -4,7 +4,7 @@ export function enableTiltControls(scene, player) {
 
     window.addEventListener('deviceorientation', (event) => {
         let tilt;
-        const isLandscape = window.orientation === 90 || window.orientation === -90;
+        const isLandscape = window.innerWidth > window.innerHeight; // Check if device is in landscape mode
         const isClockwise = window.orientation === 90; // Determine if in clockwise landscape mode
 
         // Use gamma for portrait and beta for landscape
@@ -15,6 +15,7 @@ export function enableTiltControls(scene, player) {
             const deadZone = 6; // Dead zone for movement initiation
             const baseVelocity = 320; 
             const velocityMultiplier = isLandscape ? 1 : 2; // Increase speed in portrait mode
+            const adjustedVelocity = baseVelocity * velocityMultiplier; // Adjust velocity based on orientation
 
             // Clamp tilt values to ensure responsiveness within the defined range
             tilt = Math.max(-maxTilt, Math.min(maxTilt, tilt));
@@ -30,7 +31,7 @@ export function enableTiltControls(scene, player) {
             // Handle movement logic based on smoothed tilt
             if (smoothedTilt > deadZone) {
                 // Move right
-                player.setVelocityX((smoothedTilt - deadZone) / (maxTilt - deadZone) * velocity);
+                player.setVelocityX((smoothedTilt - deadZone) / (maxTilt - deadZone) * adjustedVelocity);
                 player.setFlipX(false);
 
                 // Trigger animation only if it has changed
@@ -39,7 +40,7 @@ export function enableTiltControls(scene, player) {
                 }
             } else if (smoothedTilt < -deadZone) {
                 // Move left
-                player.setVelocityX((smoothedTilt + deadZone) / (maxTilt - deadZone) * velocity);
+                player.setVelocityX((smoothedTilt + deadZone) / (maxTilt - deadZone) * adjustedVelocity);
                 player.setFlipX(true);
 
                 // Trigger animation only if it has changed
