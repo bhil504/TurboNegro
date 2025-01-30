@@ -13,7 +13,8 @@ export function enableTiltControls(scene, player) {
         if (tilt !== null) {
             const maxTilt = isLandscape ? 20 : 90; // Normalize tilt ranges: beta (landscape) vs gamma (portrait)
             const deadZone = 6; // Dead zone for movement initiation
-            const velocity = 320; // Match velocity for consistent gameplay feel
+            const baseVelocity = 320; 
+            const velocityMultiplier = isLandscape ? 1 : 2; // Increase speed in portrait mode
 
             // Clamp tilt values to ensure responsiveness within the defined range
             tilt = Math.max(-maxTilt, Math.min(maxTilt, tilt));
