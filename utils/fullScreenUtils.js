@@ -8,12 +8,23 @@ export function addFullscreenButton(scene) {
         if (mobileFullscreenButton) {
             mobileFullscreenButton.addEventListener('click', () => {
                 const fullscreenElement = document.getElementById('fullscreen');
+
                 if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-                    fullscreenElement.requestFullscreen().catch((err) => {
-                        console.error('Failed to enable fullscreen:', err);
-                    });
+                    if (fullscreenElement.requestFullscreen) {
+                        fullscreenElement.requestFullscreen().then(() => {
+                            console.log("Fullscreen enabled on standard browsers.");
+                        }).catch((err) => {
+                            console.error('Failed to enable fullscreen:', err);
+                        });
+                    } else if (fullscreenElement.webkitRequestFullscreen) { // ✅ iOS Safari Support
+                        fullscreenElement.webkitRequestFullscreen().then(() => {
+                            console.log("Fullscreen enabled on iOS.");
+                        }).catch((err) => {
+                            console.error('Failed to enable fullscreen on iOS:', err);
+                        });
+                    }
                 } else {
-                    document.exitFullscreen();
+                    document.exitFullscreen ? document.exitFullscreen() : document.webkitExitFullscreen();
                 }
             });
         } else {
@@ -32,12 +43,15 @@ export function addFullscreenButton(scene) {
 
         fullscreenButton.on('pointerdown', () => {
             const fullscreenElement = document.getElementById('fullscreen');
+
             if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-                fullscreenElement.requestFullscreen().catch((err) => {
-                    console.error('Error attempting to enable fullscreen:', err);
-                });
+                if (fullscreenElement.requestFullscreen) {
+                    fullscreenElement.requestFullscreen();
+                } else if (fullscreenElement.webkitRequestFullscreen) { // ✅ iOS Safari Support
+                    fullscreenElement.webkitRequestFullscreen();
+                }
             } else {
-                document.exitFullscreen();
+                document.exitFullscreen ? document.exitFullscreen() : document.webkitExitFullscreen();
             }
         });
 

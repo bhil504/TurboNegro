@@ -376,6 +376,10 @@
             justify-content: center;
         }
 
+        body, #game-container, #onscreen-controls, canvas {
+            touch-action: manipulation; /* Prevents double-tap zoom but allows normal interactions */
+            -webkit-user-select: none; /* Prevents long-press text selection */
+        }
 
 
     </style>
@@ -618,5 +622,4 @@
 
 </body>
 <meta name="touch-action" content="manipulation">
-
 </html>
