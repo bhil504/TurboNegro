@@ -32,7 +32,7 @@ export default class Level2 extends Phaser.Scene {
         this.load.image('gameOver', 'assets/UI/gameOver.png');
         this.load.image('levelComplete', 'assets/UI/levelComplete.png');
         this.load.image('healthPack', 'assets/Characters/Pickups/HealthPack.png');
-        this.load.audio('level2Music', 'assets/Audio/SeptemberHue.mp3');
+        this.load.audio('level2Music', 'assets/Audio/LevelMusic/mp3/SeptemberHue.mp3');
         console.log("Assets for Level 2 preloaded successfully.");
     }
 
