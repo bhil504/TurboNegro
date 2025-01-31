@@ -248,6 +248,12 @@ export default class Level2 extends Phaser.Scene {
         this.totalEnemiesDefeated++;
         this.updateEnemyCountUI();
         
+        console.log(`Total Enemies Defeated: ${this.totalEnemiesDefeated}`);
+        if (this.totalEnemiesDefeated >= 30) {
+            console.log("Level should complete now!");
+            this.levelComplete();
+        }
+
         if (enemy.texture && enemy.texture.key) {
             if (enemy.texture.key === 'skeleton') {
                 this.mardiGrasZombieHitSFX.play();
@@ -399,20 +405,12 @@ export default class Level2 extends Phaser.Scene {
     }
     
     levelComplete() {
-        console.log("Level Complete! Moving to Level 3");
-    
-        // Stop all sounds & timers
+        console.log("Level Complete Triggered!");
+        if (this.levelMusic) this.levelMusic.stop();
         this.cleanUpLevel();
-    
-        // Display Level Complete screen
+
         this.add.image(this.scale.width / 2, this.scale.height / 2, 'levelComplete').setOrigin(0.5);
-    
-        // Proceed to the next level
-        const proceedToNextLevel = () => {
-            this.scene.start('Level3'); // Transition to Level 3
-        };
-    
-        this.handleLevelTransition(proceedToNextLevel);
+        this.handleLevelTransition(() => this.scene.start('Level3'));
     }
 
     cleanUpLevel() {
