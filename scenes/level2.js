@@ -53,7 +53,7 @@ export default class Level2 extends Phaser.Scene {
         this.playerHitSFX = this.sound.add('playerHit', { volume: 0.6 });
         this.playerProjectileFireSFX = this.sound.add('playerProjectileFire', { volume: 0.6 });
         this.mardiGrasZombieHitSFX = this.sound.add('mardiGrasZombieHit', { volume: 0.6 });
-        this.trumpetSkeletonSFX = this.sound.add('trumpetSkeletonSound', { volume: 0.6 });
+        this.trumpetSkeletonSFX = this.sound.add('trumpetSkeletonSound', { volume: 0.4 });
     
         // Initialize health, enemy count, and projectiles group
         this.playerHealth = 10;
@@ -188,7 +188,6 @@ export default class Level2 extends Phaser.Scene {
         });
     }
     
-    
     update() {
         if (!this.player || !this.cursors) return;
 
@@ -229,6 +228,26 @@ export default class Level2 extends Phaser.Scene {
             projectile.setVelocityX(this.player.flipX ? -500 : 500);
             projectile.body.setAllowGravity(false);
             this.playerProjectileFireSFX.play();
+        }
+    } 
+
+    enemyAI(enemy) {
+        if (!enemy || !enemy.body || !this.player || !this.player.body) return;
+        
+        const playerX = this.player.x;
+        
+        if (enemy.x < playerX - 10) {
+            enemy.setVelocityX(100);
+            enemy.setFlipX(false);
+        } else if (enemy.x > playerX + 10) {
+            enemy.setVelocityX(-100);
+            enemy.setFlipX(true);
+        } else {
+            enemy.setVelocityX(0);
+        }
+        
+        if (Phaser.Math.Between(0, 100) < 20 && enemy.body.touching.down && Math.abs(enemy.x - playerX) < 200) {
+            enemy.setVelocityY(-300);
         }
     } 
 
@@ -369,27 +388,7 @@ export default class Level2 extends Phaser.Scene {
         if (this.playerHealth <= 0) {
             this.gameOver();
         }
-    }
-    
-    enemyAI(enemy) {
-        if (!enemy || !enemy.body || !this.player || !this.player.body) return;
-        
-        const playerX = this.player.x;
-        
-        if (enemy.x < playerX - 10) {
-            enemy.setVelocityX(100);
-            enemy.setFlipX(false);
-        } else if (enemy.x > playerX + 10) {
-            enemy.setVelocityX(-100);
-            enemy.setFlipX(true);
-        } else {
-            enemy.setVelocityX(0);
-        }
-        
-        if (Phaser.Math.Between(0, 100) < 20 && enemy.body.touching.down && Math.abs(enemy.x - playerX) < 200) {
-            enemy.setVelocityY(-300);
-        }
-    }  
+    } 
     
     gameOver() {
         console.log("Game Over!");
