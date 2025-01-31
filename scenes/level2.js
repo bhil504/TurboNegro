@@ -175,7 +175,7 @@ export default class Level2 extends Phaser.Scene {
             startY = null;
         });
     
-        this.setupMobileControls();
+        
     }
     
     update() {
@@ -373,27 +373,7 @@ export default class Level2 extends Phaser.Scene {
         }
     }  
     
-    applyJoystickForce() {
-        if (this.player) {
-            // Apply X-axis movement
-            this.player.setVelocityX(this.joystickForceX * 160); // Adjust multiplier for sensitivity
-    
-            if (this.joystickForceX > 0) this.player.setFlipX(false);
-            if (this.joystickForceX < 0) this.player.setFlipX(true);
-    
-            // Jump if joystick is pushed upwards
-            if (this.joystickForceY < -0.5 && this.player.body.touching.down) {
-                this.player.setVelocityY(-500); // Jump
-            }
-    
-            // Change animation based on movement
-            if (Math.abs(this.joystickForceX) > 0.1 && this.player.body.touching.down) {
-                this.player.play('walk', true);
-            } else if (this.player.body.touching.down) {
-                this.player.play('idle', true);
-            }
-        }
-    }    
+      
     
     gameOver() {
         console.log("Game Over!");
