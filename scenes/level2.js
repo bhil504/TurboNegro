@@ -50,7 +50,7 @@ export default class Level2 extends Phaser.Scene {
     
         // Create platforms
         this.platforms = this.physics.add.staticGroup();
-    
+        
         // Ground platform
         this.platforms.create(width / 2, height - 20, null)
             .setDisplaySize(width, 20)
@@ -82,6 +82,9 @@ export default class Level2 extends Phaser.Scene {
     
         // Set player depth
         this.player.setDepth(1);
+    
+        // Initialize isJumping
+        this.isJumping = false;
     
         // Create animations
         this.anims.create({
@@ -155,7 +158,7 @@ export default class Level2 extends Phaser.Scene {
         if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
             console.log("Mobile device detected. Initializing controls...");
             this.setupMobileControls();
-            this.setupJoystick();
+
         } else {
             console.log("Desktop detected. Skipping mobile controls.");
         }
@@ -179,8 +182,6 @@ export default class Level2 extends Phaser.Scene {
             }
             startY = null;
         });
-    
-        this.setupMobileControls();
     }
     
     update() { 
@@ -221,7 +222,7 @@ export default class Level2 extends Phaser.Scene {
         if (Phaser.Input.Keyboard.JustDown(this.fireKey)) {
             this.fireProjectile();
         }
-    }    
+    }   
 
     fireProjectile() {
         if (!this.player || !this.projectiles) return;  // Ensure player and projectiles exist
