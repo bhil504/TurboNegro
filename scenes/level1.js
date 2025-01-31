@@ -240,7 +240,7 @@ export default class Level1 extends Phaser.Scene {
     
         if (this.totalEnemiesDefeated >= 20) {
             this.levelComplete();
-        }
+        } 
     }
     
     handlePlayerHealthPackCollision(player, healthPack) {
@@ -254,71 +254,63 @@ export default class Level1 extends Phaser.Scene {
         
     }
     
-    levelComplete() {
-        // Stop background music
-        if (this.levelMusic) this.levelMusic.stop();
-    
-        // Stop spawning enemies
-        if (this.enemySpawnTimer) this.enemySpawnTimer.remove();
-    
-        // Safely clear enemies and projectiles
-        this.enemies.clear(true, true); // Destroys all active enemies
-        this.projectiles.clear(true, true); // Destroys all active projectiles
-    
-        // Display level complete screen
-        this.add.image(this.scale.width / 2, this.scale.height / 2, 'levelComplete').setOrigin(0.5);
-    
-        // Add input event listeners for desktop and mobile
-        const proceedToNextLevel = () => {
-            this.scene.start('Level2'); // Assuming 'Level2' is the next level
-        };
-    
-        // For Desktop
-        this.input.keyboard.once('keydown-SPACE', proceedToNextLevel);
-    
-        // For Mobile (tap anywhere)
-        this.input.once('pointerdown', proceedToNextLevel);
-    }
-
     gameOver() {
-        // Stop background music
-        if (this.levelMusic) this.levelMusic.stop();
+        console.log("Game Over!");
     
-        // Stop spawning enemies
-        if (this.enemySpawnTimer) this.enemySpawnTimer.remove();
+        // Stop all sounds and timers
+        this.cleanUpLevel();
     
-        // Safely clear enemies and projectiles
-        this.enemies.clear(true, true); // Destroys all active enemies
-        this.projectiles.clear(true, true); // Destroys all active projectiles
-    
-        // Display game over screen
+        // Display Game Over screen
         this.add.image(this.scale.width / 2, this.scale.height / 2, 'gameOver').setOrigin(0.5);
     
-        // Add input event listeners for desktop and mobile
+        // Restart the level on SPACE (desktop) or tap (mobile)
         const restartLevel = () => {
             this.scene.restart();
         };
     
-        // For Desktop
-        this.input.keyboard.once('keydown-SPACE', restartLevel);
-    
-        // For Mobile (tap anywhere)
-        this.input.once('pointerdown', restartLevel);
+        this.handleLevelTransition(restartLevel);
     }
-
-    shutdown() {
+    
+    levelComplete() {
+        console.log("Level Complete! Moving to Level 2");
+    
+        // Stop all sounds and timers
+        this.cleanUpLevel();
+    
+        // Display Level Complete screen
+        this.add.image(this.scale.width / 2, this.scale.height / 2, 'levelComplete').setOrigin(0.5);
+    
+        // Proceed to the next level
+        const proceedToNextLevel = () => {
+            this.scene.start('Level2'); // Transition to Level 2
+        };
+    
+        this.handleLevelTransition(proceedToNextLevel);
+    }
+    
+    cleanUpLevel() {
+        // Stop music if it's playing
         if (this.levelMusic) {
             this.levelMusic.stop();
             this.levelMusic.destroy();
         }
-        if (this.enemySpawnTimer) {
-            this.enemySpawnTimer.remove();
-        }
-        window.removeEventListener('deviceorientation', this.tiltHandler);
+    
+        // Remove all enemy and projectile spawn timers
+        if (this.enemySpawnTimer) this.enemySpawnTimer.remove();
+    
+        // Clear all game objects to free up memory
+        this.enemies.clear(true, true);
+        this.projectiles.clear(true, true);
+    
+        console.log("Level cleaned up successfully.");
     }
-
-    destroy() {
-        this.shutdown(); // Call shutdown when the scene is destroyed
+    
+    handleLevelTransition(callback) {
+        // Desktop: Listen for SPACE key
+        this.input.keyboard.once('keydown-SPACE', callback);
+    
+        // Mobile: Listen for tap anywhere
+        this.input.once('pointerdown', callback);
     }
      
 }

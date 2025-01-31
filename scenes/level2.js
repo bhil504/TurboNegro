@@ -1,3 +1,6 @@
+import { addFullscreenButton } from '/utils/fullScreenUtils.js';
+import { setupMobileControls } from '/utils/mobileControls.js';
+
 export default class Level2 extends Phaser.Scene {
     constructor() {
         super({ key: 'Level2' });
@@ -52,17 +55,8 @@ export default class Level2 extends Phaser.Scene {
             .setVisible(false)
             .refreshBody();
     
-        const leftLedge = this.add.image(150, height - 400, 'ledgeLeft').setDepth(2);
-        const rightLedge = this.add.image(width - 150, height - 400, 'ledgeRight').setDepth(2);
-    
-        this.platforms.create(150, height - 325, null)
-            .setDisplaySize(300, 10)
-            .setVisible(false)
-            .refreshBody();
-        this.platforms.create(width - 150, height - 325, null)
-            .setDisplaySize(300, 10)
-            .setVisible(false)
-            .refreshBody();
+        this.platforms.create(150, height - 325, null).setDisplaySize(300, 10).setVisible(false).refreshBody();
+        this.platforms.create(width - 150, height - 325, null).setDisplaySize(300, 10).setVisible(false).refreshBody();
     
         // Create player
         this.player = this.physics.add.sprite(100, height - 100, 'turboNegroStanding1');
@@ -140,15 +134,6 @@ export default class Level2 extends Phaser.Scene {
             });
         }
     
-         // Setup mobile controls
-         if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-            console.log("Mobile device detected. Initializing controls...");
-            this.setupMobileControls();
-            this.setupJoystick();
-        } else {
-            console.log("Desktop detected. Skipping mobile controls.");
-        }
-    
         // Tap anywhere to attack
         this.input.on('pointerdown', (pointer) => {
             if (!pointer.wasTouch) return;
@@ -168,15 +153,23 @@ export default class Level2 extends Phaser.Scene {
             }
             startY = null;
         });
-
-        this.setupMobileControls();
-    }
     
-    update() {
+        // Add Fullscreen Button
+        addFullscreenButton(this);
+    
+        // Setup Mobile Controls (Replaces manual tilt/joystick logic)
+        setupMobileControls(this, this.player);
+    
+        console.log("Level 2 setup complete.");
+    }    
+    
+    update() { 
         if (!this.player || !this.cursors) return;
-
+    
+        // Reset horizontal velocity each frame
         this.player.setVelocityX(0);
-
+    
+        // Handle Keyboard Movement
         if (this.cursors.left.isDown) {
             this.player.setVelocityX(-165);
             this.player.setFlipX(true);
@@ -185,35 +178,43 @@ export default class Level2 extends Phaser.Scene {
             this.player.setVelocityX(165);
             this.player.setFlipX(false);
             if (!this.isJumping) this.player.play('walk', true);
-        } else if (this.player.body.touching.down && !this.isJumping) {
+        } 
+        // Idle Animation when no movement is detected
+        else if (this.player.body.touching.down && !this.isJumping) {
             this.player.play('idle', true);
         }
-
+    
+        // Jump Handling
         if (this.cursors.up.isDown && this.player.body.touching.down && !this.isJumping) {
             this.isJumping = true;
             this.player.setVelocityY(-500);
             this.player.play('jump', true);
         }
-
+    
+        // Reset Jump State
         if (this.player.body.touching.down && this.isJumping) {
             this.isJumping = false;
             this.player.play('idle', true);
         }
-
+    
+        // Fire projectile when pressing Spacebar
         if (Phaser.Input.Keyboard.JustDown(this.fireKey)) {
             this.fireProjectile();
         }
-    }
+    }    
 
     fireProjectile() {
+        if (!this.player || !this.projectiles) return;  // Ensure player and projectiles exist
+    
+        const direction = this.player.flipX ? -1 : 1; // Determine projectile direction
         const projectile = this.projectiles.create(this.player.x, this.player.y, 'projectileCD');
+    
         if (projectile) {
-            projectile.setActive(true);
-            projectile.setVisible(true);
+            projectile.setActive(true).setVisible(true);
             projectile.body.setAllowGravity(false);
-            projectile.setVelocityX(this.player.flipX ? -500 : 500);
+            projectile.setVelocityX(500 * direction); // Fire left (-) or right (+)
         }
-    }
+    }    
 
     handlePlayerEnemyCollision(player, enemy) {
         enemy.destroy();
@@ -362,111 +363,7 @@ export default class Level2 extends Phaser.Scene {
         if (Phaser.Math.Between(0, 100) < 20 && enemy.body.touching.down && Math.abs(enemy.x - playerX) < 200) {
             enemy.setVelocityY(-300);
         }
-    }
-
-    enableTiltControls() {
-        window.addEventListener('deviceorientation', (event) => {
-            const tilt = event.gamma; // Side-to-side tilt (-90 to +90)
-            if (tilt !== null) {
-                if (tilt > 8) { // Tilted to the right
-                    this.player.setVelocityX(160);
-                    this.player.setFlipX(false);
-                    this.player.play('walk', true);
-                } else if (tilt < -8) { // Tilted to the left
-                    this.player.setVelocityX(-160);
-                    this.player.setFlipX(true);
-                    this.player.play('walk', true);
-                } else { // Neutral tilt
-                    this.player.setVelocityX(0);
-                    this.player.play('idle', true);
-                }
-            }
-        });
-    }
-
-    setupMobileControls() {
-        if (window.DeviceOrientationEvent) {
-            this.tiltListener = (event) => {
-                const tilt = event.gamma;
-
-                if (tilt !== null) {
-                    if (tilt > 8) {
-                        this.player.setVelocityX(160);
-                        this.player.setFlipX(false);
-                        this.player.play('walk', true);
-                    } else if (tilt < -8) {
-                        this.player.setVelocityX(-160);
-                        this.player.setFlipX(true);
-                        this.player.play('walk', true);
-                    } else {
-                        this.player.setVelocityX(0);
-                        this.player.play('idle', true);
-                    }
-                }
-            };
-            window.addEventListener('deviceorientation', this.tiltListener);
-        } else {
-            console.warn("Tilt controls unavailable. Enabling joystick as fallback.");
-            this.setupJoystick();
-        }
-    }   
-    
-    setupJoystick() {
-        const joystickArea = document.getElementById('joystick-area');
-        let joystickKnob = document.getElementById('joystick-knob');
-    
-        if (!joystickKnob) {
-            joystickKnob = document.createElement('div');
-            joystickKnob.id = 'joystick-knob';
-            joystickArea.appendChild(joystickKnob);
-        }
-    
-        let joystickStartX = 0;
-        let joystickStartY = 0;
-        let activeInterval;
-    
-        joystickArea.addEventListener('touchstart', (event) => {
-            const touch = event.touches[0];
-            joystickStartX = touch.clientX;
-            joystickStartY = touch.clientY;
-            joystickKnob.style.transform = `translate(-50%, -50%)`;
-    
-            activeInterval = setInterval(() => this.applyJoystickForce(), 16); // Run every ~16ms (60 FPS)
-        });
-    
-        joystickArea.addEventListener('touchmove', (event) => {
-            const touch = event.touches[0];
-            const deltaX = touch.clientX - joystickStartX;
-            const deltaY = touch.clientY - joystickStartY;
-    
-            const distance = Math.sqrt(deltaX ** 2 + deltaY ** 2);
-            const maxDistance = 50; // Joystick radius limit
-    
-            const clampedX = (deltaX / distance) * Math.min(distance, maxDistance);
-            const clampedY = (deltaY / distance) * Math.min(distance, maxDistance);
-    
-            joystickKnob.style.transform = `translate(calc(${clampedX}px - 50%), calc(${clampedY}px - 50%))`;
-    
-            this.joystickForceX = clampedX / maxDistance;
-            this.joystickForceY = clampedY / maxDistance;
-        });
-    
-        joystickArea.addEventListener('touchend', () => {
-            joystickKnob.style.transform = `translate(-50%, -50%)`;
-            this.joystickForceX = 0;
-            this.joystickForceY = 0;
-    
-            if (this.player) {
-                this.player.setVelocityX(0);
-                this.player.anims.play('idle', true);
-            }
-    
-            clearInterval(activeInterval);
-        });
-    
-        this.joystickForceX = 0;
-        this.joystickForceY = 0;
-    }
+    }  
     
     applyJoystickForce() {
         if (this.player) {
@@ -491,63 +388,64 @@ export default class Level2 extends Phaser.Scene {
     }    
     
     gameOver() {
-        // Stop background music
-        if (this.levelMusic) this.levelMusic.stop();
-
-        // Stop enemy and projectile spawns
-        if (this.enemySpawnTimer) this.enemySpawnTimer.remove();
-        if (this.trumpetSpawnTimer) this.trumpetSpawnTimer.remove();
-
-        // Clear active game objects
-        this.enemies.clear(true, true);
-        this.trumpetEnemies.clear(true, true);
-        this.projectiles.clear(true, true);
-
-        // Display game over screen
+        console.log("Game Over!");
+    
+        // Stop all sounds & timers
+        this.cleanUpLevel();
+    
+        // Display Game Over screen
         this.add.image(this.scale.width / 2, this.scale.height / 2, 'gameOver').setOrigin(0.5);
-
+    
         // Restart the level on SPACE (desktop) or tap (mobile)
         const restartLevel = () => {
             this.scene.restart();
         };
-
-        // Desktop: Listen for SPACE key
-        this.input.keyboard.once('keydown-SPACE', restartLevel);
-
-        // Mobile: Listen for tap
-        this.input.once('pointerdown', restartLevel);
-
+    
+        this.handleLevelTransition(restartLevel);
     }
     
     levelComplete() {
-        // Stop background music
-        if (this.levelMusic) this.levelMusic.stop();
+        console.log("Level Complete! Moving to Level 3");
+    
+        // Stop all sounds & timers
+        this.cleanUpLevel();
+    
+        // Display Level Complete screen
+        this.add.image(this.scale.width / 2, this.scale.height / 2, 'levelComplete').setOrigin(0.5);
+    
+        // Proceed to the next level
+        const proceedToNextLevel = () => {
+            this.scene.start('Level3'); // Transition to Level 3
+        };
+    
+        this.handleLevelTransition(proceedToNextLevel);
+    }
 
-        // Stop enemy and projectile spawns
+    cleanUpLevel() {
+        // Stop music if it's playing
+        if (this.levelMusic) {
+            this.levelMusic.stop();
+            this.levelMusic.destroy();
+        }
+    
+        // Remove all enemy and projectile spawn timers
         if (this.enemySpawnTimer) this.enemySpawnTimer.remove();
         if (this.trumpetSpawnTimer) this.trumpetSpawnTimer.remove();
-
-        // Clear active game objects
+    
+        // Clear all game objects to free up memory
         this.enemies.clear(true, true);
         this.trumpetEnemies.clear(true, true);
         this.projectiles.clear(true, true);
-
-        // Display level complete screen
-        this.add.image(this.scale.width / 2, this.scale.height / 2, 'levelComplete').setOrigin(0.5);
-
-        // Move to the next level on SPACE (desktop) or tap (mobile)
-        const proceedToNextLevel = () => {
-            this.scene.start('Level3'); // Proceed to Level 3
-        };
-
-        // Desktop: Listen for SPACE key
-        this.input.keyboard.once('keydown-SPACE', proceedToNextLevel);
-
-        // Mobile: Listen for tap
-        this.input.once('pointerdown', proceedToNextLevel);
-
     
+        console.log("Level cleaned up successfully.");
     }
 
+    handleLevelTransition(callback) {
+        // Desktop: Listen for SPACE key
+        this.input.keyboard.once('keydown-SPACE', callback);
+    
+        // Mobile: Listen for tap anywhere
+        this.input.once('pointerdown', callback);
+    }
     
 }
