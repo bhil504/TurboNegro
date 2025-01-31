@@ -249,6 +249,10 @@ export default class Level2 extends Phaser.Scene {
         this.updateEnemyCountUI();
         
         console.log(`Total Enemies Defeated: ${this.totalEnemiesDefeated}`);
+        if (this.totalEnemiesDefeated % 12 === 0) {
+            console.log("Spawning health pack!");
+            this.spawnHealthPack();
+        }
         if (this.totalEnemiesDefeated >= 30) {
             console.log("Level should complete now!");
             this.levelComplete();
@@ -269,12 +273,14 @@ export default class Level2 extends Phaser.Scene {
         const healthPack = this.healthPacks.create(x, 50, 'healthPack');
         healthPack.setBounce(0.5);
         this.physics.add.collider(healthPack, this.platforms);
+        console.log("Health pack spawned at:", x);
     }
 
     handlePlayerHealthPackCollision(player, healthPack) {
         healthPack.destroy();
         this.playerHealth = Math.min(this.playerHealth + 5, this.maxHealth);
         this.updateHealthUI();
+        console.log("Health pack collected! Health:", this.playerHealth);
     }
 
     spawnMardiGrasZombie() {
@@ -384,8 +390,6 @@ export default class Level2 extends Phaser.Scene {
             enemy.setVelocityY(-300);
         }
     }  
-    
-      
     
     gameOver() {
         console.log("Game Over!");
