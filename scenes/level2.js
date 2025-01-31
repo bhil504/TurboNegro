@@ -178,13 +178,11 @@ export default class Level2 extends Phaser.Scene {
         this.setupMobileControls();
     }
     
-    update() { 
+    update() {
         if (!this.player || !this.cursors) return;
-    
-        // Reset horizontal velocity each frame
+
         this.player.setVelocityX(0);
-    
-        // Handle Keyboard Movement
+
         if (this.cursors.left.isDown) {
             this.player.setVelocityX(-165);
             this.player.setFlipX(true);
@@ -193,30 +191,25 @@ export default class Level2 extends Phaser.Scene {
             this.player.setVelocityX(165);
             this.player.setFlipX(false);
             if (!this.isJumping) this.player.play('walk', true);
-        } 
-        // Idle Animation when no movement is detected
-        else if (this.player.body.touching.down && !this.isJumping) {
+        } else if (this.player.body.touching.down && !this.isJumping) {
             this.player.play('idle', true);
         }
-    
-        // Jump Handling
+
         if (this.cursors.up.isDown && this.player.body.touching.down && !this.isJumping) {
             this.isJumping = true;
             this.player.setVelocityY(-500);
             this.player.play('jump', true);
         }
-    
-        // Reset Jump State
+
         if (this.player.body.touching.down && this.isJumping) {
             this.isJumping = false;
             this.player.play('idle', true);
         }
-    
-        // Fire projectile when pressing Spacebar
+
         if (Phaser.Input.Keyboard.JustDown(this.fireKey)) {
             this.fireProjectile();
         }
-    }   
+    }  
 
     fireProjectile() {
         if (!this.player || !this.projectiles) return;  // Ensure player and projectiles exist
