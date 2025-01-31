@@ -39,7 +39,7 @@ export default class Level2 extends Phaser.Scene {
         this.load.audio('playerHit', 'assets/Audio/SoundFX/mp3/playerHit.mp3');
         this.load.audio('playerProjectileFire', 'assets/Audio/SoundFX/mp3/playerprojectilefire.mp3');
         this.load.audio('mardiGrasZombieHit', 'assets/Audio/SoundFX/mp3/MardiGrasZombieHit.mp3');
-        this.load.audio('trumpetSkeletonSound', 'assets/Audio/SoundFX/mp3/trumpetSkeletonSound.mp3');
+        this.load.audio('trumpetSkeletonSound', 'assets/Audio/SoundFX/mp3/trumpetSkeletonHit.mp3');
     }
 
     create() {
