@@ -149,8 +149,7 @@ export default class Level2 extends Phaser.Scene {
         // Setup mobile controls
         if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
             console.log("Mobile device detected. Initializing controls...");
-            this.setupMobileControls();
-
+            setupMobileControls(this, this.player);
         } else {
             console.log("Desktop detected. Skipping mobile controls.");
         }
@@ -174,9 +173,7 @@ export default class Level2 extends Phaser.Scene {
             }
             startY = null;
         });
-    
-        
-    }
+    }    
     
     update() {
         if (!this.player || !this.cursors) return;
