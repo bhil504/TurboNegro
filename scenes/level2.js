@@ -50,18 +50,14 @@ export default class Level2 extends Phaser.Scene {
     
         // Create platforms
         this.platforms = this.physics.add.staticGroup();
-    
-        // Ground platform
         this.platforms.create(width / 2, height - 20, null)
             .setDisplaySize(width, 20)
             .setVisible(false)
             .refreshBody();
     
-        // Ledge Images (Visual Only)
         const leftLedge = this.add.image(150, height - 400, 'ledgeLeft').setDepth(2);
         const rightLedge = this.add.image(width - 150, height - 400, 'ledgeRight').setDepth(2);
     
-        // Ledge Collision Platforms (Invisible Physics Objects)
         this.platforms.create(150, height - 325, null)
             .setDisplaySize(300, 10)
             .setVisible(false)
