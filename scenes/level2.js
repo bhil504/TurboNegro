@@ -34,6 +34,12 @@ export default class Level2 extends Phaser.Scene {
         this.load.image('healthPack', 'assets/Characters/Pickups/HealthPack.png');
         this.load.audio('level2Music', 'assets/Audio/LevelMusic/mp3/SeptemberHue.mp3');
         console.log("Assets for Level 2 preloaded successfully.");
+
+        // Load sound effects like Level 1
+        this.load.audio('playerHit', 'assets/Audio/SoundFX/mp3/playerHit.mp3');
+        this.load.audio('playerProjectileFire', 'assets/Audio/SoundFX/mp3/playerprojectilefire.mp3');
+        this.load.audio('mardiGrasZombieHit', 'assets/Audio/SoundFX/mp3/MardiGrasZombieHit.mp3');
+        this.load.audio('trumpetSkeletonSound', 'assets/Audio/SoundFX/mp3/trumpetSkeletonSound.mp3');
     }
 
     create() {
@@ -42,7 +48,18 @@ export default class Level2 extends Phaser.Scene {
         // Play background music
         this.levelMusic = this.sound.add('level2Music', { loop: true, volume: 0.5 });
         this.levelMusic.play();
+
+        // Sound Effects
+        this.playerHitSFX = this.sound.add('playerHit', { volume: 0.6 });
+        this.playerProjectileFireSFX = this.sound.add('playerProjectileFire', { volume: 0.6 });
+        this.mardiGrasZombieHitSFX = this.sound.add('mardiGrasZombieHit', { volume: 0.6 });
+        this.trumpetSkeletonSFX = this.sound.add('trumpetSkeletonSound', { volume: 0.6 });
     
+        // Initialize health and projectiles group
+        this.playerHealth = 10;
+        this.maxHealth = 10;
+        this.projectiles = this.physics.add.group({ defaultKey: 'projectileCD' });
+
         // Set background
         this.add.image(width / 2, height / 2, 'level2Background')
             .setDisplaySize(width, height)
@@ -173,7 +190,7 @@ export default class Level2 extends Phaser.Scene {
             }
             startY = null;
         });
-    }    
+    }
     
     update() {
         if (!this.player || !this.cursors) return;
@@ -209,42 +226,36 @@ export default class Level2 extends Phaser.Scene {
     }  
 
     fireProjectile() {
-        if (!this.player || !this.projectiles) return;  // Ensure player and projectiles exist
-    
-        const direction = this.player.flipX ? -1 : 1; // Determine projectile direction
+        if (!this.projectiles) return;
         const projectile = this.projectiles.create(this.player.x, this.player.y, 'projectileCD');
-    
         if (projectile) {
-            projectile.setActive(true).setVisible(true);
+            projectile.setVelocityX(this.player.flipX ? -500 : 500);
             projectile.body.setAllowGravity(false);
-            projectile.setVelocityX(500 * direction); // Fire left (-) or right (+)
+            this.playerProjectileFireSFX.play();
         }
-    }    
+    }  
 
     handlePlayerEnemyCollision(player, enemy) {
         enemy.destroy();
         this.playerHealth--;
         this.updateHealthUI();
-
+        this.playerHitSFX.play();
         if (this.playerHealth <= 0) {
             this.gameOver();
         }
     }
 
     handleProjectileEnemyCollision(projectile, enemy) {
-        if (!projectile || !enemy) return;
         projectile.destroy();
         enemy.destroy();
         this.totalEnemiesDefeated++;
-
-        if (this.totalEnemiesDefeated % 12 === 0) {
-            this.spawnHealthPack();
-        }
-
-        this.updateEnemyCountUI();
-
-        if (this.totalEnemiesDefeated >= 30) {
-            this.levelComplete();
+        
+        if (enemy.texture && enemy.texture.key) {
+            if (enemy.texture.key === 'skeleton') {
+                this.mardiGrasZombieHitSFX.play();
+            } else if (enemy.texture.key === 'trumpetSkeleton') {
+                this.trumpetSkeletonSFX.play();
+            }
         }
     }
 
