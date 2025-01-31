@@ -50,13 +50,30 @@ export default class Level2 extends Phaser.Scene {
     
         // Create platforms
         this.platforms = this.physics.add.staticGroup();
+    
+        // Ground platform
         this.platforms.create(width / 2, height - 20, null)
             .setDisplaySize(width, 20)
             .setVisible(false)
             .refreshBody();
     
-        this.platforms.create(150, height - 325, null).setDisplaySize(300, 10).setVisible(false).refreshBody();
-        this.platforms.create(width - 150, height - 325, null).setDisplaySize(300, 10).setVisible(false).refreshBody();
+        // Left ledge (Physics & Image)
+        const leftLedge = this.platforms.create(150, height - 325, null)
+            .setDisplaySize(300, 10)
+            .setVisible(false)
+            .refreshBody();
+        this.add.image(leftLedge.x, leftLedge.y, 'ledgeLeft')
+            .setOrigin(0.5, 1)
+            .setDepth(1);
+    
+        // Right ledge (Physics & Image)
+        const rightLedge = this.platforms.create(width - 150, height - 325, null)
+            .setDisplaySize(300, 10)
+            .setVisible(false)
+            .refreshBody();
+        this.add.image(rightLedge.x, rightLedge.y, 'ledgeRight')
+            .setOrigin(0.5, 1)
+            .setDepth(1);
     
         // Create player
         this.player = this.physics.add.sprite(100, height - 100, 'turboNegroStanding1');
@@ -134,6 +151,15 @@ export default class Level2 extends Phaser.Scene {
             });
         }
     
+        // Setup mobile controls
+        if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+            console.log("Mobile device detected. Initializing controls...");
+            this.setupMobileControls();
+            this.setupJoystick();
+        } else {
+            console.log("Desktop detected. Skipping mobile controls.");
+        }
+    
         // Tap anywhere to attack
         this.input.on('pointerdown', (pointer) => {
             if (!pointer.wasTouch) return;
@@ -154,14 +180,8 @@ export default class Level2 extends Phaser.Scene {
             startY = null;
         });
     
-        // Add Fullscreen Button
-        addFullscreenButton(this);
-    
-        // Setup Mobile Controls (Replaces manual tilt/joystick logic)
-        setupMobileControls(this, this.player);
-    
-        console.log("Level 2 setup complete.");
-    }    
+        this.setupMobileControls();
+    }
     
     update() { 
         if (!this.player || !this.cursors) return;
