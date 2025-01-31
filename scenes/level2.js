@@ -44,22 +44,23 @@ export default class Level2 extends Phaser.Scene {
 
     create() {
         const { width, height } = this.scale;
-    
+        
         // Play background music
         this.levelMusic = this.sound.add('level2Music', { loop: true, volume: 0.5 });
         this.levelMusic.play();
-
+    
         // Sound Effects
         this.playerHitSFX = this.sound.add('playerHit', { volume: 0.6 });
         this.playerProjectileFireSFX = this.sound.add('playerProjectileFire', { volume: 0.6 });
         this.mardiGrasZombieHitSFX = this.sound.add('mardiGrasZombieHit', { volume: 0.6 });
         this.trumpetSkeletonSFX = this.sound.add('trumpetSkeletonSound', { volume: 0.6 });
     
-        // Initialize health and projectiles group
+        // Initialize health, enemy count, and projectiles group
         this.playerHealth = 10;
         this.maxHealth = 10;
+        this.totalEnemiesDefeated = 0;
         this.projectiles = this.physics.add.group({ defaultKey: 'projectileCD' });
-
+    
         // Set background
         this.add.image(width / 2, height / 2, 'level2Background')
             .setDisplaySize(width, height)
@@ -120,10 +121,8 @@ export default class Level2 extends Phaser.Scene {
         this.physics.add.overlap(this.player, this.healthPacks, this.handlePlayerHealthPackCollision, null, this);
     
         // Setup enemies and projectiles
-        this.projectiles = this.physics.add.group({ defaultKey: 'projectileCD' });
         this.enemies = this.physics.add.group();
         this.trumpetEnemies = this.physics.add.group();
-        this.totalEnemiesDefeated = 0;
     
         // Spawn timers
         this.enemySpawnTimer = this.time.addEvent({
@@ -140,10 +139,7 @@ export default class Level2 extends Phaser.Scene {
             loop: true,
         });
     
-        // Player health setup
-        this.playerHealth = 10;
-        this.maxHealth = 10;
-    
+        // Update UI
         this.updateHealthUI();
         this.updateEnemyCountUI();
     
@@ -192,6 +188,7 @@ export default class Level2 extends Phaser.Scene {
         });
     }
     
+    
     update() {
         if (!this.player || !this.cursors) return;
 
@@ -233,7 +230,7 @@ export default class Level2 extends Phaser.Scene {
             projectile.body.setAllowGravity(false);
             this.playerProjectileFireSFX.play();
         }
-    }  
+    } 
 
     handlePlayerEnemyCollision(player, enemy) {
         enemy.destroy();
@@ -249,6 +246,7 @@ export default class Level2 extends Phaser.Scene {
         projectile.destroy();
         enemy.destroy();
         this.totalEnemiesDefeated++;
+        this.updateEnemyCountUI();
         
         if (enemy.texture && enemy.texture.key) {
             if (enemy.texture.key === 'skeleton') {
