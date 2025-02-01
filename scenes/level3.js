@@ -19,7 +19,13 @@ export default class Level3 extends Phaser.Scene {
         this.load.image('Beads', 'assets/Characters/Projectiles/Beads/Beads.png');
         this.load.image('skeleton', 'assets/Characters/Enemies/MardiGrasZombie.png');
         this.load.image('trumpetSkeleton', 'assets/Characters/Enemies/TrumpetSkeleton.png');
-        this.load.audio('level3Music', 'assets/Audio/BhillionDollarAutoBots.mp3');
+        this.load.audio('level3Music', 'assets/Audio/LevelMusic/mp3/BhillionDollarAutoBots.mp3');
+
+        // Load sound effects like Level 1
+        this.load.audio('playerHit', 'assets/Audio/SoundFX/mp3/playerHit.mp3');
+        this.load.audio('playerProjectileFire', 'assets/Audio/SoundFX/mp3/playerprojectilefire.mp3');
+        this.load.audio('mardiGrasZombieHit', 'assets/Audio/SoundFX/mp3/MardiGrasZombieHit.mp3');
+        this.load.audio('trumpetSkeletonSound', 'assets/Audio/SoundFX/mp3/trumpetSkeletonHit.mp3');
     }
 
     create() {
@@ -141,29 +147,13 @@ export default class Level3 extends Phaser.Scene {
             loop: true,
         });
     
-        // Mobile Controls for Tilt
-    if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-        console.log("Mobile device detected. Initializing controls...");
-        if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-            DeviceOrientationEvent.requestPermission()
-                .then(permissionState => {
-                    if (permissionState === 'granted') {
-                        this.enableTiltControls();
-                    } else {
-                        console.warn("Motion access denied. Joystick is available.");
-                        this.setupJoystick(); // Fallback to joystick
-                    }
-                })
-                .catch(error => {
-                    console.error("Error requesting motion permission:", error);
-                    this.setupJoystick(); // Fallback to joystick
-                });
+        // Setup mobile controls
+        if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+            console.log("Mobile device detected. Initializing controls...");
+            setupMobileControls(this, this.player);
         } else {
-            this.enableTiltControls(); // For non-iOS or older devices
+            console.log("Desktop detected. Skipping mobile controls.");
         }
-    } else {
-        console.log("Desktop detected. Skipping mobile-specific controls.");
-    }
 
     
         // Tap anywhere to attack (Mobile or Desktop)
@@ -216,18 +206,24 @@ export default class Level3 extends Phaser.Scene {
         if (this.cursors.left.isDown) {
             this.player.setVelocityX(-165);
             this.player.setFlipX(true);
-            if (this.player.body.touching.down) this.player.play('walk', true);
+            if (!this.isJumping) this.player.play('walk', true);
         } else if (this.cursors.right.isDown) {
             this.player.setVelocityX(165);
             this.player.setFlipX(false);
-            if (this.player.body.touching.down) this.player.play('walk', true);
-        } else if (this.player.body.touching.down) {
+            if (!this.isJumping) this.player.play('walk', true);
+        } else if (this.player.body.touching.down && !this.isJumping) {
             this.player.play('idle', true);
         }
 
-        if (this.cursors.up.isDown && this.player.body.touching.down) {
+        if (this.cursors.up.isDown && this.player.body.touching.down && !this.isJumping) {
+            this.isJumping = true;
             this.player.setVelocityY(-500);
-            console.log("Player jumps!");
+            this.player.play('jump', true);
+        }
+
+        if (this.player.body.touching.down && this.isJumping) {
+            this.isJumping = false;
+            this.player.play('idle', true);
         }
 
         if (Phaser.Input.Keyboard.JustDown(this.fireKey)) {
@@ -236,23 +232,14 @@ export default class Level3 extends Phaser.Scene {
     }
 
     fireProjectile() {
+        if (!this.projectiles) return;
         const projectile = this.projectiles.create(this.player.x, this.player.y, 'projectileCD');
         if (projectile) {
-            projectile.body.setAllowGravity(false);
             projectile.setVelocityX(this.player.flipX ? -500 : 500);
-            console.log("Projectile fired!");
-
-            projectile.setCollideWorldBounds(false);
-            projectile.body.onWorldBounds = true;
-
-            this.physics.world.on('worldbounds', (body) => {
-                if (body.gameObject === projectile && projectile.active) {
-                    projectile.destroy();
-                    console.log("Projectile destroyed off-screen!");
-                }
-            });
+            projectile.body.setAllowGravity(false);
+            this.playerProjectileFireSFX.play();
         }
-    }
+    } 
 
     handleBeadCollision(player, bead) {
         if (bead) {
@@ -615,135 +602,4 @@ export default class Level3 extends Phaser.Scene {
         }
     }
 
-    setupMobileControls() {
-        if (window.DeviceOrientationEvent) {
-            window.addEventListener('deviceorientation', (event) => {
-                const tilt = event.gamma;
-
-                if (tilt !== null) {
-                    if (tilt > 8) {
-                        this.player.setVelocityX(160);
-                        this.player.setFlipX(false);
-                        this.player.play('walk', true);
-                    } else if (tilt < -8) {
-                        this.player.setVelocityX(-160);
-                        this.player.setFlipX(true);
-                        this.player.play('walk', true);
-                    } else {
-                        this.player.setVelocityX(0);
-                        this.player.play('idle', true);
-                    }
-                }
-            });
-        } else {
-            console.warn("Tilt controls unavailable. Enabling joystick as fallback.");
-            this.setupJoystick();
-        }
-    }
-
-    setupJoystick() {
-        const joystickArea = document.getElementById('joystick-area');
-        let joystickKnob = document.getElementById('joystick-knob');
-    
-        // Add the knob dynamically if it doesn't exist
-        if (!joystickKnob) {
-            joystickKnob = document.createElement('div');
-            joystickKnob.id = 'joystick-knob';
-            joystickArea.appendChild(joystickKnob);
-        }
-    
-        let joystickStartX = 0;
-        let joystickStartY = 0;
-        let activeInterval;
-    
-        joystickArea.addEventListener('touchstart', (event) => {
-            const touch = event.touches[0];
-            joystickStartX = touch.clientX;
-            joystickStartY = touch.clientY;
-            joystickKnob.style.transform = `translate(-50%, -50%)`; // Reset to center
-    
-            // Start a continuous movement interval
-            activeInterval = setInterval(() => this.applyJoystickForce(), 16); // Run every ~16ms (60 FPS)
-        });
-    
-        joystickArea.addEventListener('touchmove', (event) => {
-            const touch = event.touches[0];
-            const deltaX = touch.clientX - joystickStartX;
-            const deltaY = touch.clientY - joystickStartY;
-    
-            const distance = Math.sqrt(deltaX ** 2 + deltaY ** 2);
-            const maxDistance = 50; // Joystick radius limit
-    
-            // Clamp the knob's movement to the max distance
-            const clampedX = (deltaX / distance) * Math.min(distance, maxDistance);
-            const clampedY = (deltaY / distance) * Math.min(distance, maxDistance);
-    
-            // Move the knob visually
-            joystickKnob.style.transform = `translate(calc(${clampedX}px - 50%), calc(${clampedY}px - 50%))`;
-    
-            // Store the clamped values for force application
-            this.joystickForceX = clampedX / maxDistance;
-            this.joystickForceY = clampedY / maxDistance;
-        });
-    
-        joystickArea.addEventListener('touchend', () => {
-            joystickKnob.style.transform = `translate(-50%, -50%)`; // Reset knob position
-            this.joystickForceX = 0; // Reset forces
-            this.joystickForceY = 0;
-    
-            if (this.player) {
-                this.player.setVelocityX(0); // Stop horizontal movement
-                this.player.anims.play('idle', true);
-            }
-    
-            clearInterval(activeInterval); // Stop continuous movement
-        });
-    
-        // Initialize joystick force values
-        this.joystickForceX = 0;
-        this.joystickForceY = 0;
-    }    
-    
-    applyJoystickForce() {
-        if (this.player) {
-            // Apply X-axis movement
-            this.player.setVelocityX(this.joystickForceX * 160); // Adjust multiplier for sensitivity
-    
-            if (this.joystickForceX > 0) this.player.setFlipX(false);
-            if (this.joystickForceX < 0) this.player.setFlipX(true);
-    
-            // Jump if joystick is pushed upwards
-            if (this.joystickForceY < -0.5 && this.player.body.touching.down) {
-                this.player.setVelocityY(-500); // Jump
-            }
-    
-            // Change animation based on movement
-            if (Math.abs(this.joystickForceX) > 0.1 && this.player.body.touching.down) {
-                this.player.play('walk', true);
-            } else if (this.player.body.touching.down) {
-                this.player.play('idle', true);
-            }
-        }
-    }    
-    
-    enableTiltControls() {
-        window.addEventListener('deviceorientation', (event) => {
-            const tilt = event.gamma; // Side-to-side tilt (-90 to +90)
-            if (tilt !== null) {
-                if (tilt > 8) { // Tilted to the right
-                    this.player.setVelocityX(160);
-                    this.player.setFlipX(false);
-                    this.player.play('walk', true);
-                } else if (tilt < -8) { // Tilted to the left
-                    this.player.setVelocityX(-160);
-                    this.player.setFlipX(true);
-                    this.player.play('walk', true);
-                } else { // Neutral tilt
-                    this.player.setVelocityX(0);
-                    this.player.play('idle', true);
-                }
-            }
-        });
-    }
-    
 }
