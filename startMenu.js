@@ -64,6 +64,30 @@ export default class StartMenu extends Phaser.Scene {
     
         // Add Fullscreen Button
         addFullscreenButton(this);
-    }    
-    
+
+        // Add keyboard shortcuts for level selection
+        this.input.keyboard.on('keydown', (event) => {
+            switch (event.key) {
+                case '1':
+                    this.scene.start('Level1');
+                    break;
+                case '2':
+                    this.scene.start('Level2');
+                    break;
+                case '3':
+                    this.scene.start('Level3');
+                    break;
+                case '4':
+                    this.scene.start('Level4');
+                    break;
+                case '5':
+                    this.scene.start('Level5');
+                    break;
+                case 'B':
+                case 'b':
+                    this.scene.start('BossFight');
+                    break;
+            }
+        });
+    }
 }
