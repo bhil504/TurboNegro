@@ -43,6 +43,12 @@ export default class Level3 extends Phaser.Scene {
         // Music setup
         this.levelMusic = this.sound.add('level3Music', { loop: true, volume: 0.2 });
         this.levelMusic.play();
+
+        // Sound Effects
+        this.playerHitSFX = this.sound.add('playerHit', { volume: 0.6 });
+        this.playerProjectileFireSFX = this.sound.add('playerProjectileFire', { volume: 0.6 });
+        this.mardiGrasZombieHitSFX = this.sound.add('mardiGrasZombieHit', { volume: 0.6 });
+        this.trumpetSkeletonSFX = this.sound.add('trumpetSkeletonSound', { volume: 0.4 });
     
         // Camera and world bounds
         this.cameras.main.setBounds(0, 0, 1600, height);
@@ -156,8 +162,7 @@ export default class Level3 extends Phaser.Scene {
             setupMobileControls(this, this.player);
         } else {
             console.log("Desktop detected. Skipping mobile controls.");
-        }
-
+        }        
     
         // Tap anywhere to attack (Mobile or Desktop)
         this.input.on('pointerdown', (pointer) => {
@@ -188,6 +193,9 @@ export default class Level3 extends Phaser.Scene {
         } else {
             console.warn("Attack button not found!");
         }
+
+        addFullscreenButton(this);
+
     
         console.log("Level 3 setup complete.");
     }       
@@ -240,22 +248,28 @@ export default class Level3 extends Phaser.Scene {
         if (projectile) {
             projectile.setVelocityX(this.player.flipX ? -500 : 500);
             projectile.body.setAllowGravity(false);
+    
+            // Play the projectile fire sound
             this.playerProjectileFireSFX.play();
         }
-    } 
+    }    
 
     handleBeadCollision(player, bead) {
         if (bead) {
             bead.destroy();
             this.playerHealth -= 2;
+    
+            // Play player hit sound
+            this.playerHitSFX.play();
+    
             console.log("Player hit by bead! Health -2");
             this.updateHealthUI();
-
+    
             if (this.playerHealth <= 0) {
                 this.gameOver();
             }
         }
-    }
+    }    
 
     destroyBlimp(projectile, blimp) {
         if (projectile) {
@@ -296,27 +310,34 @@ export default class Level3 extends Phaser.Scene {
             projectile.destroy();
             console.log("Projectile destroyed!");
         }
-
+    
         if (enemy && enemy.active) {
             console.log(`Enemy destroyed: ${enemy.texture.key}`);
             enemy.destroy();
-
+    
             this.totalEnemiesDefeated++;
             console.log(`Total Enemies Defeated: ${this.totalEnemiesDefeated}`);
-
+    
             this.updateEnemyCountUI();
-
+    
+            // Play sound based on enemy type
+            if (enemy.texture.key === 'skeleton') {
+                this.mardiGrasZombieHitSFX.play();
+            } else if (enemy.texture.key === 'trumpetSkeleton') {
+                this.trumpetSkeletonSFX.play();
+            }
+    
             if (this.totalEnemiesDefeated % 12 === 0) {
                 this.spawnHealthPack();
                 console.log("Health pack spawned!");
             }
-
+    
             if (this.totalEnemiesDefeated >= 40) {
                 console.log("Level Complete Triggered!");
                 this.levelComplete();
             }
         }
-    }
+    }    
 
     spawnHealthPack() {
         const { width } = this.scale;
