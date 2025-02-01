@@ -24,12 +24,12 @@ export default class Level4 extends Phaser.Scene {
         this.load.image('healthPack', 'assets/Items/HealthPack.png');
         this.load.audio('level4Music', 'assets/Audio/LevelMusic/mp3/Danza.mp3');
 
-         // Load sound effects like Level 1
-         this.load.audio('playerHit', 'assets/Audio/SoundFX/mp3/playerHit.mp3');
-         this.load.audio('playerProjectileFire', 'assets/Audio/SoundFX/mp3/playerprojectilefire.mp3');
-         this.load.audio('mardiGrasZombieHit', 'assets/Audio/SoundFX/mp3/MardiGrasZombieHit.mp3');
-         this.load.audio('trumpetSkeletonSound', 'assets/Audio/SoundFX/mp3/trumpetSkeletonHit.mp3');
-         this.load.audio('beignetMinionHit', 'assets/Audio/SoundFX/mp3/beignetminionHit.mp3');
+        // Load sound effects like Level 1
+        this.load.audio('playerHit', 'assets/Audio/SoundFX/mp3/playerHit.mp3');
+        this.load.audio('playerProjectileFire', 'assets/Audio/SoundFX/mp3/playerprojectilefire.mp3');
+        this.load.audio('mardiGrasZombieHit', 'assets/Audio/SoundFX/mp3/MardiGrasZombieHit.mp3');
+        this.load.audio('trumpetSkeletonSound', 'assets/Audio/SoundFX/mp3/trumpetSkeletonHit.mp3');
+        this.load.audio('beignetMinionHit', 'assets/Audio/SoundFX/mp3/beignetminionHit.mp3');
     }
 
     updateHealthUI() {
@@ -54,6 +54,8 @@ export default class Level4 extends Phaser.Scene {
         this.playerProjectileFireSFX = this.sound.add('playerProjectileFire', { volume: 0.6 });
         this.mardiGrasZombieHitSFX = this.sound.add('mardiGrasZombieHit', { volume: 0.6 });
         this.trumpetSkeletonSFX = this.sound.add('trumpetSkeletonSound', { volume: 0.4 });
+        this.beignetMinionHitSFX = this.sound.add('beignetMinionHit', { volume: 0.6 }); // <-- Added
+
     
         // Player Setup
         this.player = this.physics.add.sprite(100, height - 150, 'turboNegroStanding1');
@@ -388,15 +390,18 @@ export default class Level4 extends Phaser.Scene {
         enemy.destroy();
         this.totalEnemiesDefeated++;
         this.updateEnemyCountUI();
-
-        if (enemy.texture.key === 'beignetMinion') {
+    
+        if (enemy.texture.key === 'beignetMinion' && this.beignetMinionHitSFX) {
             this.beignetMinionHitSFX.play();
-        } else if (enemy.texture.key === 'mardiGrasZombie') {
+        } else if (enemy.texture.key === 'mardiGrasZombie' && this.mardiGrasZombieHitSFX) {
             this.mardiGrasZombieHitSFX.play();
-        } else if (enemy.texture.key === 'trumpetSkeleton') {
+        } else if (enemy.texture.key === 'trumpetSkeleton' && this.trumpetSkeletonSFX) {
             this.trumpetSkeletonSFX.play();
+        } else {
+            console.warn("Sound effect not found for enemy:", enemy.texture.key);
         }
     }
+    
     
     handleEnemyCollision(player, enemy) {
         enemy.destroy();
