@@ -101,11 +101,16 @@ export default class Level5 extends Phaser.Scene {
     }
 
     handlePlayerHealthPackCollision(player, healthPack) {
-        healthPack.destroy(); // Remove the health pack from the scene
-        this.playerHealth = Math.min(this.playerHealth + 5, this.maxHealth); // Restore health but not above max
-        this.updateHealthUI(); // Update the health bar display
-        console.log("Health pack collected! Health:", this.playerHealth);
-    }
+        if (healthPack.active) {
+            this.playerHealth = Math.min(this.playerHealth + 5, this.maxHealth);
+            this.updateHealthUI();
+            console.log("Health pack collected! Health:", this.playerHealth);
+    
+            this.time.delayedCall(100, () => {
+                healthPack.destroy();
+            }); // Delay destruction to prevent overlapping issues
+        }
+    }    
 
     updateHealthUI() {
         const healthPercentage = (this.playerHealth / this.maxHealth) * 100;
@@ -154,7 +159,14 @@ export default class Level5 extends Phaser.Scene {
         if (Phaser.Input.Keyboard.JustDown(this.attackKey)) {
             this.fireProjectile();
         }
-    }     
+    
+        // Ensure enemies keep moving and don't get stuck
+        this.enemies.children.iterate((enemy) => {
+            if (enemy.body.velocity.x === 0) {
+                enemy.setVelocityX(Phaser.Math.Between(-100, 100)); // Give a new velocity if stopped
+            }
+        });
+    }         
 
     fireProjectile() {
         const projectile = this.projectiles.create(this.player.x, this.player.y, 'playerProjectile');
@@ -192,14 +204,24 @@ export default class Level5 extends Phaser.Scene {
     }
     
     spawnBeignetMinion() {
-        const { width } = this.scale;
-        const side = Math.random() < 0.5 ? 0 : width;
-        const minion = this.enemies.create(side, 0, 'beignetMinion');
-
+        const { width, height } = this.scale;
+        const side = Math.random() < 0.5 ? 0 : width; // Spawn on left or right side
+        const minion = this.enemies.create(side, height / 2, 'beignetMinion');
+    
         minion.setCollideWorldBounds(true);
         minion.body.setAllowGravity(true);
-        minion.setVelocityX(side === 0 ? 100 : -100);
-
+        minion.setBounce(1); // Ensure bouncing
+        minion.setVelocityX(side === 0 ? 100 : -100); // Move left if right-spawned, and vice versa
+    
+        // Reverse direction upon hitting a wall
+        minion.body.onWorldBounds = true;
+        minion.setInteractive();
+        minion.body.world.on('worldbounds', (body) => {
+            if (body.gameObject === minion) {
+                minion.setVelocityX(minion.body.velocity.x > 0 ? -100 : 100);
+            }
+        });
+    
         this.time.addEvent({
             delay: 2000,
             loop: true,
@@ -207,7 +229,7 @@ export default class Level5 extends Phaser.Scene {
                 if (minion.active) this.shootBeignet(minion);
             },
         });
-    }
+    }    
 
     shootBeignet(minion) {
         const projectile = this.beignetProjectiles.create(minion.x, minion.y, 'beignetProjectile');
@@ -220,17 +242,34 @@ export default class Level5 extends Phaser.Scene {
     }
 
     spawnBeignetMonster() {
-        const { width } = this.scale;
+        const { width, height } = this.scale;
         const x = Phaser.Math.Between(50, width - 50);
-        const monster = this.enemies.create(x, 0, 'beignetMonster');
-
+        const monster = this.enemies.create(x, height / 3, 'beignetMonster');
+    
         monster.setCollideWorldBounds(true);
         monster.body.setAllowGravity(true);
         monster.setBounce(0.2);
         monster.health = 2;
-
+        monster.setVelocityX(Phaser.Math.Between(-150, 150)); // Randomized horizontal movement
+    
+        // Reverse direction when hitting a wall
+        monster.body.onWorldBounds = true;
+        monster.setInteractive();
+        monster.body.world.on('worldbounds', (body) => {
+            if (body.gameObject === monster) {
+                monster.setVelocityX(monster.body.velocity.x > 0 ? -150 : 150);
+            }
+        });
+    
         this.physics.add.overlap(this.player, monster, this.handleMonsterCollision, null, this);
-    }
+
+        this.physics.add.collider(this.enemies, this.platforms, (enemy) => {
+            if (enemy.body.touching.right || enemy.body.touching.left) {
+                enemy.setVelocityX(enemy.body.velocity.x * -1); // Reverse direction on collision
+            }
+        });
+        
+    }    
 
     handleBeignetHit(player, projectile) {
         projectile.destroy();
