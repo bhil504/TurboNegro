@@ -470,7 +470,6 @@ export default class Level4 extends Phaser.Scene {
     
         console.log("Level cleaned up successfully.");
     }
-    
 
     handleLevelTransition(callback) {
         this.input.keyboard.once('keydown-SPACE', callback);
