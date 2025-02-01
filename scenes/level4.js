@@ -429,34 +429,13 @@ export default class Level4 extends Phaser.Scene {
         }
     }
 
-    // Function to clean up the level before transitioning
-    cleanUpLevel() {
-        if (this.levelMusic) {
-            this.levelMusic.stop();
-            this.levelMusic.destroy();
-        }
-
-        if (this.enemySpawnTimer) this.enemySpawnTimer.remove();
-        if (this.trumpetSpawnTimer) this.trumpetSpawnTimer.remove();
-
-        this.enemies.clear(true, true);
-        this.trumpetEnemies.clear(true, true);
-        this.projectiles.clear(true, true);
-    }
-
-    // Standardized transition handling
-    handleLevelTransition(callback) {
-        this.input.keyboard.once('keydown-SPACE', callback);
-        this.input.once('pointerdown', callback);
-    }
-
     levelComplete() {
         console.log("Level Complete!");
         this.cleanUpLevel();
-
+    
         // Show level complete UI
         this.add.image(this.scale.width / 2, this.scale.height / 2, 'levelComplete').setOrigin(0.5);
-
+    
         // Transition to Level 5
         this.handleLevelTransition(() => this.scene.start('Level5'));
     }
@@ -464,12 +443,38 @@ export default class Level4 extends Phaser.Scene {
     gameOver() {
         console.log("Game Over!");
         this.cleanUpLevel();
-
+    
         // Show game over UI
         this.add.image(this.scale.width / 2, this.scale.height / 2, 'gameOver').setOrigin(0.5);
-
+    
         // Restart Level 4
         this.handleLevelTransition(() => this.scene.restart());
+    }
+    
+    cleanUpLevel() {
+        if (this.levelMusic) {
+            this.levelMusic.stop();
+            this.levelMusic.destroy();
+        }
+    
+        // Stop all enemy and projectile spawn timers
+        if (this.enemySpawnTimer) this.enemySpawnTimer.remove();
+        if (this.trumpetSpawnTimer) this.trumpetSpawnTimer.remove();
+        if (this.beignetMinionSpawnTimer) this.beignetMinionSpawnTimer.remove(); // Add this
+    
+        // Destroy all enemies and projectiles
+        this.enemies.clear(true, true);
+        this.trumpetEnemies.clear(true, true);
+        this.beignetProjectiles.clear(true, true); // Ensure Beignet projectiles are removed
+        this.projectiles.clear(true, true); // Ensure player projectiles are removed
+    
+        console.log("Level cleaned up successfully.");
+    }
+    
+
+    handleLevelTransition(callback) {
+        this.input.keyboard.once('keydown-SPACE', callback);
+        this.input.once('pointerdown', callback);
     }
     
 }
