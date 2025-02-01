@@ -6,6 +6,15 @@ export default class Level4 extends Phaser.Scene {
         super({ key: 'Level4' });
     }
 
+    updateHealthUI() {
+        const healthPercentage = (this.playerHealth / this.maxHealth) * 100;
+        document.getElementById('health-bar-inner').style.width = `${healthPercentage}%`;
+    }
+
+    updateEnemyCountUI() {
+        document.getElementById('enemy-count').innerText = `Enemies Left: ${45 - this.totalEnemiesDefeated}`;
+    }
+
     preload() {
         console.log("Preloading assets for Level 4...");
         this.load.image('level4Background', 'assets/Levels/BackGrounds/Level4.webp');
@@ -34,15 +43,6 @@ export default class Level4 extends Phaser.Scene {
 
     }
 
-    updateHealthUI() {
-        const healthPercentage = (this.playerHealth / this.maxHealth) * 100;
-        document.getElementById('health-bar-inner').style.width = `${healthPercentage}%`;
-    }
-
-    updateEnemyCountUI() {
-        document.getElementById('enemy-count').innerText = `Enemies Left: ${45 - this.totalEnemiesDefeated}`;
-    }
-    
     create() {
         const { width, height } = this.scale;
     
@@ -228,17 +228,47 @@ export default class Level4 extends Phaser.Scene {
         if (Phaser.Input.Keyboard.JustDown(this.attackKey)) {
             this.fireProjectile();
         }
-    }    
+    }  
 
-    fireProjectile() {
-        const projectile = this.projectiles.create(this.player.x, this.player.y, 'playerProjectile');
-        if (projectile) {
-            projectile.setVelocityX(this.player.flipX ? -500 : 500);
-            projectile.setCollideWorldBounds(false);
-            projectile.body.setAllowGravity(false);
-            this.playerProjectileFireSFX.play();
+    spawnHealthPack() {
+        const { width } = this.scale;
+        const x = Phaser.Math.Between(50, width - 50); // Random X position
+        const healthPack = this.healthPacks.create(x, 0, 'healthPack'); // Spawn at the top of the screen
+        healthPack.setCollideWorldBounds(true); // Enable collision with world bounds
+        healthPack.setBounce(0.5); // Add bounce for realism
+        healthPack.body.setAllowGravity(true); // Enable gravity
+    }
+    
+    collectHealthPack(player, healthPack) {
+        healthPack.destroy();
+        this.playerHealth = Math.min(this.playerHealth + 5, this.maxHealth); // Restore 5 health points
+        this.updateHealthUI();
+        console.log("Health Pack Collected! Health:", this.playerHealth);
+    }
+
+    zombieAI(zombie) {
+        if (!zombie || !zombie.body || !this.player || !this.player.body) return;
+
+        const playerX = this.player.x;
+
+        if (zombie.x < playerX - 10) {
+            zombie.setVelocityX(100);
+            zombie.setFlipX(false);
+        } else if (zombie.x > playerX + 10) {
+            zombie.setVelocityX(-100);
+            zombie.setFlipX(true);
+        } else {
+            zombie.setVelocityX(0);
         }
-    }    
+
+        if (
+            Phaser.Math.Between(0, 100) < 20 &&
+            zombie.body.touching.down &&
+            Math.abs(zombie.x - playerX) < 200
+        ) {
+            zombie.setVelocityY(-300);
+        }
+    }
 
     spawnMardiGrasZombie() {
         const zombie = this.enemies.create(Phaser.Math.Between(50, 750), 0, 'mardiGrasZombie');
@@ -322,6 +352,16 @@ export default class Level4 extends Phaser.Scene {
         });
     }
 
+    fireProjectile() {
+        const projectile = this.projectiles.create(this.player.x, this.player.y, 'playerProjectile');
+        if (projectile) {
+            projectile.setVelocityX(this.player.flipX ? -500 : 500);
+            projectile.setCollideWorldBounds(false);
+            projectile.body.setAllowGravity(false);
+            this.playerProjectileFireSFX.play();
+        }
+    }
+
     shootBeignet(minion) {
         const projectile = this.beignetProjectiles.create(minion.x, minion.y, 'beignetProjectile');
         if (projectile) {
@@ -335,46 +375,6 @@ export default class Level4 extends Phaser.Scene {
             }
         }
     }    
-
-    spawnHealthPack() {
-        const { width } = this.scale;
-        const x = Phaser.Math.Between(50, width - 50); // Random X position
-        const healthPack = this.healthPacks.create(x, 0, 'healthPack'); // Spawn at the top of the screen
-        healthPack.setCollideWorldBounds(true); // Enable collision with world bounds
-        healthPack.setBounce(0.5); // Add bounce for realism
-        healthPack.body.setAllowGravity(true); // Enable gravity
-    }
-    
-    collectHealthPack(player, healthPack) {
-        healthPack.destroy();
-        this.playerHealth = Math.min(this.playerHealth + 5, this.maxHealth); // Restore 5 health points
-        this.updateHealthUI();
-        console.log("Health Pack Collected! Health:", this.playerHealth);
-    }
-
-    zombieAI(zombie) {
-        if (!zombie || !zombie.body || !this.player || !this.player.body) return;
-
-        const playerX = this.player.x;
-
-        if (zombie.x < playerX - 10) {
-            zombie.setVelocityX(100);
-            zombie.setFlipX(false);
-        } else if (zombie.x > playerX + 10) {
-            zombie.setVelocityX(-100);
-            zombie.setFlipX(true);
-        } else {
-            zombie.setVelocityX(0);
-        }
-
-        if (
-            Phaser.Math.Between(0, 100) < 20 &&
-            zombie.body.touching.down &&
-            Math.abs(zombie.x - playerX) < 200
-        ) {
-            zombie.setVelocityY(-300);
-        }
-    }
 
     handleBeignetHit(player, projectile) {
         projectile.destroy();
