@@ -35,20 +35,23 @@ export default class Level5 extends Phaser.Scene {
         this.totalEnemiesToDefeat = 45;
         this.totalEnemiesDefeated = 0;
         this.updateEnemyCountUI();
-
+    
         this.add.image(width / 2, height / 2, 'level5Background').setDisplaySize(width, height);
         this.levelMusic = this.sound.add('level5Music', { loop: true, volume: 0.5 });
         this.levelMusic.play();
-
+    
+        // Initialize healthPacks group
+        this.healthPacks = this.physics.add.group();
+    
         this.playerHitSFX = this.sound.add('playerHit', { volume: 0.6 });
         this.playerProjectileFireSFX = this.sound.add('playerProjectileFire', { volume: 0.6 });
         this.beignetMinionHitSFX = this.sound.add('beignetMinionHit', { volume: 0.8 });
         this.beignetMonsterHitSFX = this.sound.add('beignetMonsterHit', { volume: 0.8 });
         this.beignetProjectileFireSFX = this.sound.add('beignetProjectileFire', { volume: 0.6 });
-
+    
         this.player = this.physics.add.sprite(100, height - 150, 'turboNegroStanding1');
         this.player.setCollideWorldBounds(true);
-
+    
         this.anims.create({
             key: 'idle',
             frames: [
@@ -62,34 +65,36 @@ export default class Level5 extends Phaser.Scene {
         });
         this.anims.create({ key: 'walk', frames: [{ key: 'turboNegroWalking' }], frameRate: 8, repeat: -1 });
         this.anims.create({ key: 'jump', frames: [{ key: 'turboNegroJump' }], frameRate: 1 });
-
+    
         this.cursors = this.input.keyboard.createCursorKeys();
         this.attackKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
-
+    
         this.platforms = this.physics.add.staticGroup();
         this.ground = this.platforms.create(width / 2, height - 10, null).setDisplaySize(width, 20).setVisible(false).refreshBody();
-
+    
         this.platforms.create(width / 2, height / 2 - 50, 'platform').setDisplaySize(200, 20).setVisible(true).refreshBody();
         this.platforms.create(50, height / 2, 'platform').setDisplaySize(200, 20).setVisible(true).refreshBody();
         this.platforms.create(width - 50, height / 2, 'platform').setDisplaySize(200, 20).setVisible(true).refreshBody();
-
+    
         this.physics.add.collider(this.player, this.platforms);
-
+    
         this.projectiles = this.physics.add.group();
         this.beignetProjectiles = this.physics.add.group();
         this.enemies = this.physics.add.group();
-
+    
         this.physics.add.collider(this.enemies, this.platforms);
+        this.physics.add.overlap(this.player, this.healthPacks, this.handlePlayerHealthPackCollision, null, this);
         this.physics.add.overlap(this.player, this.beignetProjectiles, this.handleBeignetHit, null, this);
         this.physics.add.collider(this.projectiles, this.enemies, this.handleProjectileHit, null, this);
         this.physics.add.collider(this.projectiles, this.beignetProjectiles, this.handleProjectileCollision, null, this);
-
+    
         this.time.addEvent({ delay: 3000, callback: this.spawnBeignetMinion, callbackScope: this, loop: true });
         this.time.addEvent({ delay: 5000, callback: this.spawnBeignetMonster, callbackScope: this, loop: true });
-
+    
         addFullscreenButton(this);
         setupMobileControls(this, this.player);
     }
+    
 
     spawnHealthPack() {
         const { width } = this.scale;
@@ -204,24 +209,14 @@ export default class Level5 extends Phaser.Scene {
     }
     
     spawnBeignetMinion() {
-        const { width, height } = this.scale;
-        const side = Math.random() < 0.5 ? 0 : width; // Spawn on left or right side
-        const minion = this.enemies.create(side, height / 2, 'beignetMinion');
-    
+        const { width } = this.scale;
+        const side = Math.random() < 0.5 ? 0 : width;
+        const minion = this.enemies.create(side, 0, 'beignetMinion');
+
         minion.setCollideWorldBounds(true);
         minion.body.setAllowGravity(true);
-        minion.setBounce(1); // Ensure bouncing
-        minion.setVelocityX(side === 0 ? 100 : -100); // Move left if right-spawned, and vice versa
-    
-        // Reverse direction upon hitting a wall
-        minion.body.onWorldBounds = true;
-        minion.setInteractive();
-        minion.body.world.on('worldbounds', (body) => {
-            if (body.gameObject === minion) {
-                minion.setVelocityX(minion.body.velocity.x > 0 ? -100 : 100);
-            }
-        });
-    
+        minion.setVelocityX(side === 0 ? 100 : -100);
+
         this.time.addEvent({
             delay: 2000,
             loop: true,
@@ -229,7 +224,7 @@ export default class Level5 extends Phaser.Scene {
                 if (minion.active) this.shootBeignet(minion);
             },
         });
-    }    
+    }  
 
     shootBeignet(minion) {
         const projectile = this.beignetProjectiles.create(minion.x, minion.y, 'beignetProjectile');
@@ -242,33 +237,16 @@ export default class Level5 extends Phaser.Scene {
     }
 
     spawnBeignetMonster() {
-        const { width, height } = this.scale;
+        const { width } = this.scale;
         const x = Phaser.Math.Between(50, width - 50);
-        const monster = this.enemies.create(x, height / 3, 'beignetMonster');
-    
+        const monster = this.enemies.create(x, 0, 'beignetMonster');
+
         monster.setCollideWorldBounds(true);
         monster.body.setAllowGravity(true);
         monster.setBounce(0.2);
         monster.health = 2;
-        monster.setVelocityX(Phaser.Math.Between(-150, 150)); // Randomized horizontal movement
-    
-        // Reverse direction when hitting a wall
-        monster.body.onWorldBounds = true;
-        monster.setInteractive();
-        monster.body.world.on('worldbounds', (body) => {
-            if (body.gameObject === monster) {
-                monster.setVelocityX(monster.body.velocity.x > 0 ? -150 : 150);
-            }
-        });
-    
-        this.physics.add.overlap(this.player, monster, this.handleMonsterCollision, null, this);
 
-        this.physics.add.collider(this.enemies, this.platforms, (enemy) => {
-            if (enemy.body.touching.right || enemy.body.touching.left) {
-                enemy.setVelocityX(enemy.body.velocity.x * -1); // Reverse direction on collision
-            }
-        });
-        
+        this.physics.add.overlap(this.player, monster, this.handleMonsterCollision, null, this);
     }    
 
     handleBeignetHit(player, projectile) {
