@@ -30,6 +30,8 @@ export default class Level4 extends Phaser.Scene {
         this.load.audio('mardiGrasZombieHit', 'assets/Audio/SoundFX/mp3/MardiGrasZombieHit.mp3');
         this.load.audio('trumpetSkeletonSound', 'assets/Audio/SoundFX/mp3/trumpetSkeletonHit.mp3');
         this.load.audio('beignetMinionHit', 'assets/Audio/SoundFX/mp3/beignetminionHit.mp3');
+        this.load.audio('beignetProjectileFire', 'assets/Audio/SoundFX/mp3/beignetprojectilefire.mp3');
+
     }
 
     updateHealthUI() {
@@ -55,7 +57,7 @@ export default class Level4 extends Phaser.Scene {
         this.mardiGrasZombieHitSFX = this.sound.add('mardiGrasZombieHit', { volume: 0.6 });
         this.trumpetSkeletonSFX = this.sound.add('trumpetSkeletonSound', { volume: 0.4 });
         this.beignetMinionHitSFX = this.sound.add('beignetMinionHit', { volume: 0.8 }); // <-- Added
-
+        this.beignetProjectileFireSFX = this.sound.add('beignetProjectileFire', { volume: 0.6 });
     
         // Player Setup
         this.player = this.physics.add.sprite(100, height - 150, 'turboNegroStanding1');
@@ -326,8 +328,13 @@ export default class Level4 extends Phaser.Scene {
             projectile.body.setAllowGravity(false);
             const angle = Phaser.Math.Angle.Between(minion.x, minion.y, this.player.x, this.player.y);
             projectile.setVelocity(Math.cos(angle) * 300, Math.sin(angle) * 300);
+            
+            // Play sound effect when firing
+            if (this.beignetProjectileFireSFX) {
+                this.beignetProjectileFireSFX.play();
+            }
         }
-    }
+    }    
 
     spawnHealthPack() {
         const { width } = this.scale;
@@ -399,6 +406,11 @@ export default class Level4 extends Phaser.Scene {
             this.trumpetSkeletonSFX.play();
         } else {
             console.warn("Sound effect not found for enemy:", enemy.texture.key);
+        }
+
+        if (this.totalEnemiesDefeated % 12 === 0) {
+            console.log("Spawning health pack!");
+            this.spawnHealthPack();
         }
     
         // Check if all enemies are defeated

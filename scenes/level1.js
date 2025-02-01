@@ -239,6 +239,11 @@ export default class Level1 extends Phaser.Scene {
         projectile.destroy();
         enemy.destroy();
         this.totalEnemiesDefeated++;
+
+        if (this.totalEnemiesDefeated % 12 === 0) {
+            console.log("Spawning health pack!");
+            this.spawnHealthPack();
+        }
     
         if (enemy.texture.key === 'skeleton') {
             this.mardiGrasZombieHitSFX.play();
