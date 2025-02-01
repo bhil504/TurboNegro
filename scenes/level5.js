@@ -20,7 +20,7 @@ export default class Level5 extends Phaser.Scene {
         this.load.image('turboNegroStanding4', 'assets/Characters/Character1/TurboNegroStanding/TurboNegroStanding4.png');
         this.load.image('turboNegroWalking', 'assets/Characters/Character1/TurboNegroWalking.png');
         this.load.image('turboNegroJump', 'assets/Characters/Character1/TurboNegroJump.png');
-        this.load.audio('level5Music', 'assets/Audio/Explosion of Ignorance.mp3');
+        this.load.audio('level5Music', 'assets/Audio/LevelMusic/mp3/Explosion of Ignorance.mp3');
         this.load.image('healthPack', 'assets/Items/HealthPack.png');
 
         this.load.audio('playerHit', 'assets/Audio/SoundFX/mp3/playerHit.mp3');
