@@ -16,9 +16,17 @@ export default class Level4 extends Phaser.Scene {
         this.load.image('turboNegroStanding3', 'assets/Characters/Character1/TurboNegroStanding/TurboNegroStanding3.png');
         this.load.image('turboNegroStanding4', 'assets/Characters/Character1/TurboNegroStanding/TurboNegroStanding4.png');
         this.load.image('turboNegroWalking', 'assets/Characters/Character1/TurboNegroWalking/TurboNegroWalking.png');
+        this.load.image('turboNegroJump', 'assets/Characters/Character1/TurboNegroJump.png');
         this.load.image('playerProjectile', 'assets/Characters/Projectiles/CD/CDresize.png');
         this.load.image('healthPack', 'assets/Items/HealthPack.png');
         this.load.audio('level4Music', 'assets/Audio/LevelMusic/mp3/Danza.mp3');
+
+         // Load sound effects like Level 1
+         this.load.audio('playerHit', 'assets/Audio/SoundFX/mp3/playerHit.mp3');
+         this.load.audio('playerProjectileFire', 'assets/Audio/SoundFX/mp3/playerprojectilefire.mp3');
+         this.load.audio('mardiGrasZombieHit', 'assets/Audio/SoundFX/mp3/MardiGrasZombieHit.mp3');
+         this.load.audio('trumpetSkeletonSound', 'assets/Audio/SoundFX/mp3/trumpetSkeletonHit.mp3');
+         this.load.audio('beignetMinionHit', 'assets/Audio/SoundFX/mp3/beignetminionHit.mp3');
     }
 
     updateHealthUI() {
@@ -37,6 +45,12 @@ export default class Level4 extends Phaser.Scene {
         this.add.image(width / 2, height / 2, 'level4Background').setDisplaySize(width, height);
         this.levelMusic = this.sound.add('level4Music', { loop: true, volume: 0.5 });
         this.levelMusic.play();
+
+        // Sound Effects
+        this.playerHitSFX = this.sound.add('playerHit', { volume: 0.6 });
+        this.playerProjectileFireSFX = this.sound.add('playerProjectileFire', { volume: 0.6 });
+        this.mardiGrasZombieHitSFX = this.sound.add('mardiGrasZombieHit', { volume: 0.6 });
+        this.trumpetSkeletonSFX = this.sound.add('trumpetSkeletonSound', { volume: 0.4 });
     
         // Player Setup
         this.player = this.physics.add.sprite(100, height - 150, 'turboNegroStanding1');
@@ -132,34 +146,13 @@ export default class Level4 extends Phaser.Scene {
             loop: true,
         });
     
-         // Mobile Controls
+        // Setup mobile controls
         if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-            console.log("Mobile device detected. Initializing controls...");
-            
-            if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-                // Request motion permission for iOS
-                DeviceOrientationEvent.requestPermission()
-                    .then(permissionState => {
-                        if (permissionState === 'granted') {
-                            this.enableTiltControls();
-                            console.log("Tilt controls enabled for mobile.");
-                        } else {
-                            console.warn("Motion access denied. Falling back to joystick.");
-                            this.setupJoystick(); // Fallback to joystick
-                        }
-                    })
-                    .catch(error => {
-                        console.error("Error requesting motion permission:", error);
-                        this.setupJoystick(); // Fallback to joystick
-                    });
-            } else {
-                // Non-iOS or older versions
-                this.enableTiltControls();
-                console.log("Tilt controls enabled for non-iOS.");
-            }
+                    console.log("Mobile device detected. Initializing controls...");
+                    setupMobileControls(this, this.player);
         } else {
             console.log("Desktop detected. Skipping mobile controls.");
-        }
+        }   
     
         // Tap anywhere to attack (Mobile or Desktop)
         this.input.on('pointerdown', (pointer) => {
@@ -191,6 +184,8 @@ export default class Level4 extends Phaser.Scene {
             console.warn("Attack button not found!");
         }
     
+        addFullscreenButton(this);
+
         console.log("Level 4 setup complete.");
     }    
 
@@ -199,28 +194,30 @@ export default class Level4 extends Phaser.Scene {
 
         this.player.setVelocityX(0);
 
-        // Movement
         if (this.cursors.left.isDown) {
-            this.player.setVelocityX(-160);
+            this.player.setVelocityX(-165);
             this.player.setFlipX(true);
-            if (this.player.body.touching.down) this.player.play('walk', true);
+            if (!this.isJumping) this.player.play('walk', true);
         } else if (this.cursors.right.isDown) {
-            this.player.setVelocityX(160);
+            this.player.setVelocityX(165);
             this.player.setFlipX(false);
-            if (this.player.body.touching.down) this.player.play('walk', true);
-        } else if (this.player.body.touching.down) {
+            if (!this.isJumping) this.player.play('walk', true);
+        } else if (this.player.body.touching.down && !this.isJumping) {
             this.player.play('idle', true);
         }
 
-        // Jump
-        if (this.cursors.up.isDown && this.player.body.touching.down) {
-            console.log("Jump triggered");
+        if (this.cursors.up.isDown && this.player.body.touching.down && !this.isJumping) {
+            this.isJumping = true;
             this.player.setVelocityY(-500);
             this.player.play('jump', true);
         }
 
-        // Attack
-        if (Phaser.Input.Keyboard.JustDown(this.attackKey)) {
+        if (this.player.body.touching.down && this.isJumping) {
+            this.isJumping = false;
+            this.player.play('idle', true);
+        }
+
+        if (Phaser.Input.Keyboard.JustDown(this.fireKey)) {
             this.fireProjectile();
         }
     }
@@ -231,8 +228,9 @@ export default class Level4 extends Phaser.Scene {
             projectile.setVelocityX(this.player.flipX ? -500 : 500);
             projectile.setCollideWorldBounds(false);
             projectile.body.setAllowGravity(false);
+            this.playerProjectileFireSFX.play();
         }
-    }
+    }    
 
     spawnMardiGrasZombie() {
         const zombie = this.enemies.create(Phaser.Math.Between(50, 750), 0, 'mardiGrasZombie');
@@ -369,6 +367,7 @@ export default class Level4 extends Phaser.Scene {
         projectile.destroy();
         this.playerHealth -= 1;
         this.updateHealthUI();
+        this.playerHitSFX.play();
         if (this.playerHealth <= 0) {
             this.gameOver();
         }
@@ -385,13 +384,13 @@ export default class Level4 extends Phaser.Scene {
         enemy.destroy();
         this.totalEnemiesDefeated++;
         this.updateEnemyCountUI();
-    
-        if (this.totalEnemiesDefeated % 12 === 0) {
-            this.spawnHealthPack();
-        }
-    
-        if (this.totalEnemiesDefeated >= 45) { // Updated to require 45 enemies for level completion
-            this.levelComplete();
+
+        if (enemy.texture.key === 'beignetMinion') {
+            this.beignetMinionHitSFX.play();
+        } else if (enemy.texture.key === 'mardiGrasZombie') {
+            this.mardiGrasZombieHitSFX.play();
+        } else if (enemy.texture.key === 'trumpetSkeleton') {
+            this.trumpetSkeletonSFX.play();
         }
     }
     
@@ -403,105 +402,6 @@ export default class Level4 extends Phaser.Scene {
             this.gameOver();
         }
     }
-
-    applyJoystickForce() {
-        if (this.player) {
-            // Apply X-axis movement
-            this.player.setVelocityX(this.joystickForceX * 160); // Adjust multiplier for sensitivity
-    
-            if (this.joystickForceX > 0) this.player.setFlipX(false);
-            if (this.joystickForceX < 0) this.player.setFlipX(true);
-    
-            // Jump if joystick is pushed upwards
-            if (this.joystickForceY < -0.5 && this.player.body.touching.down) {
-                this.player.setVelocityY(-500); // Jump
-            }
-    
-            // Change animation based on movement
-            if (Math.abs(this.joystickForceX) > 0.1 && this.player.body.touching.down) {
-                this.player.play('walk', true);
-            } else if (this.player.body.touching.down) {
-                this.player.play('idle', true);
-            }
-        }
-    }
-
-    setupJoystick() {
-        const joystickArea = document.getElementById('joystick-area');
-        let joystickKnob = document.getElementById('joystick-knob');
-    
-        if (!joystickKnob) {
-            joystickKnob = document.createElement('div');
-            joystickKnob.id = 'joystick-knob';
-            joystickArea.appendChild(joystickKnob);
-        }
-    
-        let joystickStartX = 0;
-        let joystickStartY = 0;
-        let activeInterval;
-    
-        joystickArea.addEventListener('touchstart', (event) => {
-            const touch = event.touches[0];
-            joystickStartX = touch.clientX;
-            joystickStartY = touch.clientY;
-            joystickKnob.style.transform = `translate(-50%, -50%)`;
-    
-            activeInterval = setInterval(() => this.applyJoystickForce(), 16); // Run every ~16ms (60 FPS)
-        });
-    
-        joystickArea.addEventListener('touchmove', (event) => {
-            const touch = event.touches[0];
-            const deltaX = touch.clientX - joystickStartX;
-            const deltaY = touch.clientY - joystickStartY;
-    
-            const distance = Math.sqrt(deltaX ** 2 + deltaY ** 2);
-            const maxDistance = 50; // Joystick radius limit
-    
-            const clampedX = (deltaX / distance) * Math.min(distance, maxDistance);
-            const clampedY = (deltaY / distance) * Math.min(distance, maxDistance);
-    
-            joystickKnob.style.transform = `translate(calc(${clampedX}px - 50%), calc(${clampedY}px - 50%))`;
-    
-            this.joystickForceX = clampedX / maxDistance;
-            this.joystickForceY = clampedY / maxDistance;
-        });
-    
-        joystickArea.addEventListener('touchend', () => {
-            joystickKnob.style.transform = `translate(-50%, -50%)`;
-            this.joystickForceX = 0;
-            this.joystickForceY = 0;
-    
-            if (this.player) {
-                this.player.setVelocityX(0);
-                this.player.anims.play('idle', true);
-            }
-    
-            clearInterval(activeInterval);
-        });
-    
-        this.joystickForceX = 0;
-        this.joystickForceY = 0;
-    }    
-
-    enableTiltControls() {
-        window.addEventListener('deviceorientation', (event) => {
-            const tilt = event.gamma; // Side-to-side tilt (-90 to +90)
-            if (tilt !== null) {
-                if (tilt > 8) { // Tilted to the right
-                    this.player.setVelocityX(160);
-                    this.player.setFlipX(false);
-                    this.player.play('walk', true);
-                } else if (tilt < -8) { // Tilted to the left
-                    this.player.setVelocityX(-160);
-                    this.player.setFlipX(true);
-                    this.player.play('walk', true);
-                } else { // Neutral tilt
-                    this.player.setVelocityX(0);
-                    this.player.play('idle', true);
-                }
-            }
-        });
-    }    
 
     levelComplete() {
         console.log("Level Complete!");
