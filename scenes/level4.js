@@ -54,7 +54,7 @@ export default class Level4 extends Phaser.Scene {
         this.playerProjectileFireSFX = this.sound.add('playerProjectileFire', { volume: 0.6 });
         this.mardiGrasZombieHitSFX = this.sound.add('mardiGrasZombieHit', { volume: 0.6 });
         this.trumpetSkeletonSFX = this.sound.add('trumpetSkeletonSound', { volume: 0.4 });
-        this.beignetMinionHitSFX = this.sound.add('beignetMinionHit', { volume: 0.6 }); // <-- Added
+        this.beignetMinionHitSFX = this.sound.add('beignetMinionHit', { volume: 0.8 }); // <-- Added
 
     
         // Player Setup
@@ -400,8 +400,13 @@ export default class Level4 extends Phaser.Scene {
         } else {
             console.warn("Sound effect not found for enemy:", enemy.texture.key);
         }
-    }
     
+        // Check if all enemies are defeated
+        if (this.totalEnemiesDefeated >= 45) {
+            console.log("All enemies defeated. Level complete!");
+            this.levelComplete();
+        }
+    }    
     
     handleEnemyCollision(player, enemy) {
         enemy.destroy();
@@ -412,72 +417,47 @@ export default class Level4 extends Phaser.Scene {
         }
     }
 
+    // Function to clean up the level before transitioning
+    cleanUpLevel() {
+        if (this.levelMusic) {
+            this.levelMusic.stop();
+            this.levelMusic.destroy();
+        }
+
+        if (this.enemySpawnTimer) this.enemySpawnTimer.remove();
+        if (this.trumpetSpawnTimer) this.trumpetSpawnTimer.remove();
+
+        this.enemies.clear(true, true);
+        this.trumpetEnemies.clear(true, true);
+        this.projectiles.clear(true, true);
+    }
+
+    // Standardized transition handling
+    handleLevelTransition(callback) {
+        this.input.keyboard.once('keydown-SPACE', callback);
+        this.input.once('pointerdown', callback);
+    }
+
     levelComplete() {
         console.log("Level Complete!");
-    
-        // Stop music and clear timers
-        if (this.levelMusic) this.levelMusic.stop();
-        if (this.enemySpawnTimer) this.enemySpawnTimer.remove();
-        if (this.trumpetSpawnTimer) this.trumpetSpawnTimer.remove();
-        if (this.fireBeadsTimer) this.fireBeadsTimer.remove();
-    
-        // Clear objects and stop interactions
-        this.enemies.clear(true, true);
-        this.trumpetEnemies.clear(true, true);
-        this.projectiles.clear(true, true);
-        if (this.mardiGrasBlimp) {
-            this.mardiGrasBlimp.destroy();
-            this.mardiGrasBlimp = null;
-        }
-    
-        // Disable player and enemy movement
-        this.physics.pause();
-    
-        // Display Level Complete screen
+        this.cleanUpLevel();
+
+        // Show level complete UI
         this.add.image(this.scale.width / 2, this.scale.height / 2, 'levelComplete').setOrigin(0.5);
-    
-        // Proceed to the next level
-        const nextLevel = () => {
-            this.scene.start('Level5'); // Adjust to the actual next level key
-        };
-    
-        // Add input handlers for both desktop and mobile
-        this.input.keyboard.once('keydown-SPACE', nextLevel);
-        this.input.once('pointerdown', nextLevel);
-    }    
-    
+
+        // Transition to Level 5
+        this.handleLevelTransition(() => this.scene.start('Level5'));
+    }
+
     gameOver() {
         console.log("Game Over!");
-    
-        // Stop music and clear timers
-        if (this.levelMusic) this.levelMusic.stop();
-        if (this.enemySpawnTimer) this.enemySpawnTimer.remove();
-        if (this.trumpetSpawnTimer) this.trumpetSpawnTimer.remove();
-        if (this.fireBeadsTimer) this.fireBeadsTimer.remove();
-    
-        // Clear objects and stop interactions
-        this.enemies.clear(true, true);
-        this.trumpetEnemies.clear(true, true);
-        this.projectiles.clear(true, true);
-        if (this.mardiGrasBlimp) {
-            this.mardiGrasBlimp.destroy();
-            this.mardiGrasBlimp = null;
-        }
-    
-        // Disable player and enemy movement
-        this.physics.pause();
-    
-        // Display Game Over screen
+        this.cleanUpLevel();
+
+        // Show game over UI
         this.add.image(this.scale.width / 2, this.scale.height / 2, 'gameOver').setOrigin(0.5);
-    
-        // Restart the level
-        const restartLevel = () => {
-            this.scene.restart();
-        };
-    
-        // Add input handlers for both desktop and mobile
-        this.input.keyboard.once('keydown-SPACE', restartLevel);
-        this.input.once('pointerdown', restartLevel);
-    }  
+
+        // Restart Level 4
+        this.handleLevelTransition(() => this.scene.restart());
+    }
     
 }
