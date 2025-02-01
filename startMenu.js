@@ -59,8 +59,8 @@ export default class StartMenu extends Phaser.Scene {
             this.scene.start('Level1');
         });
     
-        const music = this.sound.add('menuMusic', { loop: true, volume: 0.6 });
-        music.play();
+        this.music = this.sound.add('menuMusic', { loop: true, volume: 0.6 });
+        this.music.play();
     
         // Add Fullscreen Button
         addFullscreenButton(this);
@@ -69,22 +69,28 @@ export default class StartMenu extends Phaser.Scene {
         this.input.keyboard.on('keydown', (event) => {
             switch (event.key) {
                 case '1':
+                    this.music.stop();
                     this.scene.start('Level1');
                     break;
                 case '2':
+                    this.music.stop();
                     this.scene.start('Level2');
                     break;
                 case '3':
+                    this.music.stop();
                     this.scene.start('Level3');
                     break;
                 case '4':
+                    this.music.stop();
                     this.scene.start('Level4');
                     break;
                 case '5':
+                    this.music.stop();
                     this.scene.start('Level5');
                     break;
                 case 'B':
                 case 'b':
+                    this.music.stop();
                     this.scene.start('BossFight');
                     break;
             }
