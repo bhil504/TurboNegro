@@ -191,9 +191,10 @@ export default class Level4 extends Phaser.Scene {
 
     update() {
         if (!this.player || !this.cursors) return;
-
+    
+        // Reset player movement
         this.player.setVelocityX(0);
-
+    
         if (this.cursors.left.isDown) {
             this.player.setVelocityX(-165);
             this.player.setFlipX(true);
@@ -205,22 +206,22 @@ export default class Level4 extends Phaser.Scene {
         } else if (this.player.body.touching.down && !this.isJumping) {
             this.player.play('idle', true);
         }
-
+    
         if (this.cursors.up.isDown && this.player.body.touching.down && !this.isJumping) {
             this.isJumping = true;
             this.player.setVelocityY(-500);
             this.player.play('jump', true);
         }
-
+    
         if (this.player.body.touching.down && this.isJumping) {
             this.isJumping = false;
             this.player.play('idle', true);
         }
-
-        if (Phaser.Input.Keyboard.JustDown(this.fireKey)) {
+    
+        if (Phaser.Input.Keyboard.JustDown(this.attackKey)) {
             this.fireProjectile();
         }
-    }
+    }    
 
     fireProjectile() {
         const projectile = this.projectiles.create(this.player.x, this.player.y, 'playerProjectile');
