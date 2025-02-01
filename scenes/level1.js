@@ -97,10 +97,18 @@ export default class Level1 extends Phaser.Scene {
         this.physics.add.collider(this.player, this.enemies, this.handlePlayerEnemyCollision, null, this);
         this.physics.add.collider(this.projectiles, this.enemies, this.handleProjectileEnemyCollision, null, this);
         this.physics.add.collider(this.enemies, this.platforms);
+
+        // Setup mobile controls only if it's a mobile device
+        if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+            console.log("Mobile device detected. Initializing controls...");
+            setupMobileControls(this, this.player);
+        } else {
+            console.log("Desktop detected. Skipping mobile controls.");
+        }
     
         // Add utilities
         addFullscreenButton(this);
-        setupMobileControls(this, this.player); // Handles tilt and joystick setup automatically
+       
     }
 
     update() {

@@ -18,7 +18,7 @@ export default class Level4 extends Phaser.Scene {
         this.load.image('turboNegroWalking', 'assets/Characters/Character1/TurboNegroWalking/TurboNegroWalking.png');
         this.load.image('playerProjectile', 'assets/Characters/Projectiles/CD/CDresize.png');
         this.load.image('healthPack', 'assets/Items/HealthPack.png');
-        this.load.audio('level4Music', 'assets/Audio/Danza.mp3');
+        this.load.audio('level4Music', 'assets/Audio/LevelMusic/mp3/Danza.mp3');
     }
 
     updateHealthUI() {

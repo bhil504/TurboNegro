@@ -199,17 +199,8 @@ export default class Level3 extends Phaser.Scene {
 
     
         console.log("Level 3 setup complete.");
-    }       
-
-    updateHealthUI() {
-        const healthPercentage = (this.playerHealth / this.maxHealth) * 100;
-        document.getElementById('health-bar-inner').style.width = `${healthPercentage}%`;
-    }
-
-    updateEnemyCountUI() {
-        document.getElementById('enemy-count').innerText = `Enemies Left: ${40 - this.totalEnemiesDefeated}`;
-    }
-
+    }  
+    
     update() {
         if (!this.player || !this.cursors) return;
 
@@ -243,180 +234,14 @@ export default class Level3 extends Phaser.Scene {
         }
     }
 
-    fireProjectile() {
-        if (!this.projectiles) return;
-        const projectile = this.projectiles.create(this.player.x, this.player.y, 'projectileCD');
-        if (projectile) {
-            projectile.setVelocityX(this.player.flipX ? -500 : 500);
-            projectile.body.setAllowGravity(false);
-    
-            // Play the projectile fire sound
-            this.playerProjectileFireSFX.play();
-        }
-    }    
-
-    handleBeadCollision(player, bead) {
-        if (bead) {
-            bead.destroy();
-            this.playerHealth -= 2;
-    
-            // Play player hit sound
-            this.playerHitSFX.play();
-    
-            console.log("Player hit by bead! Health -2");
-            this.updateHealthUI();
-    
-            if (this.playerHealth <= 0) {
-                this.gameOver();
-            }
-        }
-    }    
-
-    destroyBlimp(projectile, blimp) {
-        if (projectile) {
-            projectile.destroy();
-            console.log("Projectile destroyed!");
-        }
-
-        if (blimp) {
-            blimp.destroy();
-            console.log("Blimp destroyed!");
-
-            if (this.fireBeadsTimer) {
-                this.fireBeadsTimer.remove();
-                this.fireBeadsTimer = null;
-            }
-
-            this.time.delayedCall(5000, () => {
-                this.createBlimpPath();
-            });
-        }
+    updateHealthUI() {
+        const healthPercentage = (this.playerHealth / this.maxHealth) * 100;
+        document.getElementById('health-bar-inner').style.width = `${healthPercentage}%`;
     }
 
-    handlePlayerEnemyCollision(player, enemy) {
-        if (enemy && enemy.active) {
-            enemy.destroy(); // Destroy enemy
-            this.playerHealth -= 1; // Decrease player health
-            console.log("Player hit by Mardi Gras Zombie! Health -1");
-    
-            this.updateHealthUI(); // Update health bar UI
-            if (this.playerHealth <= 0) {
-                this.gameOver(); // End the game if health reaches 0
-            }
-        }
+    updateEnemyCountUI() {
+        document.getElementById('enemy-count').innerText = `Enemies Left: ${40 - this.totalEnemiesDefeated}`;
     }
-
-    handleProjectileEnemyCollision(projectile, enemy) {
-        if (projectile && projectile.active) {
-            projectile.destroy();
-            console.log("Projectile destroyed!");
-        }
-    
-        if (enemy && enemy.active) {
-            console.log(`Enemy destroyed: ${enemy.texture.key}`);
-            enemy.destroy();
-    
-            this.totalEnemiesDefeated++;
-            console.log(`Total Enemies Defeated: ${this.totalEnemiesDefeated}`);
-    
-            this.updateEnemyCountUI();
-    
-            // Play sound based on enemy type
-            if (enemy.texture.key === 'skeleton') {
-                this.mardiGrasZombieHitSFX.play();
-            } else if (enemy.texture.key === 'trumpetSkeleton') {
-                this.trumpetSkeletonSFX.play();
-            }
-    
-            if (this.totalEnemiesDefeated % 12 === 0) {
-                this.spawnHealthPack();
-                console.log("Health pack spawned!");
-            }
-    
-            if (this.totalEnemiesDefeated >= 40) {
-                console.log("Level Complete Triggered!");
-                this.levelComplete();
-            }
-        }
-    }    
-
-    spawnHealthPack() {
-        const { width } = this.scale;
-        const x = Phaser.Math.Between(50, width - 50);
-        const healthPack = this.healthPacks.create(x, 50, 'healthPack');
-        healthPack.setBounce(0.5);
-        healthPack.setCollideWorldBounds(true);
-        console.log("Health pack spawned at:", x);
-    }
-
-    handlePlayerHealthPackCollision(player, healthPack) {
-        healthPack.destroy();
-        this.playerHealth = Math.min(this.playerHealth + 5, this.maxHealth);
-        this.updateHealthUI();
-        console.log("Health pack collected! Health +5");
-    }
-
-    levelComplete() {
-        console.log("Level Complete!");
-    
-        // Stop music and clear timers
-        if (this.levelMusic) this.levelMusic.stop();
-        if (this.enemySpawnTimer) this.enemySpawnTimer.remove();
-        if (this.trumpetSpawnTimer) this.trumpetSpawnTimer.remove();
-        if (this.fireBeadsTimer) this.fireBeadsTimer.remove();
-    
-        // Clear objects
-        this.enemies.clear(true, true);
-        this.trumpetEnemies.clear(true, true);
-        this.projectiles.clear(true, true);
-        if (this.mardiGrasBlimp) {
-            this.mardiGrasBlimp.destroy();
-            this.mardiGrasBlimp = null;
-        }
-    
-        // Display Level Complete screen
-        this.add.image(this.scale.width / 2, this.scale.height / 2, 'levelComplete').setOrigin(0.5);
-    
-        // Proceed to the next level
-        const nextLevel = () => {
-            this.scene.start('Level4'); // Adjust to the actual next level key
-        };
-    
-        // Add input handlers for both desktop and mobile
-        this.input.keyboard.once('keydown-SPACE', nextLevel);
-        this.input.once('pointerdown', nextLevel);
-    }
-    
-    gameOver() {
-        console.log("Game Over!");
-    
-        // Stop music and clear timers
-        if (this.levelMusic) this.levelMusic.stop();
-        if (this.enemySpawnTimer) this.enemySpawnTimer.remove();
-        if (this.trumpetSpawnTimer) this.trumpetSpawnTimer.remove();
-        if (this.fireBeadsTimer) this.fireBeadsTimer.remove();
-    
-        // Clear objects
-        this.enemies.clear(true, true);
-        this.trumpetEnemies.clear(true, true);
-        this.projectiles.clear(true, true);
-        if (this.mardiGrasBlimp) {
-            this.mardiGrasBlimp.destroy();
-            this.mardiGrasBlimp = null;
-        }
-    
-        // Display Game Over screen
-        this.add.image(this.scale.width / 2, this.scale.height / 2, 'gameOver').setOrigin(0.5);
-    
-        // Restart the level
-        const restartLevel = () => {
-            this.scene.restart();
-        };
-    
-        // Add input handlers for both desktop and mobile
-        this.input.keyboard.once('keydown-SPACE', restartLevel);
-        this.input.once('pointerdown', restartLevel);
-    }         
 
     updateHealthBar() {
         if (!this.healthBar) return;
@@ -436,65 +261,17 @@ export default class Level3 extends Phaser.Scene {
         this.healthBar.fillRect(20, 20, barWidth * healthPercentage, barHeight);
     }
 
-    createBlimpPath() {
-    const path = [
-        { x: 100, y: 50 },
-        { x: 1400, y: 100 },
-        { x: 1200, y: 500 },
-        { x: 200, y: 400 },
-    ];
-
-    let currentPoint = 0;
-
-    const moveBlimp = () => {
-        if (!this.mardiGrasBlimp || !this.mardiGrasBlimp.active) {
-            return; // Exit if the blimp no longer exists
+    fireProjectile() {
+        if (!this.projectiles) return;
+        const projectile = this.projectiles.create(this.player.x, this.player.y, 'projectileCD');
+        if (projectile) {
+            projectile.setVelocityX(this.player.flipX ? -500 : 500);
+            projectile.body.setAllowGravity(false);
+    
+            // Play the projectile fire sound
+            this.playerProjectileFireSFX.play();
         }
-
-        const nextPoint = path[currentPoint];
-        this.tweens.add({
-            targets: this.mardiGrasBlimp,
-            x: nextPoint.x,
-            y: nextPoint.y,
-            duration: 3000,
-            ease: 'Linear',
-            onComplete: () => {
-                currentPoint = (currentPoint + 1) % path.length;
-                moveBlimp(); // Continue moving the blimp
-            },
-        });
-    };
-
-    if (this.mardiGrasBlimp) {
-        this.mardiGrasBlimp.destroy();
-    }
-
-    this.mardiGrasBlimp = this.physics.add.sprite(path[0].x, path[0].y, 'MardiGrasBlimp');
-    this.mardiGrasBlimp.setDepth(3);
-    this.mardiGrasBlimp.body.setAllowGravity(false);
-    this.mardiGrasBlimp.body.setImmovable(true);
-
-    moveBlimp();
-
-    this.physics.add.overlap(
-        this.projectiles,
-        this.mardiGrasBlimp,
-        this.destroyBlimp,
-        null,
-        this
-    );
-
-    if (this.fireBeadsTimer) {
-        this.fireBeadsTimer.remove();
-    }
-
-    this.fireBeadsTimer = this.time.addEvent({
-        delay: 5000,
-        loop: true,
-        callback: this.fireBeads,
-        callbackScope: this,
-    });
-    }
+    } 
 
     fireBeads() {
         if (this.mardiGrasBlimp.active) {
@@ -508,6 +285,39 @@ export default class Level3 extends Phaser.Scene {
                 this.player.y
             );
             bead.setVelocity(Math.cos(angle) * 300, Math.sin(angle) * 300);
+        }
+    }
+    
+    spawnHealthPack() {
+        const { width } = this.scale;
+        const x = Phaser.Math.Between(50, width - 50);
+        const healthPack = this.healthPacks.create(x, 50, 'healthPack');
+        healthPack.setBounce(0.5);
+        healthPack.setCollideWorldBounds(true);
+        console.log("Health pack spawned at:", x);
+    }
+
+    zombieAI(zombie) {
+        if (!zombie || !zombie.body || !this.player || !this.player.body) return;
+    
+        const playerX = this.player.x;
+    
+        if (zombie.x < playerX - 10) {
+            zombie.setVelocityX(100);
+            zombie.setFlipX(false);
+        } else if (zombie.x > playerX + 10) {
+            zombie.setVelocityX(-100);
+            zombie.setFlipX(true);
+        } else {
+            zombie.setVelocityX(0);
+        }
+    
+        if (
+            Phaser.Math.Between(0, 100) < 20 &&
+            zombie.body.touching.down &&
+            Math.abs(zombie.x - playerX) < 200
+        ) {
+            zombie.setVelocityY(-300);
         }
     }
 
@@ -579,30 +389,168 @@ export default class Level3 extends Phaser.Scene {
         });
     }
 
-    zombieAI(zombie) {
-        if (!zombie || !zombie.body || !this.player || !this.player.body) return;
+    trumpetSkeletonAttack(trumpetSkeleton) {
+        console.log('Trumpet Skeleton attacks!');
+        this.playerHealth -= 2; // Inflict 2 points of damage
+        this.updateHealthBar();
     
-        const playerX = this.player.x;
+        if (this.playerHealth <= 0) {
+            this.gameOver();
+        }
+    }
+
+    createBlimpPath() {
+        const path = [
+            { x: 100, y: 50 },
+            { x: 1400, y: 100 },
+            { x: 1200, y: 500 },
+            { x: 200, y: 400 },
+        ];
     
-        if (zombie.x < playerX - 10) {
-            zombie.setVelocityX(100);
-            zombie.setFlipX(false);
-        } else if (zombie.x > playerX + 10) {
-            zombie.setVelocityX(-100);
-            zombie.setFlipX(true);
-        } else {
-            zombie.setVelocityX(0);
+        let currentPoint = 0;
+    
+        const moveBlimp = () => {
+            if (!this.mardiGrasBlimp || !this.mardiGrasBlimp.active) {
+                return; // Exit if the blimp no longer exists
+            }
+    
+            const nextPoint = path[currentPoint];
+            this.tweens.add({
+                targets: this.mardiGrasBlimp,
+                x: nextPoint.x,
+                y: nextPoint.y,
+                duration: 3000,
+                ease: 'Linear',
+                onComplete: () => {
+                    currentPoint = (currentPoint + 1) % path.length;
+                    moveBlimp(); // Continue moving the blimp
+                },
+            });
+        };
+    
+        if (this.mardiGrasBlimp) {
+            this.mardiGrasBlimp.destroy();
         }
     
-        if (
-            Phaser.Math.Between(0, 100) < 20 &&
-            zombie.body.touching.down &&
-            Math.abs(zombie.x - playerX) < 200
-        ) {
-            zombie.setVelocityY(-300);
+        this.mardiGrasBlimp = this.physics.add.sprite(path[0].x, path[0].y, 'MardiGrasBlimp');
+        this.mardiGrasBlimp.setDepth(3);
+        this.mardiGrasBlimp.body.setAllowGravity(false);
+        this.mardiGrasBlimp.body.setImmovable(true);
+    
+        moveBlimp();
+    
+        this.physics.add.overlap(
+            this.projectiles,
+            this.mardiGrasBlimp,
+            this.destroyBlimp,
+            null,
+            this
+        );
+    
+        if (this.fireBeadsTimer) {
+            this.fireBeadsTimer.remove();
+        }
+    
+        this.fireBeadsTimer = this.time.addEvent({
+            delay: 5000,
+            loop: true,
+            callback: this.fireBeads,
+            callbackScope: this,
+        });
+    }
+
+    destroyBlimp(projectile, blimp) {
+        if (projectile) {
+            projectile.destroy();
+            console.log("Projectile destroyed!");
+        }
+
+        if (blimp) {
+            blimp.destroy();
+            console.log("Blimp destroyed!");
+
+            if (this.fireBeadsTimer) {
+                this.fireBeadsTimer.remove();
+                this.fireBeadsTimer = null;
+            }
+
+            this.time.delayedCall(5000, () => {
+                this.createBlimpPath();
+            });
+        }
+    }
+
+    handleBeadCollision(player, bead) {
+        if (bead) {
+            bead.destroy();
+            this.playerHealth -= 2;
+    
+            // Play player hit sound
+            this.playerHitSFX.play();
+    
+            console.log("Player hit by bead! Health -2");
+            this.updateHealthUI();
+    
+            if (this.playerHealth <= 0) {
+                this.gameOver();
+            }
         }
     }    
 
+    handlePlayerEnemyCollision(player, enemy) {
+        if (enemy && enemy.active) {
+            enemy.destroy(); // Destroy enemy
+            this.playerHealth -= 1; // Decrease player health
+            console.log("Player hit by Mardi Gras Zombie! Health -1");
+    
+            this.updateHealthUI(); // Update health bar UI
+            if (this.playerHealth <= 0) {
+                this.gameOver(); // End the game if health reaches 0
+            }
+        }
+    }
+
+    handleProjectileEnemyCollision(projectile, enemy) {
+        if (projectile && projectile.active) {
+            projectile.destroy();
+            console.log("Projectile destroyed!");
+        }
+    
+        if (enemy && enemy.active) {
+            console.log(`Enemy destroyed: ${enemy.texture.key}`);
+            enemy.destroy();
+    
+            this.totalEnemiesDefeated++;
+            console.log(`Total Enemies Defeated: ${this.totalEnemiesDefeated}`);
+    
+            this.updateEnemyCountUI();
+    
+            // Play sound based on enemy type
+            if (enemy.texture.key === 'skeleton') {
+                this.mardiGrasZombieHitSFX.play();
+            } else if (enemy.texture.key === 'trumpetSkeleton') {
+                this.trumpetSkeletonSFX.play();
+            }
+    
+            if (this.totalEnemiesDefeated % 12 === 0) {
+                this.spawnHealthPack();
+                console.log("Health pack spawned!");
+            }
+    
+            if (this.totalEnemiesDefeated >= 40) {
+                console.log("Level Complete Triggered!");
+                this.levelComplete();
+            }
+        }
+    }    
+
+    handlePlayerHealthPackCollision(player, healthPack) {
+        healthPack.destroy();
+        this.playerHealth = Math.min(this.playerHealth + 5, this.maxHealth);
+        this.updateHealthUI();
+        console.log("Health pack collected! Health +5");
+    } 
+    
     handleTrumpetSkeletonCollision(player, trumpetSkeleton) {
         if (trumpetSkeleton && trumpetSkeleton.active) {
             trumpetSkeleton.destroy(); // Destroy enemy
@@ -617,14 +565,65 @@ export default class Level3 extends Phaser.Scene {
     
     }
 
-    trumpetSkeletonAttack(trumpetSkeleton) {
-        console.log('Trumpet Skeleton attacks!');
-        this.playerHealth -= 2; // Inflict 2 points of damage
-        this.updateHealthBar();
+    gameOver() {
+        console.log("Game Over!");
     
-        if (this.playerHealth <= 0) {
-            this.gameOver();
+        // Stop all sounds and timers
+        this.cleanUpLevel();
+    
+        // Display Game Over screen
+        this.add.image(this.scale.width / 2, this.scale.height / 2, 'gameOver').setOrigin(0.5);
+    
+        // Restart the level on SPACE (desktop) or tap (mobile)
+        const restartLevel = () => {
+            this.scene.restart();
+        };
+    
+        this.handleLevelTransition(restartLevel);
+    }
+    
+    levelComplete() {
+        console.log("Level Complete! Moving to Level 4");
+    
+        // Stop all sounds and timers
+        this.cleanUpLevel();
+    
+        // Display Level Complete screen
+        this.add.image(this.scale.width / 2, this.scale.height / 2, 'levelComplete').setOrigin(0.5);
+    
+        // Proceed to the next level
+        const proceedToNextLevel = () => {
+            this.scene.start('Level4'); // Transition to Level 4
+        };
+    
+        this.handleLevelTransition(proceedToNextLevel);
+    }
+    
+    cleanUpLevel() {
+        // Stop music if it's playing
+        if (this.levelMusic) {
+            this.levelMusic.stop();
+            this.levelMusic.destroy();
         }
+    
+        // Remove all enemy and projectile spawn timers
+        if (this.enemySpawnTimer) this.enemySpawnTimer.remove();
+        if (this.trumpetSpawnTimer) this.trumpetSpawnTimer.remove();
+    
+        // Clear all game objects to free up memory
+        this.enemies.clear(true, true);
+        this.trumpetEnemies.clear(true, true);
+        this.projectiles.clear(true, true);
+    
+        console.log("Level cleaned up successfully.");
+    }
+    
+    handleLevelTransition(callback) {
+        // Desktop: Listen for SPACE key
+        this.input.keyboard.once('keydown-SPACE', callback);
+    
+        // Mobile: Listen for tap anywhere
+        this.input.once('pointerdown', callback);
     }
 
 }

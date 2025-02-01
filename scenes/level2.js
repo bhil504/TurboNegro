@@ -186,6 +186,9 @@ export default class Level2 extends Phaser.Scene {
             }
             startY = null;
         });
+
+        // Add Fullscreen Button
+        addFullscreenButton(this);
     }
     
     update() {
