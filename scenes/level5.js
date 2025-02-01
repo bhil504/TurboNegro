@@ -1,3 +1,6 @@
+import { addFullscreenButton } from '/utils/fullScreenUtils.js';
+import { setupMobileControls } from '/utils/mobileControls.js';
+
 export default class Level5 extends Phaser.Scene {
     constructor() {
         super({ key: 'Level5' });
@@ -18,29 +21,34 @@ export default class Level5 extends Phaser.Scene {
         this.load.image('turboNegroWalking', 'assets/Characters/Character1/TurboNegroWalking.png');
         this.load.image('turboNegroJump', 'assets/Characters/Character1/TurboNegroJump.png');
         this.load.audio('level5Music', 'assets/Audio/Explosion of Ignorance.mp3');
-        this.load.image('healthPack', 'assets/Items/HealthPack.png'); // Health pack asset
+        this.load.image('healthPack', 'assets/Items/HealthPack.png');
+
+        this.load.audio('playerHit', 'assets/Audio/SoundFX/mp3/playerHit.mp3');
+        this.load.audio('playerProjectileFire', 'assets/Audio/SoundFX/mp3/playerprojectilefire.mp3');
+        this.load.audio('beignetMinionHit', 'assets/Audio/SoundFX/mp3/beignetminionHit.mp3');
+        this.load.audio('beignetMonsterHit', 'assets/Audio/SoundFX/mp3/beignetmonsterHit.mp3');
+        this.load.audio('beignetProjectileFire', 'assets/Audio/SoundFX/mp3/beignetprojectilefire.mp3');
     }
 
     create() {
         const { width, height } = this.scale;
+        this.totalEnemiesToDefeat = 45;
+        this.totalEnemiesDefeated = 0;
+        this.updateEnemyCountUI();
 
-        this.totalEnemiesToDefeat = 45; // Set the goal for level completion
-        this.totalEnemiesDefeated = 0;  // Reset defeated enemies count
-        this.updateEnemyCountUI();      // Initialize the enemy count UI
-
-
-        // Background
         this.add.image(width / 2, height / 2, 'level5Background').setDisplaySize(width, height);
-
-        // Music
         this.levelMusic = this.sound.add('level5Music', { loop: true, volume: 0.5 });
         this.levelMusic.play();
 
-        // Player
+        this.playerHitSFX = this.sound.add('playerHit', { volume: 0.6 });
+        this.playerProjectileFireSFX = this.sound.add('playerProjectileFire', { volume: 0.6 });
+        this.beignetMinionHitSFX = this.sound.add('beignetMinionHit', { volume: 0.8 });
+        this.beignetMonsterHitSFX = this.sound.add('beignetMonsterHit', { volume: 0.8 });
+        this.beignetProjectileFireSFX = this.sound.add('beignetProjectileFire', { volume: 0.6 });
+
         this.player = this.physics.add.sprite(100, height - 150, 'turboNegroStanding1');
         this.player.setCollideWorldBounds(true);
 
-        // Animations
         this.anims.create({
             key: 'idle',
             frames: [
@@ -55,162 +63,33 @@ export default class Level5 extends Phaser.Scene {
         this.anims.create({ key: 'walk', frames: [{ key: 'turboNegroWalking' }], frameRate: 8, repeat: -1 });
         this.anims.create({ key: 'jump', frames: [{ key: 'turboNegroJump' }], frameRate: 1 });
 
-        // Input
         this.cursors = this.input.keyboard.createCursorKeys();
         this.attackKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
 
-        // Platforms
         this.platforms = this.physics.add.staticGroup();
-
-        // Add Invisible Ground
         this.ground = this.platforms.create(width / 2, height - 10, null).setDisplaySize(width, 20).setVisible(false).refreshBody();
 
-        // Add Other Platforms (Matching Level 4)
-        this.platforms.create(width / 2, height / 2 - 50, 'platform')
-            .setDisplaySize(200, 20) // Adjusted size
-            .setVisible(true)
-            .refreshBody();
-
-        this.platforms.create(50, height / 2, 'platform')
-            .setDisplaySize(200, 20) // Adjusted size
-            .setVisible(true)
-            .refreshBody();
-
-        this.platforms.create(width - 50, height / 2, 'platform')
-            .setDisplaySize(200, 20) // Adjusted size
-            .setVisible(true)
-            .refreshBody();
-
+        this.platforms.create(width / 2, height / 2 - 50, 'platform').setDisplaySize(200, 20).setVisible(true).refreshBody();
+        this.platforms.create(50, height / 2, 'platform').setDisplaySize(200, 20).setVisible(true).refreshBody();
+        this.platforms.create(width - 50, height / 2, 'platform').setDisplaySize(200, 20).setVisible(true).refreshBody();
 
         this.physics.add.collider(this.player, this.platforms);
 
-        // Groups
         this.projectiles = this.physics.add.group();
         this.beignetProjectiles = this.physics.add.group();
         this.enemies = this.physics.add.group();
 
-        // Collisions
-        this.physics.add.collider(this.enemies, this.platforms, (enemy) => {
-            if (enemy.body.velocity.x === 0) {
-                enemy.setVelocityX(Math.random() < 0.5 ? 100 : -100);
-            }
-        });
+        this.physics.add.collider(this.enemies, this.platforms);
         this.physics.add.overlap(this.player, this.beignetProjectiles, this.handleBeignetHit, null, this);
         this.physics.add.collider(this.projectiles, this.enemies, this.handleProjectileHit, null, this);
         this.physics.add.collider(this.projectiles, this.beignetProjectiles, this.handleProjectileCollision, null, this);
 
-        // Player Health
-        this.playerHealth = 10;
-        this.maxHealth = 10;
-        this.totalEnemiesDefeated = 0;
-        this.updateHealthUI();
+        this.time.addEvent({ delay: 3000, callback: this.spawnBeignetMinion, callbackScope: this, loop: true });
+        this.time.addEvent({ delay: 5000, callback: this.spawnBeignetMonster, callbackScope: this, loop: true });
 
-        // Spawning Enemies
-        this.time.addEvent({
-            delay: 3000,
-            callback: this.spawnBeignetMinion,
-            callbackScope: this,
-            loop: true,
-        });
-
-        this.time.addEvent({
-            delay: 4000,
-            callback: this.spawnBeignetMonster,
-            callbackScope: this,
-            loop: true,
-        });
-
-        // Create a group for health packs
-        this.healthPacks = this.physics.add.group();
-
-        // Add collision detection for health packs and platforms
-        this.physics.add.collider(this.healthPacks, this.platforms);
-
-        // Add overlap detection for health packs and player
-        this.physics.add.overlap(this.player, this.healthPacks, this.handlePlayerHealthPackCollision, null, this);
-
-        // Mobile Controls
-        if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-            console.log("Mobile device detected. Initializing controls...");
-            
-            if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-                // Request motion permission for iOS
-                DeviceOrientationEvent.requestPermission()
-                    .then(permissionState => {
-                        if (permissionState === 'granted') {
-                            this.enableTiltControls();
-                            console.log("Tilt controls enabled for mobile.");
-                        } else {
-                            console.warn("Motion access denied. Falling back to joystick.");
-                            this.setupJoystick(); // Fallback to joystick
-                        }
-                    })
-                    .catch(error => {
-                        console.error("Error requesting motion permission:", error);
-                        this.setupJoystick(); // Fallback to joystick
-                    });
-            } else {
-                // Non-iOS or older versions
-                this.enableTiltControls();
-                console.log("Tilt controls enabled for non-iOS.");
-            }
-        } else {
-            console.log("Desktop detected. Skipping mobile controls.");
-        }
-
-        // Tap anywhere to attack
-        this.input.on('pointerdown', (pointer) => {
-            if (!pointer.wasTouch) return; // Prevent mouse clicks from triggering on desktop
-            this.fireProjectile();
-        });
-
-        // Swipe up to jump
-        let startY = null;
-        this.input.on('pointerdown', (pointer) => {
-            startY = pointer.y; // Record starting Y position
-        });
-
-        this.input.on('pointerup', (pointer) => {
-            if (startY !== null && pointer.y < startY - 50 && this.player.body.touching.down) {
-                this.player.setVelocityY(-500); // Jump velocity
-                this.player.play('jump', true);
-            }
-            startY = null; // Reset
-        });
-
-        // Tilt controls (accelerometer)
-        if (typeof DeviceOrientationEvent !== 'undefined' && typeof DeviceOrientationEvent.requestPermission === 'function') {
-            DeviceOrientationEvent.requestPermission()
-                .then(permissionState => {
-                    if (permissionState === 'granted') {
-                        window.addEventListener('deviceorientation', (event) => {
-                            const tiltX = event.gamma; // Horizontal tilt (-90 to +90)
-                            if (tiltX < -10) {
-                                this.player.setVelocityX(-160);
-                                this.player.setFlipX(true);
-                                this.player.play('walk', true);
-                            } else if (tiltX > 10) {
-                                this.player.setVelocityX(160);
-                                this.player.setFlipX(false);
-                                this.player.play('walk', true);
-                            } else {
-                                this.player.setVelocityX(0);
-                                this.player.play('idle', true);
-                            }
-                        });
-                    }
-                })
-                .catch((error) => {
-                    console.error("Motion permissions denied:", error);
-                    this.setupJoystick(); // Fallback to joystick
-                });
-                } else {
-                    console.log("Non-iOS device or motion permissions not required.");
-                    this.setupJoystick(); // Fallback for unsupported devices
-                }
-
-                
-            }
+        addFullscreenButton(this);
+        setupMobileControls(this, this.player);
+    }
 
     spawnHealthPack() {
         const { width } = this.scale;
@@ -335,7 +214,8 @@ export default class Level5 extends Phaser.Scene {
         if (projectile) {
             projectile.body.setAllowGravity(false);
             const angle = Phaser.Math.Angle.Between(minion.x, minion.y, this.player.x, this.player.y);
-            projectile.setVelocity(Math.cos(angle) * 200, Math.sin(angle) * 200);
+            projectile.setVelocity(Math.cos(angle) * 300, Math.sin(angle) * 300);
+            this.beignetProjectileFireSFX.play();
         }
     }
 
@@ -356,6 +236,7 @@ export default class Level5 extends Phaser.Scene {
         projectile.destroy();
         this.playerHealth -= 1;
         this.updateHealthUI();
+        this.playerHitSFX.play();
         if (this.playerHealth <= 0) {
             this.gameOver();
         }
@@ -368,27 +249,23 @@ export default class Level5 extends Phaser.Scene {
 
     handleProjectileHit(projectile, enemy) {
         projectile.destroy();
-    
-        if (enemy.texture.key === 'beignetMonster') {
-            enemy.health -= 1;
-            if (enemy.health <= 0) {
-                enemy.destroy();
-                this.totalEnemiesDefeated++;
-            }
-        } else {
-            enemy.destroy();
-            this.totalEnemiesDefeated++;
-        }
-    
-        this.updateEnemyCountUI(); // Update the UI
-    
+        enemy.destroy();
+        this.totalEnemiesDefeated++;
+        this.updateEnemyCountUI();
+
         // Spawn a health pack every 12 enemies defeated
         if (this.totalEnemiesDefeated % 12 === 0) {
             this.spawnHealthPack();
             console.log("Health pack spawned after defeating 12 enemies.");
         }
     
-        this.checkLevelCompletion(); // Check if the level is complete
+        if (enemy.texture.key === 'beignetMinion') {
+            this.beignetMinionHitSFX.play();
+        } else if (enemy.texture.key === 'beignetMonster') {
+            this.beignetMonsterHitSFX.play();
+        } else {
+            console.warn("No sound effect assigned for:", enemy.texture.key);
+        }
     }
 
     handleMonsterCollision(player, monster) {
