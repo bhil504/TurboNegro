@@ -90,7 +90,7 @@ export default class Level3 extends Phaser.Scene {
         this.physics.add.collider(this.player, this.platforms);
         this.player.setDepth(1);
     
-        // Player animations
+        // Create animations
         this.anims.create({
             key: 'idle',
             frames: [
@@ -103,6 +103,7 @@ export default class Level3 extends Phaser.Scene {
             repeat: -1,
         });
         this.anims.create({ key: 'walk', frames: [{ key: 'turboNegroWalking' }], frameRate: 8, repeat: -1 });
+        this.anims.create({ key: 'jump', frames: [{ key: 'turboNegroJump' }], frameRate: 1 });
     
         // Input setup
         this.cursors = this.input.keyboard.createCursorKeys();
