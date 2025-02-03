@@ -6,6 +6,16 @@ export default class Level5 extends Phaser.Scene {
         super({ key: 'Level5' });
     }
 
+    updateEnemyCountUI() {
+        const enemiesLeft = this.totalEnemiesToDefeat - this.totalEnemiesDefeated;
+        document.getElementById('enemy-count').innerText = `Enemies Left: ${enemiesLeft}`;
+    }
+
+    updateHealthUI() {
+        const healthPercentage = (this.playerHealth / this.maxHealth) * 100;
+        document.getElementById('health-bar-inner').style.width = `${healthPercentage}%`;
+    }
+
     preload() {
         console.log("Preloading assets for Level 5...");
         this.load.image('level5Background', 'assets/Levels/BackGrounds/Level5.webp');
@@ -94,33 +104,6 @@ export default class Level5 extends Phaser.Scene {
         addFullscreenButton(this);
         setupMobileControls(this, this.player);
     }
-    
-
-    spawnHealthPack() {
-        const { width } = this.scale;
-        const x = Phaser.Math.Between(50, width - 50); // Random X position
-        const healthPack = this.healthPacks.create(x, 50, 'healthPack'); // Spawn at the top of the screen
-        healthPack.setBounce(0.5); // Add bounce for realism
-        healthPack.setCollideWorldBounds(true); // Enable collision with world bounds
-        console.log("Health pack spawned at:", x);
-    }
-
-    handlePlayerHealthPackCollision(player, healthPack) {
-        if (healthPack.active) {
-            this.playerHealth = Math.min(this.playerHealth + 5, this.maxHealth);
-            this.updateHealthUI();
-            console.log("Health pack collected! Health:", this.playerHealth);
-    
-            this.time.delayedCall(100, () => {
-                healthPack.destroy();
-            }); // Delay destruction to prevent overlapping issues
-        }
-    }    
-
-    updateHealthUI() {
-        const healthPercentage = (this.playerHealth / this.maxHealth) * 100;
-        document.getElementById('health-bar-inner').style.width = `${healthPercentage}%`;
-    }
 
     update() {
         if (!this.player || !this.cursors) return;
@@ -187,9 +170,23 @@ export default class Level5 extends Phaser.Scene {
         }
     }
 
-    updateEnemyCountUI() {
-        const enemiesLeft = this.totalEnemiesToDefeat - this.totalEnemiesDefeated;
-        document.getElementById('enemy-count').innerText = `Enemies Left: ${enemiesLeft}`;
+    shootBeignet(minion) {
+        const projectile = this.beignetProjectiles.create(minion.x, minion.y, 'beignetProjectile');
+        if (projectile) {
+            projectile.body.setAllowGravity(false);
+            const angle = Phaser.Math.Angle.Between(minion.x, minion.y, this.player.x, this.player.y);
+            projectile.setVelocity(Math.cos(angle) * 300, Math.sin(angle) * 300);
+            this.beignetProjectileFireSFX.play();
+        }
+    }
+
+    spawnHealthPack() {
+        const { width } = this.scale;
+        const x = Phaser.Math.Between(50, width - 50); // Random X position
+        const healthPack = this.healthPacks.create(x, 50, 'healthPack'); // Spawn at the top of the screen
+        healthPack.setBounce(0.5); // Add bounce for realism
+        healthPack.setCollideWorldBounds(true); // Enable collision with world bounds
+        console.log("Health pack spawned at:", x);
     }
     
     spawnHealthPack() {
@@ -226,16 +223,6 @@ export default class Level5 extends Phaser.Scene {
         });
     }  
 
-    shootBeignet(minion) {
-        const projectile = this.beignetProjectiles.create(minion.x, minion.y, 'beignetProjectile');
-        if (projectile) {
-            projectile.body.setAllowGravity(false);
-            const angle = Phaser.Math.Angle.Between(minion.x, minion.y, this.player.x, this.player.y);
-            projectile.setVelocity(Math.cos(angle) * 300, Math.sin(angle) * 300);
-            this.beignetProjectileFireSFX.play();
-        }
-    }
-
     spawnBeignetMonster() {
         const { width } = this.scale;
         const x = Phaser.Math.Between(50, width - 50);
@@ -259,29 +246,48 @@ export default class Level5 extends Phaser.Scene {
         }
     }
 
-    handleProjectileCollision(playerProjectile, beignetProjectile) {
-        playerProjectile.destroy();
-        beignetProjectile.destroy();
-    }
-
     handleProjectileHit(projectile, enemy) {
         projectile.destroy();
-        enemy.destroy();
-        this.totalEnemiesDefeated++;
-        this.updateEnemyCountUI();
-
+    
+        if (enemy.texture.key === 'beignetMonster') {
+            enemy.health -= 1;
+            if (enemy.health <= 0) {
+                enemy.destroy();
+                this.totalEnemiesDefeated++;
+            }
+        } else {
+            enemy.destroy();
+            this.totalEnemiesDefeated++;
+        }
+    
+        this.updateEnemyCountUI(); // Update the UI
+    
         // Spawn a health pack every 12 enemies defeated
         if (this.totalEnemiesDefeated % 12 === 0) {
             this.spawnHealthPack();
             console.log("Health pack spawned after defeating 12 enemies.");
         }
-    
+
         if (enemy.texture.key === 'beignetMinion') {
             this.beignetMinionHitSFX.play();
         } else if (enemy.texture.key === 'beignetMonster') {
             this.beignetMonsterHitSFX.play();
         } else {
             console.warn("No sound effect assigned for:", enemy.texture.key);
+        }
+    
+        this.checkLevelCompletion(); // Check if the level is complete
+    }
+
+    handlePlayerHealthPackCollision(player, healthPack) {
+        if (healthPack.active) {
+            this.playerHealth = Math.min(this.playerHealth + 5, this.maxHealth);
+            this.updateHealthUI();
+            console.log("Health pack collected! Health:", this.playerHealth);
+    
+            this.time.delayedCall(100, () => {
+                healthPack.destroy();
+            }); // Delay destruction to prevent overlapping issues
         }
     }
 
@@ -294,6 +300,11 @@ export default class Level5 extends Phaser.Scene {
                 this.gameOver();
             }
         }
+    }
+
+    handleProjectileCollision(playerProjectile, beignetProjectile) {
+        playerProjectile.destroy();
+        beignetProjectile.destroy();
     }
 
     checkLevelCompletion() {
