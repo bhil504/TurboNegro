@@ -45,6 +45,11 @@ export default class Level5 extends Phaser.Scene {
         this.totalEnemiesToDefeat = 45;
         this.totalEnemiesDefeated = 0;
         this.updateEnemyCountUI();
+
+        this.playerHealth = 10;  // Or whatever the starting health should be
+        this.maxHealth = 10;      // Set max health
+        this.updateHealthUI();
+
     
         this.add.image(width / 2, height / 2, 'level5Background').setDisplaySize(width, height);
         this.levelMusic = this.sound.add('level5Music', { loop: true, volume: 0.5 });
@@ -282,14 +287,12 @@ export default class Level5 extends Phaser.Scene {
     handlePlayerHealthPackCollision(player, healthPack) {
         if (healthPack.active) {
             this.playerHealth = Math.min(this.playerHealth + 5, this.maxHealth);
-            this.updateHealthUI();
+            this.updateHealthUI(); // Ensure UI is updated
             console.log("Health pack collected! Health:", this.playerHealth);
-    
-            this.time.delayedCall(100, () => {
-                healthPack.destroy();
-            }); // Delay destruction to prevent overlapping issues
+            
+            healthPack.destroy(); // Immediately remove health pack to avoid duplicate collisions
         }
-    }
+    }    
 
     handleMonsterCollision(player, monster) {
         if (monster.active) {
