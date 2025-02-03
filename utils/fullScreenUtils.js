@@ -1,5 +1,6 @@
 export function addFullscreenButton(scene) {
     const fullscreenElement = document.getElementById('fullscreen');
+
     if (!fullscreenElement) {
         console.error("⚠️ Fullscreen element not found!");
         return;
@@ -11,9 +12,10 @@ export function addFullscreenButton(scene) {
         console.log("📱 Mobile detected. Adding fullscreen button.");
         const mobileFullscreenButton = document.getElementById('mobile-fullscreen-button');
         if (mobileFullscreenButton) {
-            mobileFullscreenButton.addEventListener('click', () => toggleFullscreen(fullscreenElement));
-        } else {
-            console.warn("⚠️ Mobile fullscreen button not found.");
+            mobileFullscreenButton.addEventListener('click', () => {
+                exitIframeFullscreen(); // Exit iframe fullscreen first
+                setTimeout(() => toggleFullscreen(fullscreenElement), 300);
+            });
         }
     } else {
         console.log("🖥️ Desktop detected. Adding fullscreen button.");
@@ -25,7 +27,10 @@ export function addFullscreenButton(scene) {
             borderRadius: '5px',
         }).setInteractive();
 
-        fullscreenButton.on('pointerdown', () => toggleFullscreen(fullscreenElement));
+        fullscreenButton.on('pointerdown', () => {
+            exitIframeFullscreen(); // Exit iframe fullscreen first
+            setTimeout(() => toggleFullscreen(fullscreenElement), 300);
+        });
 
         return fullscreenButton;
     }
@@ -40,5 +45,12 @@ function toggleFullscreen(element) {
         }
     } else {
         document.exitFullscreen ? document.exitFullscreen() : document.webkitExitFullscreen();
+    }
+}
+
+function exitIframeFullscreen() {
+    if (document.fullscreenElement || document.webkitFullscreenElement) {
+        document.exitFullscreen ? document.exitFullscreen() : document.webkitExitFullscreen();
+        console.log("🔄 Exiting iframe fullscreen before game fullscreen...");
     }
 }
