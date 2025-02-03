@@ -1,5 +1,6 @@
 export function addFullscreenButton(scene) {
     const fullscreenElement = document.getElementById('fullscreen');
+    const gameIframe = document.getElementById('game-iframe');
 
     if (!fullscreenElement) {
         console.error("⚠️ Fullscreen element not found!");
@@ -13,8 +14,7 @@ export function addFullscreenButton(scene) {
         const mobileFullscreenButton = document.getElementById('mobile-fullscreen-button');
         if (mobileFullscreenButton) {
             mobileFullscreenButton.addEventListener('click', () => {
-                exitIframeFullscreen(); // Exit iframe fullscreen first
-                setTimeout(() => toggleFullscreen(fullscreenElement), 300);
+                exitIframeFullscreen(() => toggleFullscreen(fullscreenElement));
             });
         }
     } else {
@@ -28,11 +28,25 @@ export function addFullscreenButton(scene) {
         }).setInteractive();
 
         fullscreenButton.on('pointerdown', () => {
-            exitIframeFullscreen(); // Exit iframe fullscreen first
-            setTimeout(() => toggleFullscreen(fullscreenElement), 300);
+            exitIframeFullscreen(() => toggleFullscreen(fullscreenElement));
         });
 
         return fullscreenButton;
+    }
+}
+
+function exitIframeFullscreen(callback) {
+    if (document.fullscreenElement === document.getElementById('game-iframe') ||
+        document.webkitFullscreenElement === document.getElementById('game-iframe')) {
+        console.log("🔄 Exiting iframe fullscreen before entering game fullscreen...");
+        document.exitFullscreen().then(() => {
+            setTimeout(callback, 300);
+        }).catch((err) => {
+            console.error("❌ Error exiting iframe fullscreen:", err);
+            callback(); // Proceed even if exiting fails
+        });
+    } else {
+        callback();
     }
 }
 
@@ -44,13 +58,6 @@ function toggleFullscreen(element) {
             element.webkitRequestFullscreen();
         }
     } else {
-        document.exitFullscreen ? document.exitFullscreen() : document.webkitExitFullscreen();
-    }
-}
-
-function exitIframeFullscreen() {
-    if (document.fullscreenElement || document.webkitFullscreenElement) {
-        document.exitFullscreen ? document.exitFullscreen() : document.webkitExitFullscreen();
-        console.log("🔄 Exiting iframe fullscreen before game fullscreen...");
+        document.exitFullscreen();
     }
 }
