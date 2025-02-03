@@ -396,7 +396,7 @@
             <div id="title">
                 <h1>Turbo Negro!</h1>
             </div>
-            <div id="warning">Warning!<br>This game is in development</div>
+            <div id="warning">Warning!<br>This game is in development<br>Meaning,<br>game may glitch or pause due to updates.<br>Updates occur nightly and multiple times</div>
 
             <div id="fullscreen">
                 <div id="health-bar-container">
@@ -509,67 +509,16 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.55.2/phaser.min.js"></script>
 
     <script type="module">
-        import StartMenu from './startMenu.js';
+        import StartMenu from './scenes/startMenu.js';
         import Level1 from './scenes/level1.js';
         import Level2 from './scenes/level2.js';
         import Level3 from './scenes/level3.js';
         import Level4 from './scenes/level4.js';
         import Level5 from './scenes/level5.js';
         import BossFight from './scenes/bossFight.js';
-
-        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-        let controlMode = 'joystick'; // Default to joystick
-
-        // Hide joystick and attack button on non-mobile devices
-        if (!isMobile) {
-            document.getElementById('joystick-area').style.display = 'none';
-            document.getElementById('attack-button').style.display = 'none';
-        }
-
-
-        // Initialize Tilt Controls
-        function initTiltControl() {
-            const handleTilt = (event) => {
-                if (event.gamma !== null) {
-                    const sensitivity = 2;
-                    const clampedGamma = Math.max(-30, Math.min(30, event.gamma));
-                    const velocityX = clampedGamma * sensitivity;
-
-                    if (typeof player !== 'undefined' && player.setVelocityX) {
-                        player.setVelocityX(velocityX);
-                    }
-                }
-            };
-            window.addEventListener('deviceorientation', handleTilt);
-        }
-
-        function initializeControls() {
-            if (isMobile && /iPhone/i.test(navigator.userAgent)) {
-                const enableTilt = confirm(
-                    "This game supports tilt controls for iPhone. Enable 'Motion & Orientation Access' in Safari settings. Use tilt controls?"
-                );
-                if (enableTilt && typeof DeviceMotionEvent !== 'undefined' && DeviceMotionEvent.requestPermission) {
-                    DeviceMotionEvent.requestPermission()
-                        .then((response) => {
-                            if (response === 'granted') {
-                                console.log('Tilt controls enabled!');
-                                controlMode = 'tilt';
-                                initTiltControl();
-                            } else {
-                                alert('Tilt controls denied. Using joystick instead.');
-                            }
-                        })
-                        .catch((err) => {
-                            console.error('Error enabling tilt:', err);
-                            alert('Tilt controls unavailable. Using joystick.');
-                        });
-                } else {
-                    alert('Tilt controls not supported. Using joystick.');
-                }
-            }
-        }
-
-        document.addEventListener('DOMContentLoaded', initializeControls);
+        import { setupJoystick } from './utils/joystickUtils.js';
+        import { enableTiltControls } from './utils/tiltUtils.js';
+        import { addFullscreenButton } from './utils/fullScreenUtils.js';
 
         const config = {
             type: Phaser.AUTO,
@@ -588,7 +537,7 @@
         };
 
         const game = new Phaser.Game(config);
-        if (controlMode === 'tilt') initTiltControl();
+
     </script>
 
     <div id="bhilliondollar">

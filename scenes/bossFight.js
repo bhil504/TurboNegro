@@ -17,7 +17,7 @@ export default class BossFight extends Phaser.Scene {
         this.load.image('turboNegroWalking', 'assets/Characters/Character1/TurboNegroWalking.png');
         this.load.image('healthPack', 'assets/Items/HealthPack.png');
         this.load.image('fallingHazard', 'assets/Levels/Platforms/fallingHazard.png');
-        this.load.audio('bossMusic', 'assets/Audio/SmoothDaggers.mp3');
+        this.load.audio('bossMusic', 'assets/Audio/LevelMusic/mp3/SmoothDaggers.mp3');
         this.load.audio('bossHit', 'assets/Audio/SoundFX/BossHit.mp3');
         this.load.audio('playerHit', 'assets/Audio/SoundFX/PlayerHit.mp3');
     }
