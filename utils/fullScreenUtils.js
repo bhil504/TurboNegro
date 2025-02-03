@@ -19,7 +19,7 @@ export function addFullscreenButton(scene) {
         }
     } else {
         console.log("🖥️ Desktop detected. Adding fullscreen button.");
-        const fullscreenButton = scene.add.text(20, 20, '[ game fullscreen ]', {
+        const fullscreenButton = scene.add.text(20, 20, '[ fullscreen ]', {
             fontSize: '20px',
             fill: '#ffffff',
             backgroundColor: '#000000',
