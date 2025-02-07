@@ -531,6 +531,49 @@
             document.getElementById('attack-button').style.display = 'none';
         }
 
+        // Initialize Tilt Controls
+        function initTiltControl() {
+            const handleTilt = (event) => {
+                if (event.gamma !== null) {
+                    const sensitivity = 2;
+                    const clampedGamma = Math.max(-30, Math.min(30, event.gamma));
+                    const velocityX = clampedGamma * sensitivity;
+
+                    if (typeof player !== 'undefined' && player.setVelocityX) {
+                        player.setVelocityX(velocityX);
+                    }
+                }
+            };
+            window.addEventListener('deviceorientation', handleTilt);
+        }
+
+        function initializeControls() {
+            if (isMobile && /iPhone/i.test(navigator.userAgent)) {
+                const enableTilt = confirm(
+                    "This game supports tilt controls for iPhone. Enable 'Motion & Orientation Access' in Safari settings. Use tilt controls?"
+                );
+                if (enableTilt && typeof DeviceMotionEvent !== 'undefined' && DeviceMotionEvent.requestPermission) {
+                    DeviceMotionEvent.requestPermission()
+                        .then((response) => {
+                            if (response === 'granted') {
+                                console.log('Tilt controls enabled!');
+                                controlMode = 'tilt';
+                                initTiltControl();
+                            } else {
+                                alert('Tilt controls denied. Using joystick instead.');
+                            }
+                        })
+                        .catch((err) => {
+                            console.error('Error enabling tilt:', err);
+                            alert('Tilt controls unavailable. Using joystick.');
+                        });
+                } else {
+                    alert('Tilt controls not supported. Using joystick.');
+                }
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', initializeControls);
 
        
 
