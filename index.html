@@ -8,7 +8,12 @@
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-GFC2WF2CGJ"></script>
 
+    <link rel="apple-touch-icon" href="assets/Logo/Turbo Negro.png">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="Turbo Negro">
     
+
 
     <script>
     window.dataLayer = window.dataLayer || [];
@@ -400,18 +405,78 @@
 
     </style>
 </head>
+<script>
+    window.addEventListener("load", function () {
+        setTimeout(() => { // Delay execution to ensure DOM elements are loaded
+            const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
+            const isInStandaloneMode = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone;
+            const iosPrompt = document.getElementById("ios-prompt");
+    
+            if (isIOS && !isInStandaloneMode && !localStorage.getItem("iosPromptDismissed")) {
+                if (iosPrompt) {
+                    iosPrompt.style.display = "block";
+    
+                    // Auto-hide after 15 seconds
+                    setTimeout(() => {
+                        iosPrompt.style.display = "none";
+                    }, 15000);
+                }
+            }
+    
+            // Add event listener to dismiss button
+            const dismissButton = document.getElementById("dismiss-ios-prompt");
+            if (dismissButton) {
+                dismissButton.addEventListener("click", function () {
+                    localStorage.setItem("iosPromptDismissed", "true");
+                    iosPrompt.style.display = "none";
+                });
+            }
+        }, 500); // Small delay ensures elements exist
+    });
+    </script>
+    
+    
+    <div id="ios-prompt" style="
+    display: none;
+    position: fixed;
+    bottom: 15px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    padding: 12px 16px;
+    border-radius: 10px;
+    font-size: 16px;
+    text-align: center;
+    z-index: 9999;
+    width: 90%;
+    max-width: 350px;
+    box-shadow: 0px 4px 8px rgba(0, 0, 0, 0.4);
+">
+    <p><strong>Add Turbo Negro to your home screen for fullscreen mode!</strong></p>
+    <p>Tap the <strong>Share</strong> button <img src="assets/share-icon.png" alt="Share" width="16"> and then <strong>Add to Home Screen</strong></p>
+    <button id="dismiss-ios-prompt" style="
+        background: red;
+        color: white;
+        border: none;
+        padding: 6px 12px;
+        margin-top: 8px;
+        border-radius: 5px;
+        font-size: 14px;
+        cursor: pointer;
+    ">Dismiss</button>
+</div>
+
+    
 <body>
 
     <div id="main-container">
-        
         <!-- UI and Game Container -->
         <div id="ui-container">
-
             <div id="title">
                 <h1>Turbo Negro! Saves The French Quarter!</h1>
             </div>
             <div id="warning">Warning!<br>This game is in development<br>Meaning,<br>game may glitch or pause due to updates.<br>Updates occur nightly</div>
-
             <div id="fullscreen">
                 <div id="health-bar-container">
                     Health: 
@@ -446,7 +511,6 @@
                     <button id="attack-button">Attack</button>
                 </div>
             </div>
-                
                 <!-- Game Instructions -->
                 <div id="instructions"> 
                     <h2>Game Instructions:</h2>
@@ -528,9 +592,10 @@
                         <p><strong>Behavior:</strong><br>Adjusts attack patterns as its health decreases.</p>
                     </div>
                 </div>
-                
         </div>
     </div>
+
+   
 
     <!-- Phaser Library -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/phaser/3.55.2/phaser.min.js"></script>
@@ -599,8 +664,6 @@
         }
 
         document.addEventListener('DOMContentLoaded', initializeControls);
-
-       
 
         const config = {
             type: Phaser.AUTO,
