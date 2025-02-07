@@ -470,7 +470,30 @@
         }
     });
 </script> 
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+        const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
         
+        if (isIOS) {
+            document.getElementById("ios-share-button").style.display = "block"; // Show button for iOS users
+        }
+    
+        document.getElementById("ios-share-button").addEventListener("click", function () {
+            if (navigator.share) {
+                navigator.share({
+                    title: "Turbo Negro - Saves The French Quarter!",
+                    text: "Play Turbo Negro now! Add it to your home screen for fullscreen mode.",
+                    url: window.location.href
+                })
+                .then(() => console.log("Shared successfully"))
+                .catch((error) => console.log("Error sharing:", error));
+            } else {
+                alert("Sharing is not supported on this browser. For the best experience, use Safari to add Turbo Negro to your home screen.");
+            }
+        });
+    });
+</script>
     <div id="ios-prompt">
         <p><strong>Add Turbo Negro to your home screen for fullscreen mode!</strong></p>
         <p>Tap the <strong>Share</strong> button <img src="assets/apple-share-icon.png" alt="Share"> and then <strong>Add to Home Screen</strong></p>
@@ -492,6 +515,21 @@
                     <div id="health-bar">
                         <div id="health-bar-inner"></div>
                     </div>
+                    <!-- Add this button to your UI for iOS users -->
+                    <button id="ios-share-button" style="
+                    display: none; /* Hidden by default */
+                    width: 120px;
+                    height: 40px;
+                    font-size: 14px;
+                    color: white;
+                    background-color: #333;
+                    border: 2px solid white;
+                    border-radius: 5px;
+                    text-align: center;
+                    padding: 5px;
+                    margin: 5px;
+                    cursor: pointer;
+                    ">Share Game</button>
                     <div id="enemy-count">Enemies Left: 0</div>
                 </div>
                 <div id="game-container"></div>
