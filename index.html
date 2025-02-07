@@ -439,36 +439,31 @@
     </style>
 </head>
 <script>
-    window.addEventListener("load", function () {
-        setTimeout(() => {
-            const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
-            const isInStandaloneMode = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone;
-            const iosPrompt = document.getElementById("ios-prompt");
+    document.addEventListener("DOMContentLoaded", function () {
+    function isInStandaloneMode() {
+        return window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone;
+    }
 
-            if (isIOS && !isInStandaloneMode && !localStorage.getItem("iosPromptDismissed")) {
-                iosPrompt.style.display = "block";
-                setTimeout(() => { iosPrompt.style.display = "none"; }, 15000);
-            }
+    if (isInStandaloneMode()) {
+        // Adjust game container for iOS fullscreen
+        document.body.style.height = "100vh";
+        document.body.style.overflow = "hidden";
 
-            document.getElementById("dismiss-ios-prompt").addEventListener("click", function () {
-                localStorage.setItem("iosPromptDismissed", "true");
-                iosPrompt.style.display = "none";
-            });
-        }, 500);
-    });
+        const gameContainer = document.getElementById("fullscreen");
+        gameContainer.style.position = "absolute";
+        gameContainer.style.top = "0";
+        gameContainer.style.left = "0";
+        gameContainer.style.width = "100vw";
+        gameContainer.style.height = "100vh";
 
-    document.getElementById("mobile-fullscreen-button").addEventListener("click", function () {
-        const gameContainer = document.getElementById("game-container");
-        if (!document.fullscreenElement) {
-            if (gameContainer.requestFullscreen) {
-                gameContainer.requestFullscreen();
-            } else if (gameContainer.webkitRequestFullscreen) {
-                gameContainer.webkitRequestFullscreen();
-            }
-        } else {
-            document.exitFullscreen();
+        // Hide fullscreen button since iOS standalone ignores requestFullscreen()
+        const fullscreenButton = document.getElementById("mobile-fullscreen-button");
+        if (fullscreenButton) {
+            fullscreenButton.style.display = "none";
         }
-    });
+    }
+});
+
 </script> 
 
 <script>
