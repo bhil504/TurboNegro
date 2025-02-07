@@ -739,31 +739,47 @@
         </button>
     </div>
     <script>
-        window.onload = function () {
-            const gameHeight = document.body.scrollHeight; // Calculate the total height of the game
-            window.parent.postMessage({ height: gameHeight }, "*"); // Send the height to the parent site
-        };
-        window.addEventListener('resize', () => {
-            const fullscreenElement = document.getElementById('fullscreen');
-            const isLandscape = window.innerWidth > window.innerHeight;
-
-            if (isLandscape) {
-                fullscreenElement.style.justifyContent = 'center';
-                fullscreenElement.style.alignItems = 'center';
-            } else {
-                fullscreenElement.style.justifyContent = 'flex-start'; // Adjust for portrait mode
+        document.addEventListener("DOMContentLoaded", function () {
+            function isInStandaloneMode() {
+                return window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone;
             }
+    
+            function adjustFullscreen() {
+                const gameContainer = document.getElementById("fullscreen");
+                const isLandscape = window.innerWidth > window.innerHeight;
+    
+                if (isInStandaloneMode()) {
+                    // Ensure full height in iOS standalone mode
+                    document.body.style.height = "100vh";
+                    document.body.style.overflow = "hidden";
+                    gameContainer.style.position = "absolute";
+                    gameContainer.style.top = "0";
+                    gameContainer.style.left = "0";
+                    gameContainer.style.width = "100vw";
+                    gameContainer.style.height = "100vh";
+    
+                    // Hide the fullscreen button on iOS standalone mode
+                    const fullscreenButton = document.getElementById("mobile-fullscreen-button");
+                    if (fullscreenButton) {
+                        fullscreenButton.style.display = "none";
+                    }
+                }
+    
+                // Adjust fullscreen container alignment based on orientation
+                if (isLandscape) {
+                    gameContainer.style.justifyContent = "center";
+                    gameContainer.style.alignItems = "center";
+                } else {
+                    gameContainer.style.justifyContent = "flex-start"; // Adjust for portrait mode
+                }
+            }
+    
+            // Run adjustments on load and window resize
+            window.onload = adjustFullscreen;
+            window.addEventListener("resize", adjustFullscreen);
         });
-
-        // Initial check
-        const isLandscape = window.innerWidth > window.innerHeight;
-        if (isLandscape) {
-            const fullscreenElement = document.getElementById('fullscreen');
-            fullscreenElement.style.justifyContent = 'center';
-            fullscreenElement.style.alignItems = 'center';
-        }
-
     </script>
+    
 
 </body>
 
