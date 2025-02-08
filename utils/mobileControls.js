@@ -51,15 +51,34 @@ function initializeTiltControls(scene, player) {
 function initializeJoystick(scene, player) {
     setupJoystick(scene, player);
 
+    // Ensure joystick and tilt don't override each other
     scene.events.on('update', () => {
-        if (!player || !player.body) return; // Prevent applying forces before player exists
-        
-        // Ensure both tilt and joystick work together correctly
-        applyJoystickForce(scene, player);
+        if (player) {
+            if (scene.isUsingTilt) {
+                // Tilt controls take priority
+                player.setVelocityX(scene.smoothedTilt * 160);
+            } else {
+                // Use joystick if tilt isn't active
+                applyJoystickForce(scene, player);
+            }
+
+            // Handle animations based on movement
+            if (player.body.touching.down) {
+                if (player.body.velocity.x > 0) {
+                    player.setFlipX(false);
+                    player.anims.play('walk', true);
+                } else if (player.body.velocity.x < 0) {
+                    player.setFlipX(true);
+                    player.anims.play('walk', true);
+                } else {
+                    player.anims.play('idle', true);
+                }
+            } else {
+                player.anims.play('jump', true);
+            }
+        }
     });
 }
-
-
 
 function setupSwipeJump(scene, player) {
     let startY = null;
