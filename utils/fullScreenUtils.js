@@ -64,7 +64,6 @@ function toggleFullscreen(element) {
 
 function adjustScreenForLandscapeFullscreen() {
     const isLandscape = window.innerWidth > window.innerHeight;
-    const isFullscreen = document.fullscreenElement || document.webkitFullscreenElement;
     const isStandalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone;
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     const fullscreenElement = document.getElementById('fullscreen');
@@ -72,25 +71,16 @@ function adjustScreenForLandscapeFullscreen() {
     if (!fullscreenElement) return;
 
     if (isMobile && isStandalone) {
-        if (isLandscape) {
-            console.log("📱 Adjusting for landscape fullscreen...");
-            fullscreenElement.style.position = "absolute";
-            fullscreenElement.style.top = "0";
-            fullscreenElement.style.left = "0";
-            fullscreenElement.style.width = "100vw";
-            fullscreenElement.style.height = "100vh";
-            fullscreenElement.style.justifyContent = "center";
-            fullscreenElement.style.alignItems = "center";
-        } else {
-            console.log("📱 Restoring portrait mode...");
-            fullscreenElement.style.position = "relative";
-            fullscreenElement.style.width = "100%";
-            fullscreenElement.style.height = "100%";
-            fullscreenElement.style.justifyContent = "flex-start";
-            fullscreenElement.style.alignItems = "flex-start";
-        }
-    } else if (!isFullscreen) {
-        console.log("🔄 Exiting fullscreen mode, resetting position...");
+        console.log("🚀 Forcing fullscreen in standalone mode...");
+        fullscreenElement.style.position = "absolute";
+        fullscreenElement.style.top = "0";
+        fullscreenElement.style.left = "0";
+        fullscreenElement.style.width = "100vw";
+        fullscreenElement.style.height = "100vh";
+        fullscreenElement.style.justifyContent = "center";
+        fullscreenElement.style.alignItems = "center";
+    } else {
+        console.log("🔄 Exiting standalone fullscreen mode...");
         fullscreenElement.style.position = "relative";
         fullscreenElement.style.width = "100%";
         fullscreenElement.style.height = "auto";
