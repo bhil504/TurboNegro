@@ -89,11 +89,12 @@ function adjustScreenForLandscapeFullscreen() {
         fullscreenElement.style.overflow = "hidden";
     } else if (isMobile && isLandscape) {
         console.log("📱 Adjusting fullscreen for mobile landscape mode...");
+
+        // Expands the game slightly to remove empty spaces
         fullscreenElement.style.position = "fixed";
         fullscreenElement.style.top = "0";
-        fullscreenElement.style.left = "50%";
-        fullscreenElement.style.transform = "translateX(-50%)";
-        fullscreenElement.style.width = "100vw";
+        fullscreenElement.style.left = "0"; // Align left
+        fullscreenElement.style.width = "120vw"; // Extend width beyond viewport to remove black bars
         fullscreenElement.style.height = "100vh";
         fullscreenElement.style.display = "flex";
         fullscreenElement.style.justifyContent = "center";
