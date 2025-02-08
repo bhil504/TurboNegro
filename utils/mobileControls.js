@@ -67,12 +67,14 @@ function initializeJoystick(scene, player) {
             player.setVelocityY(-500);
             player.play('jump', true);
         } else if ((movingLeft || movingRight) && onGround) {
-            if (!player.anims.isPlaying || player.anims.currentAnim?.key !== 'walk') {
+            if (!player.anims.currentAnim || player.anims.currentAnim.key !== 'walk') {
+                console.log("🚶 Joystick walk animation triggered");
                 player.play('walk', true);
             }
         } else if (onGround) {
-            if (!movingLeft && !movingRight) { // Ensure idle only plays when fully stopped
-                if (!player.anims.isPlaying || player.anims.currentAnim?.key !== 'idle') {
+            if (!movingLeft && !movingRight) { 
+                if (!player.anims.currentAnim || player.anims.currentAnim.key !== 'idle') {
+                    console.log("🛑 Joystick idle animation triggered");
                     player.play('idle', true);
                 }
             }
