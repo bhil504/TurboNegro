@@ -92,13 +92,13 @@ function adjustScreenForLandscapeFullscreen() {
         fullscreenElement.style.alignItems = "center";
         fullscreenElement.style.overflow = "hidden";
 
-        // **Ensure game container takes most of the screen**
+        // **Reduce game screen height by 25%**
         gameContainer.style.width = "100vw";
-        gameContainer.style.height = "80vh";  // Increased height so full screen is visible
+        gameContainer.style.height = "60vh";  // Reduced from 80vh
 
-        // **Move onscreen controls BELOW the game**
+        // **Keep onscreen controls BELOW the game**
         onscreenControls.style.width = "100vw";
-        onscreenControls.style.height = "20vh";  // Adjust height to fit properly
+        onscreenControls.style.height = "40vh";  // Increased space for controls
         onscreenControls.style.position = "absolute";
         onscreenControls.style.bottom = "0";  
     } else {
@@ -117,7 +117,6 @@ function adjustScreenForLandscapeFullscreen() {
         onscreenControls.style.position = "relative";
     }
 }
-
 
 // Listen for fullscreen and orientation changes
 document.addEventListener("fullscreenchange", adjustScreenForLandscapeFullscreen);
