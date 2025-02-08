@@ -14,7 +14,17 @@ export function setupMobileControls(scene, player) {
 
     // Add attack button functionality
     setupAttackButton(scene, player);
+
+    // Ensure the joystick and attack button don't interfere
+    document.getElementById("joystick-area").addEventListener("touchstart", (event) => {
+        event.stopPropagation(); // Prevent touches from affecting the attack button
+    });
+
+    document.getElementById("attack-button").addEventListener("touchstart", (event) => {
+        event.stopPropagation(); // Prevent attack button from interfering with movement
+    });
 }
+
 
 function initializeTiltControls(scene, player) {
     if (window.DeviceOrientationEvent) {
