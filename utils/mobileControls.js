@@ -2,10 +2,7 @@ import { setupJoystick, applyJoystickForce } from './joystickUtils.js';
 import { enableTiltControls } from './tiltUtils.js';
 
 export function setupMobileControls(scene, player) {
-    scene.isUsingJoystick = false;
-    scene.isUsingTilt = false;
-    
-    // Initialize tilt and joystick controls
+    // Initialize tilt and joystick controls together
     initializeTiltControls(scene, player);
     initializeJoystick(scene, player);
 
@@ -26,55 +23,41 @@ function initializeTiltControls(scene, player) {
             DeviceOrientationEvent.requestPermission()
                 .then(permissionState => {
                     if (permissionState === 'granted') {
-                        scene.isUsingTilt = true;
                         enableTiltControls(scene, player);
                     } else {
-                        console.warn("Motion access denied. Joystick will be used instead.");
-                        scene.isUsingTilt = false;
+                        console.warn("Motion access denied. Enabling joystick as fallback.");
                     }
                 })
                 .catch(error => {
                     console.error("Error requesting motion permission:", error);
-                    scene.isUsingTilt = false;
                 });
         } else {
             // Non-iOS or older versions
-            scene.isUsingTilt = true;
             enableTiltControls(scene, player);
         }
     } else {
-        console.warn("Tilt controls unavailable. Joystick will be used.");
-        scene.isUsingTilt = false;
+        console.warn("Tilt controls unavailable.");
     }
 }
 
 function initializeJoystick(scene, player) {
     setupJoystick(scene, player);
 
-    // Ensure joystick and tilt don't override each other
+    // Combine joystick and tilt forces in update loop
     scene.events.on('update', () => {
         if (player) {
-            if (scene.isUsingTilt) {
-                // Tilt controls take priority
-                player.setVelocityX(scene.smoothedTilt * 160);
-            } else {
-                // Use joystick if tilt isn't active
-                applyJoystickForce(scene, player);
-            }
+            const combinedForceX = (scene.joystickForceX || 0) * 160 + (scene.smoothedTilt || 0);
+            player.setVelocityX(combinedForceX);
 
-            // Handle animations based on movement
-            if (player.body.touching.down) {
-                if (player.body.velocity.x > 0) {
-                    player.setFlipX(false);
-                    player.anims.play('walk', true);
-                } else if (player.body.velocity.x < 0) {
-                    player.setFlipX(true);
-                    player.anims.play('walk', true);
-                } else {
-                    player.anims.play('idle', true);
-                }
-            } else {
-                player.anims.play('jump', true);
+            // Update animations
+            if (combinedForceX > 0) {
+                player.setFlipX(false);
+                player.play('walk', true);
+            } else if (combinedForceX < 0) {
+                player.setFlipX(true);
+                player.play('walk', true);
+            } else if (player.body.touching.down) {
+                player.play('idle', true);
             }
         }
     });
@@ -90,7 +73,7 @@ function setupSwipeJump(scene, player) {
     scene.input.on('pointerup', (pointer) => {
         if (startY !== null && pointer.y < startY - 50 && player.body.touching.down) {
             player.setVelocityY(-500); // Jump force
-            player.anims.play('jump', true);
+            player.play('jump', true);
         }
         startY = null; // Reset
     });
@@ -120,14 +103,17 @@ function fireProjectile(scene, player) {
         projectile.setVelocityX(player.flipX ? -500 : 500); // Fire direction
         projectile.body.setAllowGravity(false);
 
+        // Log if the sound is loaded
         if (scene.cache.audio.exists('playerProjectileFire')) {
             console.log("✅ Sound is loaded!");
         } else {
             console.log("❌ Sound is NOT loaded!");
         }
 
+        // Play the sound after triggering the projectile
         scene.playerProjectileFireSFX.play();
         
+        // Ensure projectiles collide with enemies
         scene.physics.add.collider(projectile, scene.enemies, (proj, enemy) => {
             proj.destroy();
             enemy.destroy();

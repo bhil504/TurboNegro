@@ -18,11 +18,7 @@ export function setupJoystick(scene, player) {
         joystickStartY = touch.clientY;
         joystickKnob.style.transform = `translate(-50%, -50%)`;
 
-        scene.isUsingJoystick = true; // Ensure other inputs are ignored
-
-        activeInterval = setInterval(() => {
-            applyJoystickForce(scene, player);
-        }, 16); // Run every ~16ms (60 FPS)
+        activeInterval = setInterval(() => applyJoystickForce(scene, player), 16); // Run every ~16ms (60 FPS)
     });
 
     joystickArea.addEventListener('touchmove', (event) => {
@@ -46,45 +42,39 @@ export function setupJoystick(scene, player) {
         joystickKnob.style.transform = `translate(-50%, -50%)`;
         scene.joystickForceX = 0;
         scene.joystickForceY = 0;
-        scene.isUsingJoystick = false;
 
-        if (player.body.touching.down) {
+        if (player) {
+            player.setVelocityX(0); // Stop horizontal movement
             player.anims.play('idle', true);
         }
 
         clearInterval(activeInterval);
     });
 
-    // Ensure joystick input is properly reset
+    // Initialize joystick force values
     scene.joystickForceX = 0;
     scene.joystickForceY = 0;
 }
 
 export function applyJoystickForce(scene, player) {
-    if (!scene.isUsingJoystick || !player) return;
+    if (player) {
+        // Apply X-axis movement
+        player.setVelocityX(scene.joystickForceX * 160); // Adjust multiplier for sensitivity
 
-    player.setVelocityX(scene.joystickForceX * 160);
-
-    if (scene.joystickForceX > 0) {
-        player.setFlipX(false);
-        if (player.body.touching.down) {
-            player.anims.play('walk', true);
+        if (scene.joystickForceX > 0) {
+            player.setFlipX(false);
+            player.play('walk', true);
+        } else if (scene.joystickForceX < 0) {
+            player.setFlipX(true);
+            player.play('walk', true);
+        } else if (player.body.touching.down) {
+            player.play('idle', true);
         }
-    } else if (scene.joystickForceX < 0) {
-        player.setFlipX(true);
-        if (player.body.touching.down) {
-            player.anims.play('walk', true);
+
+        // Jump if joystick is pushed upwards
+        if (scene.joystickForceY < -0.5 && player.body.touching.down) {
+            player.setVelocityY(-500); // Jump
+            player.play('jump', true);
         }
-    } else if (scene.joystickForceX === 0 && player.body.touching.down) {
-        player.anims.play('idle', true);
-    }
-
-    if (scene.joystickForceY < -0.5 && player.body.touching.down) {
-        player.setVelocityY(-500);
-        player.anims.play('jump', true);
-    }
-
-    if (!player.body.touching.down) {
-        player.anims.play('jump', true);
     }
 }
