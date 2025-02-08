@@ -48,12 +48,12 @@ export default class Level1 extends Phaser.Scene {
         this.add.image(width / 2, height / 2, 'level1Background').setDisplaySize(width, height);
         this.levelMusic = this.sound.add('level1Music', { loop: true, volume: 0.5 });
         this.levelMusic.play();
-
+    
         // Sound Effects
         this.playerHitSFX = this.sound.add('playerHit', { volume: 0.6 });
         this.playerProjectileFireSFX = this.sound.add('playerProjectileFire', { volume: 0.6 });
         this.mardiGrasZombieHitSFX = this.sound.add('mardiGrasZombieHit', { volume: 0.6 });
-
+    
         // Platforms setup
         this.platforms = this.physics.add.staticGroup();
         this.platforms.create(width / 2, height - 20, null).setDisplaySize(width, 20).setVisible(false).refreshBody();
@@ -97,19 +97,21 @@ export default class Level1 extends Phaser.Scene {
         this.physics.add.collider(this.player, this.enemies, this.handlePlayerEnemyCollision, null, this);
         this.physics.add.collider(this.projectiles, this.enemies, this.handleProjectileEnemyCollision, null, this);
         this.physics.add.collider(this.enemies, this.platforms);
-
-        // Setup mobile controls only if it's a mobile device
+    
+        // Detect standalone mode
+        const isStandalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone;
+    
+        // Setup mobile controls
         if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
             console.log("Mobile device detected. Initializing controls...");
-            setupMobileControls(this, this.player);
+            setupMobileControls(this, this.player, isStandalone);
         } else {
             console.log("Desktop detected. Skipping mobile controls.");
         }
     
         // Add utilities
         addFullscreenButton(this);
-       
-    }
+    }    
 
     update() {
         // Handle keyboard movement

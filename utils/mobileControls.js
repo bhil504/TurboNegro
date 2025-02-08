@@ -2,9 +2,24 @@ import { setupJoystick, applyJoystickForce } from './joystickUtils.js';
 import { enableTiltControls } from './tiltUtils.js';
 
 export function setupMobileControls(scene, player) {
-    // Initialize tilt and joystick controls together
-    initializeTiltControls(scene, player);
-    initializeJoystick(scene, player);
+    if (/iPhone|iPad|iPod/.test(navigator.userAgent)) {
+        const isStandalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone;
+        if (isStandalone) {
+            console.log("🚀 iOS standalone mode detected. Enabling both tilt and joystick controls...");
+            initializeTiltControls(scene, player);
+            initializeJoystick(scene, player);
+        } else {
+            console.log("📟 iOS not in standalone mode. Using joystick.");
+            initializeJoystick(scene, player);
+        }
+    } else if (/Android|webOS|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+        console.log("🤖 Android detected. Enabling both tilt and joystick controls.");
+        initializeTiltControls(scene, player);
+        initializeJoystick(scene, player);
+    } else {
+        console.log("📱 Non-iOS, non-Android mobile device detected. Using joystick.");
+        initializeJoystick(scene, player);
+    }
 
     // Add swipe-to-jump functionality
     setupSwipeJump(scene, player);
@@ -34,31 +49,32 @@ function initializeTiltControls(scene, player) {
                     if (permissionState === 'granted') {
                         const isStandalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone;
                         if (isStandalone) {
-                            console.log("📱 Running in standalone mode: Enabling tilt controls.");
+                            console.log("🚀 iOS standalone mode detected. Enabling both tilt and joystick controls...");
                             enableTiltControls(scene, player);
+                            initializeJoystick(scene, player);
                         } else {
-                            console.warn("Not in standalone mode. Using joystick as default.");
-                            setupJoystick(scene, player);
+                            console.log("📟 iOS not in standalone mode. Using joystick.");
+                            initializeJoystick(scene, player);
                         }
                     } else {
                         console.warn("Motion access denied. Enabling joystick as fallback.");
-                        setupJoystick(scene, player);
+                        initializeJoystick(scene, player);
                     }
                 })
                 .catch(error => {
                     console.error("Error requesting motion permission:", error);
-                    setupJoystick(scene, player);
+                    initializeJoystick(scene, player);
                 });
         } else {
             // Non-iOS or older versions
             enableTiltControls(scene, player);
+            initializeJoystick(scene, player);
         }
     } else {
         console.warn("Tilt controls unavailable.");
-        setupJoystick(scene, player);
+        initializeJoystick(scene, player);
     }
 }
-
 
 function initializeJoystick(scene, player) {
     setupJoystick(scene, player);
