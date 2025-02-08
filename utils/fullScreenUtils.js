@@ -87,20 +87,20 @@ function adjustScreenForLandscapeFullscreen() {
         fullscreenElement.style.width = "100vw";
         fullscreenElement.style.height = "100vh"; 
         fullscreenElement.style.display = "flex";
-        fullscreenElement.style.justifyContent = "center";
+        fullscreenElement.style.flexDirection = "column";  // Stack game & controls
+        fullscreenElement.style.justifyContent = "flex-start"; // Align to top
         fullscreenElement.style.alignItems = "center";
-        fullscreenElement.style.margin = "0";
-        fullscreenElement.style.padding = "0";
         fullscreenElement.style.overflow = "hidden";
 
-        // **Ensure game container takes full height without cropping**
+        // **Ensure game container takes most of the screen**
         gameContainer.style.width = "100vw";
-        gameContainer.style.height = "80vh";  // Adjustable for better fit
+        gameContainer.style.height = "80vh";  // Increased height so full screen is visible
 
-        // Keep on-screen controls in place below the game
-        onscreenControls.style.position = "absolute";
-        onscreenControls.style.bottom = "0";
+        // **Move onscreen controls BELOW the game**
         onscreenControls.style.width = "100vw";
+        onscreenControls.style.height = "20vh";  // Adjust height to fit properly
+        onscreenControls.style.position = "absolute";
+        onscreenControls.style.bottom = "0";  
     } else {
         console.log("🔄 Adjusting fullscreen for normal mode...");
 
@@ -108,16 +108,16 @@ function adjustScreenForLandscapeFullscreen() {
         fullscreenElement.style.width = "100%";
         fullscreenElement.style.height = "auto";
         fullscreenElement.style.display = "flex";
+        fullscreenElement.style.flexDirection = "column"; 
         fullscreenElement.style.justifyContent = "center";
         fullscreenElement.style.alignItems = "center";
         fullscreenElement.style.overflow = "hidden";
 
-        gameContainer.style.width = "100%";
-        gameContainer.style.height = "500px"; // Original height
-
+        gameContainer.style.height = "auto";
         onscreenControls.style.position = "relative";
     }
 }
+
 
 // Listen for fullscreen and orientation changes
 document.addEventListener("fullscreenchange", adjustScreenForLandscapeFullscreen);
