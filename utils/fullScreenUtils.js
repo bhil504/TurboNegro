@@ -86,6 +86,7 @@ function adjustScreenForLandscapeFullscreen() {
         fullscreenElement.style.display = "flex";
         fullscreenElement.style.justifyContent = "center";
         fullscreenElement.style.alignItems = "center";
+        fullscreenElement.style.margin = "0 auto"; 
         fullscreenElement.style.overflow = "hidden";
     } else if (isMobile && isLandscape) {
         console.log("📱 Adjusting fullscreen for mobile landscape mode...");
