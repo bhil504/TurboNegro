@@ -65,10 +65,10 @@ function toggleFullscreen(element) {
 function adjustScreenForLandscapeFullscreen() {
     const isLandscape = window.innerWidth > window.innerHeight;
     const isFullscreen = document.fullscreenElement || document.webkitFullscreenElement;
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    const isStandalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone;
     
-    if (isMobile && isFullscreen && isLandscape) {
-        console.log("📱 Adjusting screen position for mobile fullscreen landscape...");
+    if (isStandalone && isLandscape) {
+        console.log("📱 Adjusting screen position for iOS fullscreen in landscape...");
         const fullscreenElement = document.getElementById('fullscreen');
 
         if (fullscreenElement) {
@@ -88,7 +88,7 @@ function adjustScreenForLandscapeFullscreen() {
             fullscreenElement.style.position = "relative";
             fullscreenElement.style.width = "100%";
             fullscreenElement.style.height = "auto";
-            fullscreenElement.style.justifyContent = "flex-start"; // Reset back to normal
+            fullscreenElement.style.justifyContent = "flex-start";
         }
     }
 }
