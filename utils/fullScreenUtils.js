@@ -70,58 +70,54 @@ function toggleFullscreen(element) {
 
 function adjustScreenForLandscapeFullscreen() {
     const isLandscape = window.innerWidth > window.innerHeight;
-    const isStandalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone;
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     const fullscreenElement = document.getElementById('fullscreen');
-    const gameContainer = document.getElementById('game-container');
-    const onscreenControls = document.getElementById('onscreen-controls');
+    const gameCanvas = document.querySelector("canvas");
 
-    if (!fullscreenElement || !gameContainer || !onscreenControls) return;
+    if (!fullscreenElement || !gameCanvas) return;
 
-    if (isMobile && isLandscape) {
-        console.log("📱 Adjusting fullscreen for mobile landscape mode...");
+    if (isLandscape) {
+        console.log("📱 Adjusting game size for landscape...");
+        
+        // Increase game screen size slightly in landscape mode
+        gameCanvas.style.width = "95vw";  // Slightly wider
+        gameCanvas.style.height = "90vh"; // Slightly taller
 
         fullscreenElement.style.position = "fixed";
         fullscreenElement.style.top = "0";
-        fullscreenElement.style.left = "0";
+        fullscreenElement.style.left = "50%";
+        fullscreenElement.style.transform = "translateX(-50%)";
         fullscreenElement.style.width = "100vw";
-        fullscreenElement.style.height = "100vh"; 
+        fullscreenElement.style.height = "100vh";
         fullscreenElement.style.display = "flex";
-        fullscreenElement.style.flexDirection = "column";  // Stack game & controls
-        fullscreenElement.style.justifyContent = "flex-start"; // Align to top
+        fullscreenElement.style.justifyContent = "center";
         fullscreenElement.style.alignItems = "center";
         fullscreenElement.style.overflow = "hidden";
-
-        // **Reduce game screen height by 25%**
-        gameContainer.style.width = "100vw";
-        gameContainer.style.height = "60vh";  // Reduced from 80vh
-
-        // **Keep onscreen controls BELOW the game**
-        onscreenControls.style.width = "100vw";
-        onscreenControls.style.height = "40vh";  // Increased space for controls
-        onscreenControls.style.position = "absolute";
-        onscreenControls.style.bottom = "0";  
+        
     } else {
-        console.log("🔄 Adjusting fullscreen for normal mode...");
+        console.log("📱 Adjusting game size for portrait...");
+        
+        // Reset to normal size in portrait mode
+        gameCanvas.style.width = "100vw";
+        gameCanvas.style.height = "100vh";
 
         fullscreenElement.style.position = "relative";
         fullscreenElement.style.width = "100%";
         fullscreenElement.style.height = "auto";
         fullscreenElement.style.display = "flex";
-        fullscreenElement.style.flexDirection = "column"; 
         fullscreenElement.style.justifyContent = "center";
         fullscreenElement.style.alignItems = "center";
         fullscreenElement.style.overflow = "hidden";
-
-        gameContainer.style.height = "auto";
-        onscreenControls.style.position = "relative";
     }
 }
 
-// Listen for fullscreen and orientation changes
+// 🖥️ Listen for fullscreen, resize, and orientation changes
 document.addEventListener("fullscreenchange", adjustScreenForLandscapeFullscreen);
 document.addEventListener("webkitfullscreenchange", adjustScreenForLandscapeFullscreen);
 window.addEventListener("resize", adjustScreenForLandscapeFullscreen);
 window.addEventListener("orientationchange", () => {
     setTimeout(adjustScreenForLandscapeFullscreen, 300);
 });
+
+// 🔄 Run the function initially on load
+window.onload = adjustScreenForLandscapeFullscreen;
+
