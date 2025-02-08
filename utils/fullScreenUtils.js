@@ -77,8 +77,8 @@ function adjustScreenForLandscapeFullscreen() {
     if (!fullscreenElement || !gameContainer) return;
 
     if (isMobile && isLandscape) {
-        console.log("📱 Expanding game screen for mobile landscape mode...");
-        
+        console.log("📱 Adjusting game screen for mobile landscape...");
+
         fullscreenElement.style.position = "fixed";
         fullscreenElement.style.top = "0";
         fullscreenElement.style.left = "0";
@@ -89,15 +89,13 @@ function adjustScreenForLandscapeFullscreen() {
         fullscreenElement.style.alignItems = "center";
         fullscreenElement.style.overflow = "hidden";
 
-        // Increase game size to fit fullscreen better
-        gameContainer.style.width = "120vw"; // Increase width beyond screen size
-        gameContainer.style.height = "120vh"; // Increase height beyond screen size
-        gameContainer.style.maxWidth = "none";
-        gameContainer.style.maxHeight = "none";
-        gameContainer.style.transform = "scale(1.2)"; // Slight zoom to fill screen
+        // Adjust game container to fill edges properly
+        gameContainer.style.width = "110vw"; // Increase width slightly to remove black bars
+        gameContainer.style.height = "100vh";
+        gameContainer.style.transform = "translateX(-5vw)"; // Shift slightly to the left to remove extra space
     } else {
         console.log("🔄 Resetting game screen for normal mode...");
-        
+
         fullscreenElement.style.position = "relative";
         fullscreenElement.style.width = "100%";
         fullscreenElement.style.height = "auto";
@@ -106,12 +104,10 @@ function adjustScreenForLandscapeFullscreen() {
         fullscreenElement.style.alignItems = "center";
         fullscreenElement.style.overflow = "hidden";
 
-        // Reset game size for normal mode
-        gameContainer.style.width = "";
-        gameContainer.style.height = "";
-        gameContainer.style.maxWidth = "1100px"; // Original max size
-        gameContainer.style.maxHeight = "500px"; // Original max size
-        gameContainer.style.transform = "scale(1)"; // Reset scale
+        // Reset game container dimensions
+        gameContainer.style.width = "100%";
+        gameContainer.style.height = "auto";
+        gameContainer.style.transform = "none";
     }
 }
 
