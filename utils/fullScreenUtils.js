@@ -1,27 +1,38 @@
 export function addFullscreenButton(scene) {
     const fullscreenElement = document.getElementById('fullscreen');
+    const gameIframe = document.getElementById('game-iframe');
 
     if (!fullscreenElement) {
         console.error("⚠️ Fullscreen element not found!");
         return;
     }
 
-    function adjustFullscreenLayout() {
-        const isLandscape = window.innerWidth > window.innerHeight;
+    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
-        if (isLandscape) {
-            fullscreenElement.style.flexDirection = "row"; // Side-by-side layout
-            fullscreenElement.style.justifyContent = "center";
-            fullscreenElement.style.alignItems = "center";
-        } else {
-            fullscreenElement.style.flexDirection = "column"; // Stack in portrait
+    if (isMobile) {
+        console.log("📱 Mobile detected. Adding fullscreen button.");
+        const mobileFullscreenButton = document.getElementById('mobile-fullscreen-button');
+        if (mobileFullscreenButton) {
+            mobileFullscreenButton.addEventListener('click', () => {
+                exitIframeFullscreen(() => toggleFullscreen(fullscreenElement));
+            });
         }
+    } else {
+        console.log("🖥️ Desktop detected. Adding fullscreen button.");
+        const fullscreenButton = scene.add.text(20, 20, '[ fullscreen ]', {
+            fontSize: '20px',
+            fill: '#ffffff',
+            backgroundColor: '#000000',
+            padding: { left: 10, right: 10, top: 5, bottom: 5 },
+            borderRadius: '5px',
+        }).setInteractive();
+
+        fullscreenButton.on('pointerdown', () => {
+            exitIframeFullscreen(() => toggleFullscreen(fullscreenElement));
+        });
+
+        return fullscreenButton;
     }
-
-    // Run adjustment when fullscreen is activated
-    fullscreenElement.addEventListener("fullscreenchange", adjustFullscreenLayout);
-
-    adjustFullscreenLayout(); // Apply immediately when fullscreen is toggled
 }
 
 function exitIframeFullscreen(callback) {

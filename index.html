@@ -129,23 +129,14 @@
         #game-container {
             width: 100%;
             max-width: 1100px;
-            height: auto;
-            aspect-ratio: 16 / 9; /* Ensures it scales properly */
+            aspect-ratio: 1100 / 500;
+            margin: 0 auto;
             border-radius: 10px;
             border: 2px solid #555;
             background: linear-gradient(180deg, #111, #222);
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.8);
             position: relative;
             overflow: hidden;
-        }
-
-        /* Adjust for landscape mode */
-        @media screen and (orientation: landscape) {
-            #game-container {
-                width: 90vw;
-                height: auto;
-                max-height: 100%;
-            }
         }
 
         #onscreen-controls {
@@ -512,7 +503,7 @@
             <div id="title">
                 <h1>Turbo Negro! Saves The French Quarter!</h1>
             </div>
-            <div id="warning">Warning!<br>This game is in development<br>Meaning,<br>game may glitch or pause due to updates.<br>Updates occur often. Day or Night.<br>We apologize for the inconveniece</div>
+            <div id="warning">Warning!<br>This game is in development<br>Meaning,<br>game may glitch or pause due to updates.<br>Updates occur often. Day or Night.<br> We apologize for the inconveniece</div>
             <div id="fullscreen">
                 <div id="health-bar-container">
                     Health: 
