@@ -61,7 +61,7 @@ export function applyJoystickForce(scene, player) {
         const movingLeft = scene.joystickForceX < -0.1;
         const movingRight = scene.joystickForceX > 0.1;
         const isJumping = scene.joystickForceY < -0.5;
-        const onGround = player.body.blocked.down || player.body.touching.down;
+        const onGround = player.body.blocked.down || player.body.touching.down; // Ensures we detect ground contact
 
         // Apply movement
         player.setVelocityX(scene.joystickForceX * 160);
@@ -73,14 +73,18 @@ export function applyJoystickForce(scene, player) {
             player.setFlipX(false);
         }
 
-        // Trigger animations
+        // **Trigger animations properly**
         if (isJumping && onGround) {
             player.setVelocityY(-500);
             player.play('jump', true);
         } else if ((movingLeft || movingRight) && onGround) {
-            player.play('walk', true);
+            if (player.anims.currentAnim?.key !== 'walk') {
+                player.play('walk', true);
+            }
         } else if (onGround) {
-            player.play('idle', true);
+            if (player.anims.currentAnim?.key !== 'idle') {
+                player.play('idle', true);
+            }
         }
     }
 }

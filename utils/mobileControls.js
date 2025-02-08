@@ -61,14 +61,18 @@ function initializeJoystick(scene, player) {
                 player.setFlipX(false);
             }
 
-            // Trigger animations
+            // **Trigger animations correctly**
             if (isJumping && onGround) {
                 player.setVelocityY(-500);
                 player.play('jump', true);
             } else if ((movingLeft || movingRight) && onGround) {
-                player.play('walk', true);
+                if (player.anims.currentAnim?.key !== 'walk') {
+                    player.play('walk', true);
+                }
             } else if (onGround) {
-                player.play('idle', true);
+                if (player.anims.currentAnim?.key !== 'idle') {
+                    player.play('idle', true);
+                }
             }
         }
     });
