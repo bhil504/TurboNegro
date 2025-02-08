@@ -48,6 +48,7 @@ function initializeJoystick(scene, player) {
             const movingLeft = scene.joystickForceX < -0.1;
             const movingRight = scene.joystickForceX > 0.1;
             const isJumping = scene.joystickForceY < -0.5;
+            const onGround = player.body.blocked.down || player.body.touching.down;
             const combinedForceX = scene.joystickForceX * 160;
 
             // Apply movement
@@ -61,12 +62,12 @@ function initializeJoystick(scene, player) {
             }
 
             // Trigger animations
-            if (isJumping && player.body.touching.down) {
+            if (isJumping && onGround) {
                 player.setVelocityY(-500);
                 player.play('jump', true);
-            } else if (movingLeft || movingRight) {
+            } else if ((movingLeft || movingRight) && onGround) {
                 player.play('walk', true);
-            } else if (player.body.touching.down) {
+            } else if (onGround) {
                 player.play('idle', true);
             }
         }
