@@ -73,35 +73,37 @@ function adjustScreenForLandscapeFullscreen() {
     const isStandalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone;
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     const fullscreenElement = document.getElementById('fullscreen');
+    const gameContainer = document.getElementById('game-container');
+    const onscreenControls = document.getElementById('onscreen-controls');
 
-    if (!fullscreenElement) return;
+    if (!fullscreenElement || !gameContainer || !onscreenControls) return;
 
-    if (isMobile && isStandalone) {
-        console.log("🚀 Adjusting fullscreen for standalone mode...");
-        fullscreenElement.style.position = "absolute";
+    if (isMobile && isLandscape) {
+        console.log("📱 Adjusting fullscreen for mobile landscape mode...");
+
+        fullscreenElement.style.position = "fixed";
         fullscreenElement.style.top = "0";
         fullscreenElement.style.left = "0";
         fullscreenElement.style.width = "100vw";
-        fullscreenElement.style.height = "100vh";
+        fullscreenElement.style.height = "100vh"; 
         fullscreenElement.style.display = "flex";
         fullscreenElement.style.justifyContent = "center";
         fullscreenElement.style.alignItems = "center";
+        fullscreenElement.style.margin = "0";
+        fullscreenElement.style.padding = "0";
         fullscreenElement.style.overflow = "hidden";
-    } else if (isMobile && isLandscape) {
-        console.log("📱 Adjusting fullscreen for mobile landscape mode...");
 
-        // Expands the game slightly to remove empty spaces
-        fullscreenElement.style.position = "fixed";
-        fullscreenElement.style.top = "0";
-        fullscreenElement.style.left = "0"; // Align left
-        fullscreenElement.style.width = "120vw"; // Extend width beyond viewport to remove black bars
-        fullscreenElement.style.height = "100vh";
-        fullscreenElement.style.display = "flex";
-        fullscreenElement.style.justifyContent = "center";
-        fullscreenElement.style.alignItems = "center";
-        fullscreenElement.style.overflow = "hidden";
+        // **Ensure game container takes full height without cropping**
+        gameContainer.style.width = "100vw";
+        gameContainer.style.height = "80vh";  // Adjustable for better fit
+
+        // Keep on-screen controls in place below the game
+        onscreenControls.style.position = "absolute";
+        onscreenControls.style.bottom = "0";
+        onscreenControls.style.width = "100vw";
     } else {
         console.log("🔄 Adjusting fullscreen for normal mode...");
+
         fullscreenElement.style.position = "relative";
         fullscreenElement.style.width = "100%";
         fullscreenElement.style.height = "auto";
@@ -109,6 +111,11 @@ function adjustScreenForLandscapeFullscreen() {
         fullscreenElement.style.justifyContent = "center";
         fullscreenElement.style.alignItems = "center";
         fullscreenElement.style.overflow = "hidden";
+
+        gameContainer.style.width = "100%";
+        gameContainer.style.height = "500px"; // Original height
+
+        onscreenControls.style.position = "relative";
     }
 }
 
