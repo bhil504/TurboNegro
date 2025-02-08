@@ -497,35 +497,50 @@
 
 <script>
     document.addEventListener("DOMContentLoaded", function () {
-        function adjustForFullscreen() {
-            const isStandalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone;
-            const isLandscape = window.innerWidth > window.innerHeight;
+    function adjustForFullscreen() {
+        const isStandalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone;
+        const isLandscape = window.innerWidth > window.innerHeight;
 
-            if (isStandalone && isLandscape) {
+        const fullscreenElement = document.getElementById("fullscreen");
+        if (!fullscreenElement) return;
+
+        if (isStandalone) {
+            if (isLandscape) {
+                console.log("📱 Switching to landscape mode...");
                 document.body.style.position = "absolute";
                 document.body.style.width = "100vw";
                 document.body.style.height = "100vh";
                 document.body.style.overflow = "hidden";
 
-                const fullscreenElement = document.getElementById("fullscreen");
-                if (fullscreenElement) {
-                    fullscreenElement.style.position = "absolute";
-                    fullscreenElement.style.top = "0";
-                    fullscreenElement.style.left = "0";
-                    fullscreenElement.style.width = "100vw";
-                    fullscreenElement.style.height = "100vh";
-                    fullscreenElement.style.justifyContent = "center";
-                    fullscreenElement.style.alignItems = "center";
-                }
+                fullscreenElement.style.position = "absolute";
+                fullscreenElement.style.top = "0";
+                fullscreenElement.style.left = "0";
+                fullscreenElement.style.width = "100vw";
+                fullscreenElement.style.height = "100vh";
+                fullscreenElement.style.justifyContent = "center";
+                fullscreenElement.style.alignItems = "center";
+            } else {
+                console.log("📱 Switching back to portrait mode...");
+                document.body.style.position = "relative";
+                document.body.style.width = "100%";
+                document.body.style.height = "auto";
+                document.body.style.overflow = "auto";
+
+                fullscreenElement.style.position = "relative";
+                fullscreenElement.style.width = "100%";
+                fullscreenElement.style.height = "100%";
+                fullscreenElement.style.justifyContent = "flex-start";
+                fullscreenElement.style.alignItems = "flex-start";
             }
         }
+    }
 
-        // Run adjustments on load and when rotating the screen
-        adjustForFullscreen();
-        window.addEventListener("orientationchange", () => {
-            setTimeout(adjustForFullscreen, 300);
-        });
+    // Run adjustments on load and when rotating the screen
+    adjustForFullscreen();
+    window.addEventListener("orientationchange", () => {
+        setTimeout(adjustForFullscreen, 300);
     });
+});
 </script>
 
 <body>
