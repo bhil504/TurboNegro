@@ -73,9 +73,8 @@ function adjustScreenForLandscapeFullscreen() {
     const isStandalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone;
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     const fullscreenElement = document.getElementById('fullscreen');
-    const gameContainer = document.getElementById('game-container'); // Add game container reference
 
-    if (!fullscreenElement || !gameContainer) return;
+    if (!fullscreenElement) return;
 
     if (isMobile && isStandalone) {
         console.log("🚀 Adjusting fullscreen for standalone mode...");
@@ -88,26 +87,18 @@ function adjustScreenForLandscapeFullscreen() {
         fullscreenElement.style.justifyContent = "center";
         fullscreenElement.style.alignItems = "center";
         fullscreenElement.style.overflow = "hidden";
-
-        // Ensures game container fills the fullscreen wrapper properly
-        gameContainer.style.width = "100%";
-        gameContainer.style.height = "100%";
     } else if (isMobile && isLandscape) {
         console.log("📱 Adjusting fullscreen for mobile landscape mode...");
         fullscreenElement.style.position = "fixed";
-        fullscreenElement.style.top = "50%";
+        fullscreenElement.style.top = "0";
         fullscreenElement.style.left = "50%";
-        fullscreenElement.style.transform = "translate(-50%, -50%)"; /* Centers the game */
+        fullscreenElement.style.transform = "translateX(-50%)";
         fullscreenElement.style.width = "100vw";
         fullscreenElement.style.height = "100vh";
         fullscreenElement.style.display = "flex";
         fullscreenElement.style.justifyContent = "center";
         fullscreenElement.style.alignItems = "center";
         fullscreenElement.style.overflow = "hidden";
-
-        // Ensure game container fits fullscreen properly
-        gameContainer.style.width = "100vw";
-        gameContainer.style.height = "100vh";
     } else {
         console.log("🔄 Adjusting fullscreen for normal mode...");
         fullscreenElement.style.position = "relative";
@@ -117,13 +108,8 @@ function adjustScreenForLandscapeFullscreen() {
         fullscreenElement.style.justifyContent = "center";
         fullscreenElement.style.alignItems = "center";
         fullscreenElement.style.overflow = "hidden";
-
-        // Reset game container dimensions in normal mode
-        gameContainer.style.width = "";
-        gameContainer.style.height = "";
     }
 }
-
 
 // Listen for fullscreen and orientation changes
 document.addEventListener("fullscreenchange", adjustScreenForLandscapeFullscreen);
