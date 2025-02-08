@@ -61,7 +61,7 @@ export function setupJoystick(scene, player) {
 }
 
 export function applyJoystickForce(scene, player) {
-    if (!player) return;
+    if (!player || !player.body) return;
 
     // Tilt is the base movement speed
     let totalForceX = scene.smoothedTilt * 160;

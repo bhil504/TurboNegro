@@ -52,12 +52,13 @@ function initializeJoystick(scene, player) {
     setupJoystick(scene, player);
 
     scene.events.on('update', () => {
-        if (player) {
-            // Ensure both tilt and joystick work together correctly
-            applyJoystickForce(scene, player);
-        }
+        if (!player || !player.body) return; // Prevent applying forces before player exists
+        
+        // Ensure both tilt and joystick work together correctly
+        applyJoystickForce(scene, player);
     });
 }
+
 
 
 function setupSwipeJump(scene, player) {

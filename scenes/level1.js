@@ -99,12 +99,15 @@ export default class Level1 extends Phaser.Scene {
         this.physics.add.collider(this.enemies, this.platforms);
 
         // Setup mobile controls only if it's a mobile device
-        if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-            console.log("Mobile device detected. Initializing controls...");
-            setupMobileControls(this, this.player);
-        } else {
-            console.log("Desktop detected. Skipping mobile controls.");
-        }
+        // Ensure mobile controls are applied only AFTER the player is fully initialized
+        this.time.delayedCall(100, () => {
+            if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
+                console.log("Mobile device detected. Initializing controls...");
+                setupMobileControls(this, this.player);
+            } else {
+                console.log("Desktop detected. Skipping mobile controls.");
+            }
+        });
     
         // Add utilities
         addFullscreenButton(this);
