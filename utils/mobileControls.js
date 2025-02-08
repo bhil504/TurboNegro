@@ -32,13 +32,22 @@ function initializeTiltControls(scene, player) {
             DeviceOrientationEvent.requestPermission()
                 .then(permissionState => {
                     if (permissionState === 'granted') {
-                        enableTiltControls(scene, player);
+                        const isStandalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone;
+                        if (isStandalone) {
+                            console.log("📱 Running in standalone mode: Enabling tilt controls.");
+                            enableTiltControls(scene, player);
+                        } else {
+                            console.warn("Not in standalone mode. Using joystick as default.");
+                            setupJoystick(scene, player);
+                        }
                     } else {
                         console.warn("Motion access denied. Enabling joystick as fallback.");
+                        setupJoystick(scene, player);
                     }
                 })
                 .catch(error => {
                     console.error("Error requesting motion permission:", error);
+                    setupJoystick(scene, player);
                 });
         } else {
             // Non-iOS or older versions
@@ -46,8 +55,10 @@ function initializeTiltControls(scene, player) {
         }
     } else {
         console.warn("Tilt controls unavailable.");
+        setupJoystick(scene, player);
     }
 }
+
 
 function initializeJoystick(scene, player) {
     setupJoystick(scene, player);
