@@ -755,9 +755,9 @@
             type: Phaser.AUTO,
             parent: 'game-container',
             scale: {
-                mode: Phaser.Scale.FIT,
-                autoCenter: Phaser.Scale.CENTER_BOTH,
-            },
+        mode: Phaser.Scale.ENVELOP, // Ensures the game fills the screen
+        autoCenter: Phaser.Scale.CENTER_BOTH,
+    },
             width: 1100,
             height: 500,
             physics: {
