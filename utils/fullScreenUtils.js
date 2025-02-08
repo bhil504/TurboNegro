@@ -91,8 +91,8 @@ function adjustScreenForLandscapeFullscreen() {
         console.log("📱 Adjusting fullscreen for mobile landscape mode...");
         fullscreenElement.style.position = "fixed";
         fullscreenElement.style.top = "0";
-        fullscreenElement.style.left = "50%";
-        fullscreenElement.style.transform = "translateX(-25%)";
+        fullscreenElement.style.left = "25%";
+        fullscreenElement.style.transform = "translateX(-50%)";
         fullscreenElement.style.width = "100vw";
         fullscreenElement.style.height = "100vh";
         fullscreenElement.style.display = "flex";
