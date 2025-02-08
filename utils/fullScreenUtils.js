@@ -93,8 +93,8 @@ function adjustScreenForLandscapeFullscreen() {
         fullscreenElement.style.top = "0";
         fullscreenElement.style.left = "50%";
         fullscreenElement.style.transform = "translateX(-50%)";
-        fullscreenElement.style.width = "125vw";
-        fullscreenElement.style.height = "125vh";
+        fullscreenElement.style.width = "200vw";
+        fullscreenElement.style.height = "200vh";
         fullscreenElement.style.display = "flex";
         fullscreenElement.style.justifyContent = "center";
         fullscreenElement.style.alignItems = "center";
