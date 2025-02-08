@@ -8,27 +8,14 @@ export function addFullscreenButton(scene) {
     }
 
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    const isLandscape = window.innerWidth > window.innerHeight;
 
     if (isMobile) {
         console.log("📱 Mobile detected. Adding fullscreen button.");
         const mobileFullscreenButton = document.getElementById('mobile-fullscreen-button');
-
         if (mobileFullscreenButton) {
             mobileFullscreenButton.addEventListener('click', () => {
                 exitIframeFullscreen(() => toggleFullscreen(fullscreenElement));
             });
-
-            // Adjust positioning for landscape mode
-            if (isLandscape) {
-                mobileFullscreenButton.style.position = "absolute";
-                mobileFullscreenButton.style.right = "20px"; // Adjust right spacing
-                mobileFullscreenButton.style.top = "10px"; // Adjust top spacing
-            } else {
-                mobileFullscreenButton.style.position = "relative";
-                mobileFullscreenButton.style.right = "auto";
-                mobileFullscreenButton.style.top = "auto";
-            }
         }
     } else {
         console.log("🖥️ Desktop detected. Adding fullscreen button.");
@@ -74,20 +61,3 @@ function toggleFullscreen(element) {
         document.exitFullscreen();
     }
 }
-
-window.addEventListener('resize', () => {
-    const isLandscape = window.innerWidth > window.innerHeight;
-    const mobileFullscreenButton = document.getElementById('mobile-fullscreen-button');
-
-    if (mobileFullscreenButton) {
-        if (isLandscape) {
-            mobileFullscreenButton.style.position = "absolute";
-            mobileFullscreenButton.style.right = "20px";
-            mobileFullscreenButton.style.top = "10px";
-        } else {
-            mobileFullscreenButton.style.position = "relative";
-            mobileFullscreenButton.style.right = "auto";
-            mobileFullscreenButton.style.top = "auto";
-        }
-    }
-});
