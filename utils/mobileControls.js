@@ -72,10 +72,10 @@ function setupSwipeJump(scene, player) {
 
     scene.input.on('pointerup', (pointer) => {
         if (startY !== null && pointer.y < startY - 50 && player.body.touching.down) {
-            player.setVelocityY(-500); // Jump force
+            player.setVelocityY(-500);
             player.play('jump', true);
         }
-        startY = null; // Reset
+        startY = null;
     });
 }
 

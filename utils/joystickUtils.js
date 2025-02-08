@@ -58,14 +58,18 @@ export function setupJoystick(scene, player) {
 
 export function applyJoystickForce(scene, player) {
     if (player) {
-        // Apply X-axis movement
-        player.setVelocityX(scene.joystickForceX * 160); // Adjust multiplier for sensitivity
+        const movingLeft = scene.joystickForceX < -0.1;
+        const movingRight = scene.joystickForceX > 0.1;
 
-        if (scene.joystickForceX > 0) {
-            player.setFlipX(false);
-            player.play('walk', true);
-        } else if (scene.joystickForceX < 0) {
+        // Apply movement
+        player.setVelocityX(scene.joystickForceX * 160);
+
+        // Trigger animations
+        if (movingLeft) {
             player.setFlipX(true);
+            player.play('walk', true);
+        } else if (movingRight) {
+            player.setFlipX(false);
             player.play('walk', true);
         } else if (player.body.touching.down) {
             player.play('idle', true);
@@ -73,8 +77,9 @@ export function applyJoystickForce(scene, player) {
 
         // Jump if joystick is pushed upwards
         if (scene.joystickForceY < -0.5 && player.body.touching.down) {
-            player.setVelocityY(-500); // Jump
+            player.setVelocityY(-500);
             player.play('jump', true);
         }
     }
 }
+
