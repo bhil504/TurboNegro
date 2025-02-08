@@ -66,29 +66,35 @@ function adjustScreenForLandscapeFullscreen() {
     const isLandscape = window.innerWidth > window.innerHeight;
     const isFullscreen = document.fullscreenElement || document.webkitFullscreenElement;
     const isStandalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone;
-    const fullscreenElement = document.getElementById('fullscreen');
-
-    if (!fullscreenElement) return;
-
+    
     if (isStandalone && isLandscape) {
-        console.log("📱 Adjusting for landscape fullscreen...");
-        fullscreenElement.style.position = "absolute";
-        fullscreenElement.style.top = "0";
-        fullscreenElement.style.left = "0";
-        fullscreenElement.style.width = "100vw";
-        fullscreenElement.style.height = "100vh";
-        fullscreenElement.style.justifyContent = "center";
-        fullscreenElement.style.alignItems = "center";
-    } else if (isStandalone && !isLandscape) {
-        console.log("📱 Returning to portrait mode...");
-        fullscreenElement.style.position = "relative";
-        fullscreenElement.style.width = "100%";
-        fullscreenElement.style.height = "auto";
-        fullscreenElement.style.justifyContent = "flex-start";
+        console.log("📱 Adjusting screen position for iOS fullscreen in landscape...");
+        const fullscreenElement = document.getElementById('fullscreen');
+
+        if (fullscreenElement) {
+            fullscreenElement.style.position = "absolute";
+            fullscreenElement.style.top = "0";
+            fullscreenElement.style.left = "0";
+            fullscreenElement.style.width = "100vw";
+            fullscreenElement.style.height = "100vh";
+            fullscreenElement.style.justifyContent = "center";
+            fullscreenElement.style.alignItems = "center";
+        }
+    } else if (!isFullscreen) {
+        console.log("🔄 Exiting fullscreen, resetting position...");
+        const fullscreenElement = document.getElementById('fullscreen');
+
+        if (fullscreenElement) {
+            fullscreenElement.style.position = "relative";
+            fullscreenElement.style.width = "100%";
+            fullscreenElement.style.height = "auto";
+            fullscreenElement.style.justifyContent = "flex-start";
+        }
     }
 }
 
-// Listen for fullscreen and orientation changes
+// Listen for fullscreen changes
 document.addEventListener("fullscreenchange", adjustScreenForLandscapeFullscreen);
 document.addEventListener("webkitfullscreenchange", adjustScreenForLandscapeFullscreen);
 window.addEventListener("resize", adjustScreenForLandscapeFullscreen);
+
