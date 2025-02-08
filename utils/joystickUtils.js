@@ -60,26 +60,26 @@ export function applyJoystickForce(scene, player) {
     if (player) {
         const movingLeft = scene.joystickForceX < -0.1;
         const movingRight = scene.joystickForceX > 0.1;
+        const isJumping = scene.joystickForceY < -0.5;
 
         // Apply movement
         player.setVelocityX(scene.joystickForceX * 160);
 
-        // Trigger animations
+        // Ensure direction flip
         if (movingLeft) {
             player.setFlipX(true);
-            player.play('walk', true);
         } else if (movingRight) {
             player.setFlipX(false);
+        }
+
+        // Trigger animations
+        if (isJumping && player.body.touching.down) {
+            player.setVelocityY(-500);
+            player.play('jump', true);
+        } else if (movingLeft || movingRight) {
             player.play('walk', true);
         } else if (player.body.touching.down) {
             player.play('idle', true);
         }
-
-        // Jump if joystick is pushed upwards
-        if (scene.joystickForceY < -0.5 && player.body.touching.down) {
-            player.setVelocityY(-500);
-            player.play('jump', true);
-        }
     }
 }
-

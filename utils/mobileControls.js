@@ -43,18 +43,28 @@ function initializeTiltControls(scene, player) {
 function initializeJoystick(scene, player) {
     setupJoystick(scene, player);
 
-    // Combine joystick and tilt forces in update loop
     scene.events.on('update', () => {
         if (player) {
-            const combinedForceX = (scene.joystickForceX || 0) * 160 + (scene.smoothedTilt || 0);
+            const movingLeft = scene.joystickForceX < -0.1;
+            const movingRight = scene.joystickForceX > 0.1;
+            const isJumping = scene.joystickForceY < -0.5;
+            const combinedForceX = scene.joystickForceX * 160;
+
+            // Apply movement
             player.setVelocityX(combinedForceX);
 
-            // Update animations
-            if (combinedForceX > 0) {
-                player.setFlipX(false);
-                player.play('walk', true);
-            } else if (combinedForceX < 0) {
+            // Ensure direction flip
+            if (movingLeft) {
                 player.setFlipX(true);
+            } else if (movingRight) {
+                player.setFlipX(false);
+            }
+
+            // Trigger animations
+            if (isJumping && player.body.touching.down) {
+                player.setVelocityY(-500);
+                player.play('jump', true);
+            } else if (movingLeft || movingRight) {
                 player.play('walk', true);
             } else if (player.body.touching.down) {
                 player.play('idle', true);
