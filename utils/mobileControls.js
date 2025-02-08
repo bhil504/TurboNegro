@@ -25,7 +25,6 @@ export function setupMobileControls(scene, player) {
     });
 }
 
-
 function initializeTiltControls(scene, player) {
     if (window.DeviceOrientationEvent) {
         if (typeof DeviceOrientationEvent.requestPermission === 'function') {
