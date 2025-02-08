@@ -44,33 +44,35 @@ function initializeJoystick(scene, player) {
     setupJoystick(scene, player);
 
     scene.events.on('update', () => {
-        if (player) {
-            const movingLeft = scene.joystickForceX < -0.1;
-            const movingRight = scene.joystickForceX > 0.1;
-            const isJumping = scene.joystickForceY < -0.5;
-            const onGround = player.body.blocked.down || player.body.touching.down;
-            const combinedForceX = scene.joystickForceX * 160;
+        if (!player || !player.body) return;
 
-            // Apply movement
-            player.setVelocityX(combinedForceX);
+        const movingLeft = scene.joystickForceX < -0.1;
+        const movingRight = scene.joystickForceX > 0.1;
+        const isJumping = scene.joystickForceY < -0.5;
+        const onGround = player.body.blocked.down || player.body.touching.down;
+        const combinedForceX = scene.joystickForceX * 160;
 
-            // Ensure direction flip
-            if (movingLeft) {
-                player.setFlipX(true);
-            } else if (movingRight) {
-                player.setFlipX(false);
+        // Apply movement
+        player.setVelocityX(combinedForceX);
+
+        // Ensure direction flip
+        if (movingLeft) {
+            player.setFlipX(true);
+        } else if (movingRight) {
+            player.setFlipX(false);
+        }
+
+        // **Trigger animations properly**
+        if (isJumping && onGround) {
+            player.setVelocityY(-500);
+            player.play('jump', true);
+        } else if ((movingLeft || movingRight) && onGround) {
+            if (!player.anims.isPlaying || player.anims.currentAnim?.key !== 'walk') {
+                player.play('walk', true);
             }
-
-            // **Trigger animations correctly**
-            if (isJumping && onGround) {
-                player.setVelocityY(-500);
-                player.play('jump', true);
-            } else if ((movingLeft || movingRight) && onGround) {
-                if (player.anims.currentAnim?.key !== 'walk') {
-                    player.play('walk', true);
-                }
-            } else if (onGround) {
-                if (player.anims.currentAnim?.key !== 'idle') {
+        } else if (onGround) {
+            if (!movingLeft && !movingRight) { // Ensure idle only plays when fully stopped
+                if (!player.anims.isPlaying || player.anims.currentAnim?.key !== 'idle') {
                     player.play('idle', true);
                 }
             }
