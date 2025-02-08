@@ -63,7 +63,7 @@ export function applyJoystickForce(scene, player) {
     const movingRight = scene.joystickForceX > 0.1;
     const isJumping = scene.joystickForceY < -0.5;
     const onGround = player.body.blocked.down || player.body.touching.down;
-
+    
     // Apply movement
     player.setVelocityX(scene.joystickForceX * 160);
 
@@ -74,21 +74,20 @@ export function applyJoystickForce(scene, player) {
         player.setFlipX(false);
     }
 
-    // **Trigger animations properly**
+    // **Fix: Ensure animations play correctly**
     if (isJumping && onGround) {
         player.setVelocityY(-500);
         player.play('jump', true);
     } else if ((movingLeft || movingRight) && onGround) {
-        if (!player.anims.currentAnim || player.anims.currentAnim.key !== 'walk') {
+        if (!player.anims.isPlaying || player.anims.currentAnim.key !== 'walk') {
             console.log("🚶 Walking animation triggered");
             player.play('walk', true);
         }
-    } else if (onGround) {
-        if (!movingLeft && !movingRight) { 
-            if (!player.anims.currentAnim || player.anims.currentAnim.key !== 'idle') {
-                console.log("🛑 Idle animation triggered");
-                player.play('idle', true);
-            }
+    } else if (onGround && scene.joystickForceX === 0) {
+        // **Fix: Ensure idle only plays when not moving at all**
+        if (!player.anims.isPlaying || player.anims.currentAnim.key !== 'idle') {
+            console.log("🛑 Idle animation triggered");
+            player.play('idle', true);
         }
     }
 }

@@ -62,21 +62,19 @@ function initializeJoystick(scene, player) {
             player.setFlipX(false);
         }
 
-        // **Trigger animations properly**
+        // **Fix: Prevent idle from stopping walking animation**
         if (isJumping && onGround) {
             player.setVelocityY(-500);
             player.play('jump', true);
         } else if ((movingLeft || movingRight) && onGround) {
-            if (!player.anims.currentAnim || player.anims.currentAnim.key !== 'walk') {
+            if (!player.anims.isPlaying || player.anims.currentAnim.key !== 'walk') {
                 console.log("🚶 Joystick walk animation triggered");
                 player.play('walk', true);
             }
-        } else if (onGround) {
-            if (!movingLeft && !movingRight) { 
-                if (!player.anims.currentAnim || player.anims.currentAnim.key !== 'idle') {
-                    console.log("🛑 Joystick idle animation triggered");
-                    player.play('idle', true);
-                }
+        } else if (onGround && scene.joystickForceX === 0) {
+            if (!player.anims.isPlaying || player.anims.currentAnim.key !== 'idle') {
+                console.log("🛑 Joystick idle animation triggered");
+                player.play('idle', true);
             }
         }
     });
