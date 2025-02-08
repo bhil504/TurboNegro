@@ -59,22 +59,35 @@ export function setupJoystick(scene, player) {
 export function applyJoystickForce(scene, player) {
     if (player) {
         // Apply X-axis movement
-        player.setVelocityX(scene.joystickForceX * 160); // Adjust multiplier for sensitivity
+        player.setVelocityX(scene.joystickForceX * 160);
 
         if (scene.joystickForceX > 0) {
             player.setFlipX(false);
-            player.play('walk', true);
+            if (player.body.touching.down) {
+                player.play('walk', true);
+            }
         } else if (scene.joystickForceX < 0) {
             player.setFlipX(true);
-            player.play('walk', true);
-        } else if (player.body.touching.down) {
+            if (player.body.touching.down) {
+                player.play('walk', true);
+            }
+        } 
+
+        // Ensure player plays idle when not moving and on the ground
+        if (scene.joystickForceX === 0 && player.body.touching.down) {
             player.play('idle', true);
         }
 
-        // Jump if joystick is pushed upwards
+        // Jump only when pushing up and touching the ground
         if (scene.joystickForceY < -0.5 && player.body.touching.down) {
-            player.setVelocityY(-500); // Jump
+            player.setVelocityY(-500);
+            player.play('jump', true);
+        }
+
+        // Prevent playing `walk` mid-air
+        if (!player.body.touching.down) {
             player.play('jump', true);
         }
     }
 }
+
