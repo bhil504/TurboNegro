@@ -90,9 +90,9 @@ function adjustScreenForLandscapeFullscreen() {
     } else if (isMobile && isLandscape) {
         console.log("📱 Adjusting fullscreen for mobile landscape mode...");
         fullscreenElement.style.position = "fixed";
-        fullscreenElement.style.top = "0";
+        fullscreenElement.style.top = "50%";
         fullscreenElement.style.left = "50%";
-        fullscreenElement.style.transform = "translateX(-50%)";
+        fullscreenElement.style.transform = "translate(-50%, -50%)"; /* Centers the game */
         fullscreenElement.style.width = "100vw";
         fullscreenElement.style.height = "100vh";
         fullscreenElement.style.display = "flex";
