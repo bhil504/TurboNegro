@@ -32,6 +32,8 @@ export default class Level5 extends Phaser.Scene {
         this.load.image('turboNegroJump', 'assets/Characters/Character1/TurboNegroJump.png');
         this.load.audio('level5Music', 'assets/Audio/LevelMusic/mp3/Explosion of Ignorance.mp3');
         this.load.image('healthPack', 'assets/Items/HealthPack.png');
+        this.load.image('gameOver', 'assets/UI/gameOver.png');
+        this.load.image('levelComplete', 'assets/UI/levelComplete.png');
 
         this.load.audio('playerHit', 'assets/Audio/SoundFX/mp3/playerHit.mp3');
         this.load.audio('playerProjectileFire', 'assets/Audio/SoundFX/mp3/playerprojectilefire.mp3');
@@ -276,14 +278,13 @@ export default class Level5 extends Phaser.Scene {
     }
 
     handlePlayerHealthPackCollision(player, healthPack) {
-        if (healthPack.active) {
+        if (healthPack && healthPack.active) {
             this.playerHealth = Math.min(this.playerHealth + 5, this.maxHealth);
-            this.updateHealthUI(); // Ensure UI is updated
+            this.updateHealthUI();
             console.log("Health pack collected! Health:", this.playerHealth);
-            
-            healthPack.destroy(); // Immediately remove health pack to avoid duplicate collisions
+            healthPack.destroy(); // Make sure it's removed
         }
-    }    
+    }        
 
     handleMonsterCollision(player, monster) {
         if (monster.active) {
@@ -303,14 +304,14 @@ export default class Level5 extends Phaser.Scene {
 
     levelComplete() {
         console.log("Level 5 Complete!");
-        this.cleanUpLevel();
+        this.cleanUpLevel();  // FIXED: Clean up level before transition
         this.add.image(this.scale.width / 2, this.scale.height / 2, 'levelComplete').setOrigin(0.5);
         this.handleLevelTransition(() => this.scene.start('BossFight'));
     }
 
     gameOver() {
         console.log("Game Over");
-        this.cleanUpLevel();
+        this.cleanUpLevel();  // FIXED: Clean up level before restart
         this.add.image(this.scale.width / 2, this.scale.height / 2, 'gameOver').setOrigin(0.5);
         this.handleLevelTransition(() => this.scene.restart());
     }
@@ -320,10 +321,17 @@ export default class Level5 extends Phaser.Scene {
             this.levelMusic.stop();
             this.levelMusic.destroy();
         }
+    
+        // Stop enemy spawning timers
+        this.time.removeAllEvents();
+    
+        // Clear active objects
         this.enemies.clear(true, true);
         this.projectiles.clear(true, true);
+        this.beignetProjectiles.clear(true, true);
+    
         console.log("Level cleaned up successfully.");
-    }
+    }    
 
     handleLevelTransition(callback) {
         this.input.keyboard.once('keydown-SPACE', callback);
