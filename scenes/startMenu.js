@@ -40,7 +40,7 @@ export default class StartMenu extends Phaser.Scene {
     
         const startButton = this.add.text(width / 2, height / 1.4, 'Start Game', {
             fontSize: '30px',
-            fontStyle: 'bold',
+            fontFamily: 'Nosifer',
             fill: '#ff0000',
             backgroundColor: '#000000',
             padding: { left: 20, right: 20, top: 10, bottom: 10 },
