@@ -19,7 +19,13 @@ export default class StartMenu extends Phaser.Scene {
         const background = this.add.image(width / 2, height / 2, 'startBackground');
         background.setDisplaySize(width, height).setOrigin(0.5);
     
-        const logo = this.add.image(width / 2, height / 3, 'turboNegroLogo').setOrigin(0.5).setScale(0.6);
+        const logo = this.add.image(width / 2, height / 3, 'turboNegroLogo')
+            .setOrigin(0.5)
+            .setScale(0.6);
+
+        // Apply white shadow effect to logo
+        logo.preFX.addShadow(3, 4, 5, 0xffffff, 1, false);
+
     
         const subtitle = this.add.text(width / 2, height / 1.7, 'Saves The French Quarter!!!', {
             fontSize: '42px', // Increased font size for better visibility
