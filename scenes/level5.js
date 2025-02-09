@@ -194,15 +194,6 @@ export default class Level5 extends Phaser.Scene {
         console.log("Health pack spawned at:", x);
     }
     
-    spawnHealthPack() {
-        const { width } = this.scale;
-        const x = Phaser.Math.Between(50, width - 50); // Random X position
-        const healthPack = this.healthPacks.create(x, 50, 'healthPack'); // Spawn at the top of the screen
-        healthPack.setBounce(0.5); // Add bounce for realism
-        healthPack.setCollideWorldBounds(true); // Enable collision with world bounds
-        console.log("Health pack spawned at:", x);
-    }
-    
     collectHealthPack(player, healthPack) {
         healthPack.destroy(); // Remove the health pack from the scene
         this.playerHealth = Math.min(this.playerHealth + 5, this.maxHealth); // Restore health but not above max
@@ -310,30 +301,33 @@ export default class Level5 extends Phaser.Scene {
         beignetProjectile.destroy();
     }
 
-    checkLevelCompletion() {
-        if (this.totalEnemiesDefeated >= this.totalEnemiesToDefeat) {
-            this.levelComplete();
-        }
-    } 
-
     levelComplete() {
         console.log("Level 5 Complete!");
-    
-        // Stop music and clean up timers
-        if (this.levelMusic) this.levelMusic.stop();
-        if (this.enemySpawnTimer) this.enemySpawnTimer.remove();
-    
-        // Clear active objects
-        this.enemies.clear(true, true);
-        this.projectiles.clear(true, true);
-    
-        // Proceed to the boss fight
-        this.scene.start('BossFight');
+        this.cleanUpLevel();
+        this.add.image(this.scale.width / 2, this.scale.height / 2, 'levelComplete').setOrigin(0.5);
+        this.handleLevelTransition(() => this.scene.start('BossFight'));
     }
-    
+
     gameOver() {
         console.log("Game Over");
-        this.levelMusic.stop();
-        this.scene.restart();
+        this.cleanUpLevel();
+        this.add.image(this.scale.width / 2, this.scale.height / 2, 'gameOver').setOrigin(0.5);
+        this.handleLevelTransition(() => this.scene.restart());
+    }
+
+    cleanUpLevel() {
+        if (this.levelMusic) {
+            this.levelMusic.stop();
+            this.levelMusic.destroy();
+        }
+        this.enemies.clear(true, true);
+        this.projectiles.clear(true, true);
+        console.log("Level cleaned up successfully.");
+    }
+
+    handleLevelTransition(callback) {
+        this.input.keyboard.once('keydown-SPACE', callback);
+        this.input.once('pointerdown', callback);
     }
 }
+

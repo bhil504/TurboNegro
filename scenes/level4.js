@@ -440,7 +440,8 @@ export default class Level4 extends Phaser.Scene {
     
         // Transition to Level 5
         this.handleLevelTransition(() => this.scene.start('Level5'));
-    }    
+    }
+    
 
     gameOver() {
         console.log("Game Over!");
@@ -485,6 +486,7 @@ export default class Level4 extends Phaser.Scene {
         console.log("Level cleaned up successfully.");
     }
        
+
     handleLevelTransition(callback) {
         this.input.keyboard.once('keydown-SPACE', callback);
         this.input.once('pointerdown', callback);
