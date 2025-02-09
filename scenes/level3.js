@@ -572,12 +572,16 @@ export default class Level3 extends Phaser.Scene {
         if (this.mardiGrasBlimp) {
             this.tweens.killTweensOf(this.mardiGrasBlimp); // Stop movement
             this.mardiGrasBlimp.destroy(); // Destroy blimp
+            this.mardiGrasBlimp = null; // Ensure reference is removed
         }
     
         if (this.fireBeadsTimer) {
             this.fireBeadsTimer.remove();
             this.fireBeadsTimer = null;
         }
+    
+        // Ensure blimp does not respawn after game over
+        this.time.removeAllEvents();
     
         // Stop all sounds and timers
         this.cleanUpLevel();
@@ -591,8 +595,8 @@ export default class Level3 extends Phaser.Scene {
         };
     
         this.handleLevelTransition(restartLevel);
-    }    
-    
+    }
+       
     levelComplete() {
         console.log("Level Complete! Moving to Level 4");
     
@@ -600,12 +604,16 @@ export default class Level3 extends Phaser.Scene {
         if (this.mardiGrasBlimp) {
             this.tweens.killTweensOf(this.mardiGrasBlimp);
             this.mardiGrasBlimp.destroy();
+            this.mardiGrasBlimp = null;
         }
     
         if (this.fireBeadsTimer) {
             this.fireBeadsTimer.remove();
             this.fireBeadsTimer = null;
         }
+    
+        // Ensure no enemies spawn after level completion
+        this.time.removeAllEvents();
     
         // Stop all sounds and timers
         this.cleanUpLevel();
