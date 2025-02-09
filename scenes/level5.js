@@ -265,7 +265,7 @@ export default class Level5 extends Phaser.Scene {
             this.spawnHealthPack();
             console.log("Health pack spawned after defeating 12 enemies.");
         }
-
+    
         if (enemy.texture.key === 'beignetMinion') {
             this.beignetMinionHitSFX.play();
         } else if (enemy.texture.key === 'beignetMonster') {
@@ -274,8 +274,11 @@ export default class Level5 extends Phaser.Scene {
             console.warn("No sound effect assigned for:", enemy.texture.key);
         }
     
-        this.checkLevelCompletion(); // Check if the level is complete
-    }
+        // FIXED: Call checkLevelCompletion() only if it exists
+        if (typeof this.checkLevelCompletion === "function") {
+            this.checkLevelCompletion();
+        }
+    }    
 
     handlePlayerHealthPackCollision(player, healthPack) {
         if (healthPack && healthPack.active) {
@@ -337,5 +340,13 @@ export default class Level5 extends Phaser.Scene {
         this.input.keyboard.once('keydown-SPACE', callback);
         this.input.once('pointerdown', callback);
     }
+
+    checkLevelCompletion() {
+        if (this.totalEnemiesDefeated >= this.totalEnemiesToDefeat) {
+            console.log("All enemies defeated. Level complete!");
+            this.levelComplete();
+        }
+    }
+    
 }
 
