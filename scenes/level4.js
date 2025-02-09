@@ -353,16 +353,15 @@ export default class Level4 extends Phaser.Scene {
     }
 
     fireProjectile() {
-        if (!this.projectiles) return;
         const projectile = this.projectiles.create(this.player.x, this.player.y, 'projectileCD');
         if (projectile) {
-            projectile.setVelocityX(this.player.flipX ? -500 : 500);
+            projectile.setActive(true);
+            projectile.setVisible(true);
             projectile.body.setAllowGravity(false);
-    
-            // Play the projectile fire sound
+            projectile.setVelocityX(this.player.flipX ? -500 : 500);
             this.playerProjectileFireSFX.play();
         }
-    } 
+    }
 
     shootBeignet(minion) {
         const projectile = this.beignetProjectiles.create(minion.x, minion.y, 'beignetProjectile');
