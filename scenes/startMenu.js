@@ -54,13 +54,13 @@ export default class StartMenu extends Phaser.Scene {
     
         const startButton = this.add.text(width / 2, height / 1.3, 'Start Game', {
             fontSize: '42px', // Keeping the original size
-            fontFamily: 'Metal Mania', // Applying Metal Mania font
-            fill: '#FFD700', // Gold color for a metallic effect
+            fontFamily: 'Bangers', // Applying Bangers font
+            fill: '#FF4500', // Red-Orange color for impact
             backgroundColor: '#000000',
             padding: { left: 20, right: 20, top: 10, bottom: 10 },
             align: 'center',
-            stroke: '#8B0000', // Dark red stroke for depth
-            strokeThickness: 5, // Make the text stand out
+            stroke: '#FFFFFF', // White stroke for contrast
+            strokeThickness: 6, // Make the text stand out
         })
         .setOrigin(0.5)
         .setInteractive();
@@ -80,7 +80,7 @@ export default class StartMenu extends Phaser.Scene {
         });
         
         startButton.on('pointerout', () => {
-            startButton.setStyle({ fill: '#FFD700', backgroundColor: '#000000' });
+            startButton.setStyle({ fill: '#FF4500', backgroundColor: '#000000' });
         });
         
         // Start game when clicked
@@ -88,6 +88,7 @@ export default class StartMenu extends Phaser.Scene {
             this.sound.stopAll();
             this.scene.start('Level1');
         });
+        
         
     
         this.music = this.sound.add('menuMusic', { loop: true, volume: 0.6 });
