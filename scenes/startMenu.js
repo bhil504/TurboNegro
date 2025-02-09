@@ -38,16 +38,25 @@ export default class StartMenu extends Phaser.Scene {
         .setOrigin(0.5);
         
     
-        const startButton = this.add.text(width / 2, height / 1.4, 'Start Game', {
-            fontSize: '30px',
+        const startButton = this.add.text(width / 2, height / 1.4, 'PRESS START 2P', {
+            fontSize: '32px',
             fontFamily: 'Nosifer',
-            fill: '#ff0000',
+            fill: '#00ff00', // Classic arcade green
             backgroundColor: '#000000',
             padding: { left: 20, right: 20, top: 10, bottom: 10 },
             align: 'center',
         })
-            .setOrigin(0.5)
-            .setInteractive();
+        .setOrigin(0.5)
+        .setInteractive();
+        
+        // Add blinking animation effect for classic arcade style
+        this.tweens.add({
+            targets: startButton,
+            alpha: 0,
+            duration: 500,
+            yoyo: true,
+            repeat: -1
+        });        
     
         startButton.on('pointerover', () => {
             startButton.setStyle({ fill: '#ffffff', backgroundColor: '#ff0000' });
