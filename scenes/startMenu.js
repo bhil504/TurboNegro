@@ -32,7 +32,7 @@ export default class StartMenu extends Phaser.Scene {
 
 
     
-        const subtitle = this.add.text(width / 2, height / 1.7, 'Saves The French Quarter!!!', {
+        const subtitle = this.add.text(width / 2, height / 1.6, 'Saves The French Quarter!!!', {
             fontSize: '42px', // Increased font size for better visibility
             fontFamily: 'Nosifer', // Apply Nosifer font
             color: 'red', // Text color
