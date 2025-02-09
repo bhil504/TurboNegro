@@ -53,17 +53,19 @@ export default class StartMenu extends Phaser.Scene {
         
     
         const startButton = this.add.text(width / 2, height / 1.3, 'Start Game', {
-            fontSize: '32px',
-            fontFamily: 'Nosifer',
-            fill: '#00ff00', // Classic arcade green
+            fontSize: '42px', // Keeping the original size
+            fontFamily: 'Metal Mania', // Applying Metal Mania font
+            fill: '#FFD700', // Gold color for a metallic effect
             backgroundColor: '#000000',
             padding: { left: 20, right: 20, top: 10, bottom: 10 },
             align: 'center',
+            stroke: '#8B0000', // Dark red stroke for depth
+            strokeThickness: 5, // Make the text stand out
         })
         .setOrigin(0.5)
         .setInteractive();
         
-        // Add blinking animation effect for classic arcade style
+        // Blinking effect for arcade style
         this.tweens.add({
             targets: startButton,
             alpha: 0,
@@ -71,19 +73,22 @@ export default class StartMenu extends Phaser.Scene {
             yoyo: true,
             repeat: -1
         });        
-    
+        
+        // Hover effect
         startButton.on('pointerover', () => {
             startButton.setStyle({ fill: '#ffffff', backgroundColor: '#ff0000' });
         });
-    
+        
         startButton.on('pointerout', () => {
-            startButton.setStyle({ fill: '#ff0000', backgroundColor: '#000000' });
+            startButton.setStyle({ fill: '#FFD700', backgroundColor: '#000000' });
         });
-    
+        
+        // Start game when clicked
         startButton.on('pointerdown', () => {
             this.sound.stopAll();
             this.scene.start('Level1');
         });
+        
     
         this.music = this.sound.add('menuMusic', { loop: true, volume: 0.6 });
         this.music.play();
