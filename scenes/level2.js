@@ -289,6 +289,24 @@ export default class Level2 extends Phaser.Scene {
         }
     }
 
+    handlePlayerHealthPackCollision(player, healthPack) {
+        healthPack.destroy();
+        this.playerHealth = Math.min(this.playerHealth + 5, this.maxHealth);
+        this.updateHealthUI();
+        console.log("Health pack collected! Health:", this.playerHealth);
+    }
+
+    handleTrumpetSkeletonCollision(player, trumpetSkeleton) {
+        console.log('Player hit by Trumpet Skeleton!');
+        trumpetSkeleton.destroy();
+        this.playerHealth--;
+        this.updateHealthUI();
+        
+        if (this.playerHealth <= 0) {
+            this.gameOver();
+        }
+    }
+
     spawnHealthPack() {
         const { width } = this.scale;
         const x = Phaser.Math.Between(50, width - 50);
@@ -296,13 +314,6 @@ export default class Level2 extends Phaser.Scene {
         healthPack.setBounce(0.5);
         this.physics.add.collider(healthPack, this.platforms);
         console.log("Health pack spawned at:", x);
-    }
-
-    handlePlayerHealthPackCollision(player, healthPack) {
-        healthPack.destroy();
-        this.playerHealth = Math.min(this.playerHealth + 5, this.maxHealth);
-        this.updateHealthUI();
-        console.log("Health pack collected! Health:", this.playerHealth);
     }
 
     spawnMardiGrasZombie() {
@@ -371,27 +382,6 @@ export default class Level2 extends Phaser.Scene {
             },
         });
     }
-
-    trumpetSkeletonAttack(trumpetSkeleton) {
-        console.log('Trumpet Skeleton attacks!');
-        this.playerHealth -= 2;
-        this.updateHealthUI();
-        
-        if (this.playerHealth <= 0) {
-            this.gameOver();
-        }
-    }
-    
-    handleTrumpetSkeletonCollision(player, trumpetSkeleton) {
-        console.log('Player hit by Trumpet Skeleton!');
-        trumpetSkeleton.destroy();
-        this.playerHealth--;
-        this.updateHealthUI();
-        
-        if (this.playerHealth <= 0) {
-            this.gameOver();
-        }
-    } 
     
     gameOver() {
         console.log("Game Over!");
