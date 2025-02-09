@@ -21,14 +21,14 @@ export default class StartMenu extends Phaser.Scene {
     
         const logo = this.add.image(width / 2, height / 2.8, 'turboNegroLogo').setOrigin(0.5).setScale(0.6);
     
-        const subtitle = this.add.text(width / 2, height / 1.9, 'Saves The French Quarter!!!', {
+        const subtitle = this.add.text(width / 2, height / 1.5, 'Saves The French Quarter!!!', {
             fontSize: '42px', // Increased font size for better visibility
             fontFamily: 'Nosifer', // Apply Nosifer font
             color: 'red', // Match title color
             align: 'center',
             shadow: {
                 offsetX: 3,
-                offsetY: 2,
+                offsetY: 4,
                 color: '#000000',
                 blur: 5,
                 stroke: true,
