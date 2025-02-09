@@ -132,26 +132,27 @@ export default class Level4 extends Phaser.Scene {
         this.updateEnemyCountUI();
     
         // Enemy Spawns
-        this.time.addEvent({
+        this.enemySpawnTimer = this.time.addEvent({
             delay: 2000,
             callback: this.spawnMardiGrasZombie,
             callbackScope: this,
             loop: true,
         });
-    
-        this.time.addEvent({
+        
+        this.trumpetSpawnTimer = this.time.addEvent({
             delay: 3000,
             callback: this.spawnTrumpetSkeleton,
             callbackScope: this,
             loop: true,
         });
-    
-        this.time.addEvent({
+        
+        this.beignetMinionSpawnTimer = this.time.addEvent({
             delay: 4000,
             callback: this.spawnBeignetMinion,
             callbackScope: this,
             loop: true,
         });
+        
     
         // Setup mobile controls
         if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
@@ -439,7 +440,7 @@ export default class Level4 extends Phaser.Scene {
     
         // Transition to Level 5
         this.handleLevelTransition(() => this.scene.start('Level5'));
-    }
+    }    
 
     gameOver() {
         console.log("Game Over!");
@@ -453,25 +454,37 @@ export default class Level4 extends Phaser.Scene {
     }
     
     cleanUpLevel() {
+        console.log("Cleaning up Level 4...");
+    
+        // Stop music
         if (this.levelMusic) {
             this.levelMusic.stop();
             this.levelMusic.destroy();
         }
     
         // Stop all enemy and projectile spawn timers
-        if (this.enemySpawnTimer) this.enemySpawnTimer.remove();
-        if (this.trumpetSpawnTimer) this.trumpetSpawnTimer.remove();
-        if (this.beignetMinionSpawnTimer) this.beignetMinionSpawnTimer.remove(); // Ensure this exists
+        if (this.enemySpawnTimer) {
+            this.enemySpawnTimer.remove();
+            this.enemySpawnTimer = null;
+        }
+        if (this.trumpetSpawnTimer) {
+            this.trumpetSpawnTimer.remove();
+            this.trumpetSpawnTimer = null;
+        }
+        if (this.beignetMinionSpawnTimer) {
+            this.beignetMinionSpawnTimer.remove();
+            this.beignetMinionSpawnTimer = null;
+        }
     
-        // Destroy all enemies and projectiles
+        // Remove all game objects
         this.enemies.clear(true, true);
         this.trumpetEnemies.clear(true, true);
-        this.beignetProjectiles.clear(true, true); // Ensure Beignet projectiles are removed
-        this.projectiles.clear(true, true); // Ensure player projectiles are removed
+        this.beignetProjectiles.clear(true, true);
+        this.projectiles.clear(true, true);
     
         console.log("Level cleaned up successfully.");
-    }    
-
+    }
+       
     handleLevelTransition(callback) {
         this.input.keyboard.once('keydown-SPACE', callback);
         this.input.once('pointerdown', callback);
