@@ -28,7 +28,7 @@ export default class StartMenu extends Phaser.Scene {
             align: 'center',
             shadow: {
                 offsetX: 3,
-                offsetY: 4,
+                offsetY: 2,
                 color: '#000000',
                 blur: 5,
                 stroke: true,
