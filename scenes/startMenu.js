@@ -20,13 +20,13 @@ export default class StartMenu extends Phaser.Scene {
         background.setDisplaySize(width, height).setOrigin(0.5);
     
         // Create shadow effect by duplicating the logo behind with a slight offset
-        const logoShadow = this.add.image(width / 2 + 5, height / 3 + 5, 'turboNegroLogo')
+        const logoShadow = this.add.image(width / 2 + 5, height / 3.1 + 5.1, 'turboNegroLogo')
         .setOrigin(0.5)
         .setScale(0.6)
         .setTint(0xffffff) // Set the shadow color to white
         .setAlpha(0.7); // Reduce opacity for shadow effect
 
-        const logo = this.add.image(width / 2, height / 3, 'turboNegroLogo')
+        const logo = this.add.image(width / 2, height / 3.1, 'turboNegroLogo')
         .setOrigin(0.5)
         .setScale(0.6);
 
