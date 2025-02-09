@@ -23,14 +23,40 @@
     gtag('config', 'G-GFC2WF2CGJ');
     </script>
     <style>
-        /* General Body Styling */
-        #title {
+        /* Container for logo and title */
+        #logo-title-container {
             display: flex;
-            justify-content: center;
+            flex-direction: column; /* Stack logo above title */
             align-items: center;
+            justify-content: center;
+            width: 100%;
+            margin-top: 10px; /* Adjust spacing */
+        }
+
+        /* Style for the logo */
+        #logo {
+            max-width: 25vw; /* Scale based on viewport width */
+            height: auto;
+        }
+
+        /* Adjust logo size for smaller screens */
+        @media screen and (max-width: 768px) {
+            #logo {
+                max-width: 40vw;
+            }
+        }
+
+        @media screen and (max-width: 480px) {
+            #logo {
+                max-width: 50vw;
+            }
+        }
+
+        /* Adjust title styling */
+        #title {
             font-style: italic;
             font-family: 'Nosifer', cursive;
-            font-size: 2vw; /* Use viewport width for responsive scaling */
+            font-size: 6vw;
             color: red;
             text-shadow: 4px 4px 5px black;
             text-align: center;
@@ -41,15 +67,15 @@
         /* Adjust font size for smaller screens */
         @media screen and (max-width: 768px) {
             #title {
-                font-size: 6vw;
+                font-size: 8vw;
             }
         }
 
         @media screen and (max-width: 480px) {
             #title {
-                font-size: 8vw;
+                font-size: 10vw;
             }
-        } 
+        }
  
         body {
             font-family: 'Arial', sans-serif;
@@ -560,9 +586,11 @@
     <div id="main-container">
         <!-- UI and Game Container -->
         <div id="ui-container">
-            <div id="title">
-                <h1><img src="assets/Logo/Turbo Negro.png"><br>Saves The French Quarter!</h1>
+            <div id="logo-title-container">
+                <img id="logo" src="assets/Logo/Turbo Negro.png" alt="Turbo Negro Logo">
+                <h1 id="title">Saves The French Quarter!</h1>
             </div>
+            
             <div id="warning">Warning!<br>This game is in development<br>Meaning,<br>Game may glitch or pause due to updates<br>Updates occur often<br>Day or Night<br>We apologize for the inconveniece!</div>
             <div id="fullscreen">
                 <div id="health-bar-container">
