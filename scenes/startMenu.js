@@ -38,7 +38,7 @@ export default class StartMenu extends Phaser.Scene {
         .setOrigin(0.5);
         
     
-        const startButton = this.add.text(width / 2, height / 1.4, 'PRESS START 2P', {
+        const startButton = this.add.text(width / 2, height / 1.4, 'Start Game', {
             fontSize: '32px',
             fontFamily: 'Nosifer',
             fill: '#00ff00', // Classic arcade green
