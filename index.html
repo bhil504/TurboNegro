@@ -24,11 +24,31 @@
     </script>
     <style>
         /* General Body Styling */
-        #title { 
-            font-family: 'Nosifer'; 
-            font-size: 42px; 
-            color: red; 
-            text-shadow: 4px 4px 5px black; 
+        #title {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-style: italic;
+            font-family: 'Nosifer', cursive;
+            font-size: 6vw; /* Use viewport width for responsive scaling */
+            color: red;
+            text-shadow: 4px 4px 5px black;
+            text-align: center;
+            word-wrap: break-word;
+            max-width: 90%;
+        }
+
+        /* Adjust font size for smaller screens */
+        @media screen and (max-width: 768px) {
+            #title {
+                font-size: 8vw;
+            }
+        }
+
+        @media screen and (max-width: 480px) {
+            #title {
+                font-size: 10vw;
+            }
         } 
  
         body {
