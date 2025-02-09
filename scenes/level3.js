@@ -5,6 +5,33 @@ export default class Level3 extends Phaser.Scene {
     constructor() {
         super({ key: 'Level3' });
     }
+
+    updateHealthUI() {
+        const healthPercentage = (this.playerHealth / this.maxHealth) * 100;
+        document.getElementById('health-bar-inner').style.width = `${healthPercentage}%`;
+    }
+
+    updateEnemyCountUI() {
+        document.getElementById('enemy-count').innerText = `Enemies Left: ${40 - this.totalEnemiesDefeated}`;
+    }
+
+    updateHealthBar() {
+        if (!this.healthBar) return;
+
+        this.healthBar.clear();
+
+        const barWidth = 200;
+        const barHeight = 20;
+        const healthPercentage = Phaser.Math.Clamp(this.playerHealth / this.maxHealth, 0, 1);
+
+        const barColor = healthPercentage > 0.5 ? 0x00ff00 : healthPercentage > 0.25 ? 0xffff00 : 0xff0000;
+
+        this.healthBar.fillStyle(0x808080);
+        this.healthBar.fillRect(20, 20, barWidth, barHeight);
+
+        this.healthBar.fillStyle(barColor);
+        this.healthBar.fillRect(20, 20, barWidth * healthPercentage, barHeight);
+    }
     
     preload() {
         console.log("Preloading assets for Level 3...");
@@ -232,33 +259,6 @@ export default class Level3 extends Phaser.Scene {
         if (Phaser.Input.Keyboard.JustDown(this.fireKey)) {
             this.fireProjectile();
         }
-    }
-
-    updateHealthUI() {
-        const healthPercentage = (this.playerHealth / this.maxHealth) * 100;
-        document.getElementById('health-bar-inner').style.width = `${healthPercentage}%`;
-    }
-
-    updateEnemyCountUI() {
-        document.getElementById('enemy-count').innerText = `Enemies Left: ${40 - this.totalEnemiesDefeated}`;
-    }
-
-    updateHealthBar() {
-        if (!this.healthBar) return;
-
-        this.healthBar.clear();
-
-        const barWidth = 200;
-        const barHeight = 20;
-        const healthPercentage = Phaser.Math.Clamp(this.playerHealth / this.maxHealth, 0, 1);
-
-        const barColor = healthPercentage > 0.5 ? 0x00ff00 : healthPercentage > 0.25 ? 0xffff00 : 0xff0000;
-
-        this.healthBar.fillStyle(0x808080);
-        this.healthBar.fillRect(20, 20, barWidth, barHeight);
-
-        this.healthBar.fillStyle(barColor);
-        this.healthBar.fillRect(20, 20, barWidth * healthPercentage, barHeight);
     }
 
     fireProjectile() {
