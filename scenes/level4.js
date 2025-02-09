@@ -432,7 +432,7 @@ export default class Level4 extends Phaser.Scene {
 
     levelComplete() {
         console.log("Level Complete!");
-        this.cleanUpLevel();
+        this.cleanUpLevel(); // Stop all enemy spawns
     
         // Show level complete UI
         this.add.image(this.scale.width / 2, this.scale.height / 2, 'levelComplete').setOrigin(0.5);
@@ -443,7 +443,7 @@ export default class Level4 extends Phaser.Scene {
 
     gameOver() {
         console.log("Game Over!");
-        this.cleanUpLevel();
+        this.cleanUpLevel(); // Stop all timers and clear enemies
     
         // Show game over UI
         this.add.image(this.scale.width / 2, this.scale.height / 2, 'gameOver').setOrigin(0.5);
@@ -461,7 +461,7 @@ export default class Level4 extends Phaser.Scene {
         // Stop all enemy and projectile spawn timers
         if (this.enemySpawnTimer) this.enemySpawnTimer.remove();
         if (this.trumpetSpawnTimer) this.trumpetSpawnTimer.remove();
-        if (this.beignetMinionSpawnTimer) this.beignetMinionSpawnTimer.remove(); // Add this
+        if (this.beignetMinionSpawnTimer) this.beignetMinionSpawnTimer.remove(); // Ensure this exists
     
         // Destroy all enemies and projectiles
         this.enemies.clear(true, true);
@@ -470,7 +470,7 @@ export default class Level4 extends Phaser.Scene {
         this.projectiles.clear(true, true); // Ensure player projectiles are removed
     
         console.log("Level cleaned up successfully.");
-    }
+    }    
 
     handleLevelTransition(callback) {
         this.input.keyboard.once('keydown-SPACE', callback);
