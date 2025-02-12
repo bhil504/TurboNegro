@@ -15,8 +15,7 @@ export function addFullscreenButton(scene) {
         if (mobileFullscreenButton) {
             mobileFullscreenButton.addEventListener('click', () => {
                 exitIframeFullscreen(() => {
-                    toggleFullscreen(fullscreenElement);
-                    setTimeout(adjustScreenForLandscapeFullscreen, 500);
+                    requestGameFullscreen();
                 });
             });
         }
@@ -32,8 +31,7 @@ export function addFullscreenButton(scene) {
 
         fullscreenButton.on('pointerdown', () => {
             exitIframeFullscreen(() => {
-                toggleFullscreen(fullscreenElement);
-                setTimeout(adjustScreenForLandscapeFullscreen, 500);
+                requestGameFullscreen();
             });
         });
 
@@ -44,13 +42,10 @@ export function addFullscreenButton(scene) {
 function exitIframeFullscreen(callback) {
     const iframe = document.getElementById('game-iframe');
     
-    if (document.fullscreenElement === iframe ||
-        document.webkitFullscreenElement === iframe) {
+    if (document.fullscreenElement === iframe || document.webkitFullscreenElement === iframe) {
         console.log("🔄 Exiting iframe fullscreen before entering game fullscreen...");
         document.exitFullscreen().then(() => {
             setTimeout(() => {
-                iframe.style.width = `${window.innerWidth}px`;
-                iframe.style.height = `${window.innerHeight}px`;
                 callback();
             }, 500);
         }).catch((err) => {
@@ -68,6 +63,29 @@ function toggleFullscreen(element) {
             element.requestFullscreen();
         } else if (element.webkitRequestFullscreen) {
             element.webkitRequestFullscreen();
+        }
+    } else {
+        document.exitFullscreen();
+    }
+}
+
+function requestGameFullscreen() {
+    const gameCanvas = document.querySelector('canvas');
+
+    if (!gameCanvas) {
+        console.error("⚠️ Game canvas not found!");
+        return;
+    }
+
+    if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+        if (gameCanvas.requestFullscreen) {
+            gameCanvas.requestFullscreen();
+        } else if (gameCanvas.webkitRequestFullscreen) { // Safari
+            gameCanvas.webkitRequestFullscreen();
+        } else if (gameCanvas.mozRequestFullScreen) { // Firefox
+            gameCanvas.mozRequestFullScreen();
+        } else if (gameCanvas.msRequestFullscreen) { // IE/Edge
+            gameCanvas.msRequestFullscreen();
         }
     } else {
         document.exitFullscreen();
