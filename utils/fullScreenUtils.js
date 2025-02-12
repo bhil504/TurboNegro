@@ -16,7 +16,10 @@ export function addFullscreenButton(scene) {
             mobileFullscreenButton.addEventListener('click', () => {
                 exitIframeFullscreen(() => {
                     toggleFullscreen(fullscreenElement);
-                    setTimeout(adjustScreenForLandscapeFullscreen, 500);
+                    setTimeout(() => {
+                        adjustScreenForLandscapeFullscreen();
+                        restoreOriginalUI(); // Ensures UI layout remains consistent
+                    }, 500);
                 });
             });
         }
@@ -33,7 +36,10 @@ export function addFullscreenButton(scene) {
         fullscreenButton.on('pointerdown', () => {
             exitIframeFullscreen(() => {
                 toggleFullscreen(fullscreenElement);
-                setTimeout(adjustScreenForLandscapeFullscreen, 500);
+                setTimeout(() => {
+                    adjustScreenForLandscapeFullscreen();
+                    restoreOriginalUI(); // Ensures UI layout remains consistent
+                }, 500);
             });
         });
 
@@ -44,8 +50,7 @@ export function addFullscreenButton(scene) {
 function exitIframeFullscreen(callback) {
     const iframe = document.getElementById('game-iframe');
     
-    if (document.fullscreenElement === iframe ||
-        document.webkitFullscreenElement === iframe) {
+    if (document.fullscreenElement === iframe || document.webkitFullscreenElement === iframe) {
         console.log("🔄 Exiting iframe fullscreen before entering game fullscreen...");
         document.exitFullscreen().then(() => {
             setTimeout(() => {
@@ -97,8 +102,7 @@ function adjustScreenForLandscapeFullscreen() {
         console.log("📱 Adjusting fullscreen for mobile landscape mode...");
         fullscreenElement.style.position = "fixed";
         fullscreenElement.style.top = "0";
-        fullscreenElement.style.left = "50%";
-        fullscreenElement.style.transform = "translateX(-50%)";
+        fullscreenElement.style.left = "0";
         fullscreenElement.style.width = "100vw";
         fullscreenElement.style.height = "100vh";
         fullscreenElement.style.display = "flex";
@@ -115,12 +119,48 @@ function adjustScreenForLandscapeFullscreen() {
         fullscreenElement.style.alignItems = "center";
         fullscreenElement.style.overflow = "hidden";
     }
+
+    restoreOriginalUI(); // Keeps UI in original layout
+}
+
+function restoreOriginalUI() {
+    const onscreenControls = document.getElementById('onscreen-controls');
+    if (!onscreenControls) return;
+
+    if (document.fullscreenElement || document.webkitFullscreenElement) {
+        console.log("📺 Fullscreen Mode Active - Keeping UI original");
+        onscreenControls.style.display = "flex"; 
+        onscreenControls.style.position = "relative";
+        onscreenControls.style.bottom = "auto";
+        onscreenControls.style.left = "auto";
+        onscreenControls.style.transform = "none";
+        onscreenControls.style.zIndex = "10";
+    } else {
+        console.log("🔄 Exiting Fullscreen - Resetting UI to original layout");
+        onscreenControls.style.display = "flex"; 
+        onscreenControls.style.position = "relative";
+        onscreenControls.style.bottom = "auto";
+        onscreenControls.style.left = "auto";
+        onscreenControls.style.transform = "none";
+    }
 }
 
 // Listen for fullscreen and orientation changes
-document.addEventListener("fullscreenchange", adjustScreenForLandscapeFullscreen);
-document.addEventListener("webkitfullscreenchange", adjustScreenForLandscapeFullscreen);
-window.addEventListener("resize", adjustScreenForLandscapeFullscreen);
+document.addEventListener("fullscreenchange", () => {
+    adjustScreenForLandscapeFullscreen();
+    restoreOriginalUI(); // Ensures UI remains unchanged
+});
+
+document.addEventListener("webkitfullscreenchange", () => {
+    adjustScreenForLandscapeFullscreen();
+    restoreOriginalUI(); // Ensures UI remains unchanged
+});
+
+window.addEventListener("resize", () => {
+    adjustScreenForLandscapeFullscreen();
+    restoreOriginalUI(); // Ensures UI remains unchanged
+});
+
 window.addEventListener("orientationchange", () => {
     console.log("🔄 Orientation changed. Resetting controls...");
 
@@ -138,9 +178,9 @@ window.addEventListener("orientationchange", () => {
         window.game.joystickForceY = 0;
     }
 
-    // Ensure Phaser canvas and game scale adjust properly
     setTimeout(() => {
         adjustScreenForLandscapeFullscreen();
+        restoreOriginalUI(); // Keeps UI elements in place
         if (window.game && window.game.scale) {
             window.game.scale.resize(window.innerWidth, window.innerHeight);
         }
