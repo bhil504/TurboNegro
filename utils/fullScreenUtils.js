@@ -1,6 +1,7 @@
 export function addFullscreenButton(scene) {
     const fullscreenElement = document.getElementById('fullscreen');
     const gameIframe = document.getElementById('game-iframe');
+    const onscreenControls = document.getElementById('onscreen-controls'); // Ensure onscreen controls are managed
 
     if (!fullscreenElement) {
         console.error("⚠️ Fullscreen element not found!");
@@ -15,7 +16,11 @@ export function addFullscreenButton(scene) {
         if (mobileFullscreenButton) {
             mobileFullscreenButton.addEventListener('click', () => {
                 exitIframeFullscreen(() => {
-                    requestGameFullscreen();
+                    toggleFullscreen(fullscreenElement);
+                    setTimeout(() => {
+                        adjustScreenForLandscapeFullscreen();
+                        ensureControlsVisible(); // Ensures UI elements stay visible
+                    }, 500);
                 });
             });
         }
@@ -31,7 +36,11 @@ export function addFullscreenButton(scene) {
 
         fullscreenButton.on('pointerdown', () => {
             exitIframeFullscreen(() => {
-                requestGameFullscreen();
+                toggleFullscreen(fullscreenElement);
+                setTimeout(() => {
+                    adjustScreenForLandscapeFullscreen();
+                    ensureControlsVisible(); // Ensures UI elements stay visible
+                }, 500);
             });
         });
 
@@ -42,10 +51,13 @@ export function addFullscreenButton(scene) {
 function exitIframeFullscreen(callback) {
     const iframe = document.getElementById('game-iframe');
     
-    if (document.fullscreenElement === iframe || document.webkitFullscreenElement === iframe) {
+    if (document.fullscreenElement === iframe ||
+        document.webkitFullscreenElement === iframe) {
         console.log("🔄 Exiting iframe fullscreen before entering game fullscreen...");
         document.exitFullscreen().then(() => {
             setTimeout(() => {
+                iframe.style.width = `${window.innerWidth}px`;
+                iframe.style.height = `${window.innerHeight}px`;
                 callback();
             }, 500);
         }).catch((err) => {
@@ -63,29 +75,6 @@ function toggleFullscreen(element) {
             element.requestFullscreen();
         } else if (element.webkitRequestFullscreen) {
             element.webkitRequestFullscreen();
-        }
-    } else {
-        document.exitFullscreen();
-    }
-}
-
-function requestGameFullscreen() {
-    const gameCanvas = document.querySelector('canvas');
-
-    if (!gameCanvas) {
-        console.error("⚠️ Game canvas not found!");
-        return;
-    }
-
-    if (!document.fullscreenElement && !document.webkitFullscreenElement) {
-        if (gameCanvas.requestFullscreen) {
-            gameCanvas.requestFullscreen();
-        } else if (gameCanvas.webkitRequestFullscreen) { // Safari
-            gameCanvas.webkitRequestFullscreen();
-        } else if (gameCanvas.mozRequestFullScreen) { // Firefox
-            gameCanvas.mozRequestFullScreen();
-        } else if (gameCanvas.msRequestFullscreen) { // IE/Edge
-            gameCanvas.msRequestFullscreen();
         }
     } else {
         document.exitFullscreen();
@@ -133,12 +122,48 @@ function adjustScreenForLandscapeFullscreen() {
         fullscreenElement.style.alignItems = "center";
         fullscreenElement.style.overflow = "hidden";
     }
+
+    ensureControlsVisible(); // Keep onscreen controls visible
+}
+
+function ensureControlsVisible() {
+    const onscreenControls = document.getElementById('onscreen-controls');
+    if (!onscreenControls) return;
+
+    if (document.fullscreenElement || document.webkitFullscreenElement) {
+        console.log("📺 Fullscreen Mode Active - Ensuring UI stays visible");
+        onscreenControls.style.display = "flex"; // Keep onscreen controls visible
+        onscreenControls.style.position = "absolute";
+        onscreenControls.style.bottom = "10px"; // Keep it at the bottom of the screen
+        onscreenControls.style.left = "50%";
+        onscreenControls.style.transform = "translateX(-50%)";
+        onscreenControls.style.zIndex = "1000"; // Ensure it stays on top
+    } else {
+        console.log("🔄 Exiting Fullscreen - Resetting UI");
+        onscreenControls.style.display = "flex"; // Reset to normal mode
+        onscreenControls.style.position = "relative";
+        onscreenControls.style.bottom = "auto";
+        onscreenControls.style.left = "auto";
+        onscreenControls.style.transform = "none";
+    }
 }
 
 // Listen for fullscreen and orientation changes
-document.addEventListener("fullscreenchange", adjustScreenForLandscapeFullscreen);
-document.addEventListener("webkitfullscreenchange", adjustScreenForLandscapeFullscreen);
-window.addEventListener("resize", adjustScreenForLandscapeFullscreen);
+document.addEventListener("fullscreenchange", () => {
+    adjustScreenForLandscapeFullscreen();
+    ensureControlsVisible(); // Re-check UI visibility
+});
+
+document.addEventListener("webkitfullscreenchange", () => {
+    adjustScreenForLandscapeFullscreen();
+    ensureControlsVisible(); // Re-check UI visibility
+});
+
+window.addEventListener("resize", () => {
+    adjustScreenForLandscapeFullscreen();
+    ensureControlsVisible(); // Re-check UI visibility
+});
+
 window.addEventListener("orientationchange", () => {
     console.log("🔄 Orientation changed. Resetting controls...");
 
@@ -156,9 +181,9 @@ window.addEventListener("orientationchange", () => {
         window.game.joystickForceY = 0;
     }
 
-    // Ensure Phaser canvas and game scale adjust properly
     setTimeout(() => {
         adjustScreenForLandscapeFullscreen();
+        ensureControlsVisible(); // Keep UI elements visible
         if (window.game && window.game.scale) {
             window.game.scale.resize(window.innerWidth, window.innerHeight);
         }
