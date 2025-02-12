@@ -6,6 +6,18 @@ export default class BossFight extends Phaser.Scene {
         super({ key: 'BossFight' });
     }
 
+    updateHealthUI() {
+        document.getElementById('health-bar-inner').style.width = `${(this.playerHealth / 10) * 100}%`;
+    }
+
+    updateEnemyCountUI() {
+        const remaining = 20 - this.totalEnemiesDefeated;
+        const bossMessage = this.boss.visible
+            ? "Boss Active!"
+            : `Enemies Left: ${remaining} (Defeat to revive the boss!)`;
+        document.getElementById('enemy-count').innerText = bossMessage;
+    }
+
     preload() {
         this.load.image('finalFightBackground', 'assets/Levels/BackGrounds/finalFight.webp');
         this.load.image('beignetBoss', 'assets/Characters/Enemies/Beignet_Boss.png');
@@ -24,22 +36,6 @@ export default class BossFight extends Phaser.Scene {
         this.load.audio('playerProjectileFire', 'assets/Audio/SoundFX/mp3/playerprojectilefire.mp3');
         this.load.audio('bossHit', 'assets/Audio/SoundFX/mp3/bossHit.mp3');
         this.load.audio('playerHit', 'assets/Audio/SoundFX/mp3/playerHit.mp3');
-    }
-
-    createMovingPlatform(x, y, width, speed, distance) {
-        let platform = this.movingPlatforms.create(x, y, 'platform'); // Use the loaded image
-        platform.setDisplaySize(width, 20).setOrigin(0.5, 0.5).refreshBody(); // Adjust display size
-    
-        this.tweens.add({
-            targets: platform,
-            x: platform.x + distance,
-            duration: speed * 10,
-            yoyo: true,
-            repeat: -1,
-            ease: 'Linear'
-        });
-    
-        return platform;
     }
     
     create() {
@@ -77,6 +73,11 @@ export default class BossFight extends Phaser.Scene {
         this.player.setDepth(1);
         this.physics.add.collider(this.player, this.ground);
         this.physics.add.collider(this.player, this.movingPlatforms);
+
+        this.playerHealth = 10; // Set initial player health
+        this.maxHealth = 10; // Define max health
+        this.updateHealthUI(); // Update UI
+
     
         // **Camera Follow**
         this.cameras.main.startFollow(this.player, true, 0.08, 0.08);
@@ -97,8 +98,30 @@ export default class BossFight extends Phaser.Scene {
         this.boss.setCollideWorldBounds(true);
         this.boss.body.setAllowGravity(false);
         this.boss.health = 20;
+        document.getElementById('boss-health-bar-container').style.display = 'block'; // Make sure the health bar is visible
         this.physics.add.collider(this.boss, this.ground);
         this.physics.add.collider(this.boss, this.movingPlatforms);
+
+        // Inside the `create()` method, where you set up the boss's walking animation:
+        this.tweens.add({
+            targets: this.boss,
+            x: this.boss.x - 300,  // Move boss 300px to the left
+            duration: 3000,        // Duration of the movement (3 seconds)
+            ease: 'Linear',
+            yoyo: true,            // Make the movement go back after it finishes
+            repeat: -1,            // Repeat the movement infinitely
+            onStart: () => {
+                this.boss.setFlipX(true); // Flip boss to the left initially
+            },
+            onUpdate: (tween, target, time, delta) => {
+                const progress = tween.progress;  // Get the progress directly from tween
+                if (progress > 0.5) {
+                    this.boss.setFlipX(false); // Flip to face right
+                } else {
+                    this.boss.setFlipX(true);  // Flip to face left
+                }
+            }
+        });
     
         // **Input Controls**
         this.cursors = this.input.keyboard.createCursorKeys();
@@ -111,7 +134,7 @@ export default class BossFight extends Phaser.Scene {
     
         // **Fullscreen Button**
         addFullscreenButton(this);
-    
+
         // **Hazard Spawner - Drops Every 5 Seconds**
         this.time.addEvent({
             delay: 5000, // Every 5 seconds
@@ -122,7 +145,7 @@ export default class BossFight extends Phaser.Scene {
 
         // **Boss Fires Beignet Projectiles Every 4 Seconds**
         this.time.addEvent({
-            delay: 4000, // Fire every 4 seconds
+            delay: 3000, // Fire every 4 seconds
             callback: this.shootProjectiles,
             callbackScope: this,
             loop: true
@@ -134,22 +157,9 @@ export default class BossFight extends Phaser.Scene {
             delay: 3000, // Spawn every 3 seconds
             callback: () => {
                 this.spawnBeignetMonster();
-                this.bossMinionCount++;
-                if (this.bossMinionCount >= 5) {
-                    this.repositionBoss();
-                    this.bossMinionCount = 0; // Reset counter
-                }
             },
             callbackScope: this,
             loop: true
-        });
-
-        // Ensure player's projectiles can destroy boss's beignet projectiles
-        this.physics.add.collider(this.projectiles, this.bossProjectiles, this.handleProjectileCollision, null, this);
-
-        // **Destroy Falling Hazard when Colliding with Platforms**
-        this.physics.add.collider(this.hazards, this.movingPlatforms, (hazard) => {
-            hazard.destroy();
         });
 
         // **Destroy Beignet Monster when Hit by Player's Projectile**
@@ -160,23 +170,28 @@ export default class BossFight extends Phaser.Scene {
                 minion.destroy();
             }
         });
+
+       // Ensure player's projectiles can destroy boss's beignet projectiles
+        this.physics.add.collider(this.projectiles, this.bossProjectiles, this.handleProjectileCollision, null, this);
+
+
     }
 
-    repositionBoss() {
-        // Define the safe range for teleportation
-        let newX = Phaser.Math.Between(500, 2500); // Keep within the game bounds
-        let groundY = this.scale.height - 150; // Ensure boss stays on the ground
+    createMovingPlatform(x, y, width, speed, distance) {
+        let platform = this.movingPlatforms.create(x, y, 'platform'); // Use the loaded image
+        platform.setDisplaySize(width, 20).setOrigin(0.5, 0.5).refreshBody(); // Adjust display size
     
-        // Play a teleport effect (optional, add an effect before disappearing)
-        this.boss.setAlpha(0); // Temporarily hide boss for teleportation effect
-        this.time.delayedCall(500, () => { // Short delay for teleport effect
-            this.boss.setPosition(newX, groundY);
-            this.boss.setAlpha(1); // Make the boss visible again
+        this.tweens.add({
+            targets: platform,
+            x: platform.x + distance,
+            duration: speed * 10,
+            yoyo: true,
+            repeat: -1,
+            ease: 'Linear'
         });
     
-        console.log("Boss teleported to:", newX, groundY);
+        return platform;
     }
-    
 
     update() {
         this.player.setVelocityX(0);
@@ -202,14 +217,204 @@ export default class BossFight extends Phaser.Scene {
         // **Fix: Ensure Parallax Background Scrolls Properly**
         this.background.tilePositionX = this.cameras.main.scrollX * 0.5;
     }
-
+        
+    //Player functions
     fireProjectile() {
         let projectile = this.projectiles.create(this.player.x, this.player.y, 'playerProjectile');
         if (projectile) {
             projectile.body.setAllowGravity(false);
             projectile.setVelocityX(this.player.flipX ? -500 : 500);
             this.sound.play('playerProjectileFire');
+
+            // Check if the projectile hits the boss
+            this.physics.add.overlap(projectile, this.boss, () => {
+                this.takeBossDamage(1); // Reduce boss health by 1 for each hit
+                projectile.destroy(); // Destroy projectile after hit
+            });
         }
+    }
+
+    checkPlayerHealth() {
+        if (this.playerHealth <= 0) {
+            this.gameOver();
+        }
+    }
+
+    //Hazard functions
+    spawnHazard() {
+        let x = this.player.x; // Spawn directly above the player
+        let y = 0; // Start from the top of the screen
+    
+        let hazard = this.hazards.create(x, y, 'fallingHazard');
+    
+        if (hazard) {
+            hazard.setActive(true).setVisible(true);
+            hazard.body.setAllowGravity(true);
+            hazard.body.setImmovable(false); // Ensure it's affected by physics
+    
+            // Debugging: Check if hazard has a body
+            console.log(`🛠️ Hazard spawned at (${hazard.x}, ${hazard.y})`);
+    
+            // Set falling speed
+            hazard.setVelocityY(200);
+    
+            hazard.setScale(1); // Adjust size if needed
+    
+            // **Destroy hazard when it collides with the ground**
+            this.physics.add.collider(hazard, this.ground, () => {
+                console.log("💥 Hazard hit the ground and was destroyed.");
+                hazard.destroy();
+            });
+    
+            // **Destroy hazard when it collides with the player**
+            this.physics.add.collider(this.player, hazard, (player, hazard) => {
+                console.log("🔥 Hazard collided with player!"); // Debugging
+                hazard.destroy();
+                this.handleHazardCollision(player);
+            });
+    
+            // **Destroy hazard when it collides with a platform**
+            this.physics.add.collider(hazard, this.movingPlatforms, () => {
+                console.log("🛑 Hazard hit a platform and was destroyed.");
+                hazard.destroy();
+            });
+        }
+    }    
+
+    handleHazardCollision(player) {
+        console.log("⚠️ Hazard hit player! Reducing health...");
+        
+        this.playerHealth -= 1; // Reduce player health
+        this.updateHealthUI(); // Update the UI
+    
+        if (this.playerHealth <= 0) {
+            console.log("❌ Player health depleted! Game over.");
+            this.gameOver();
+        }
+    }
+
+    handleProjectileCollision(playerProjectile, bossProjectile) {
+        playerProjectile.destroy();
+        bossProjectile.destroy();
+    }
+
+    //Boss functions
+    updateBossHealthUI() {
+        const healthPercentage = (this.boss.health / 20) * 100;  // Assuming max health is 20
+        const healthBar = document.getElementById('boss-health-bar-inner');
+        
+        if (healthBar) {
+            healthBar.style.width = `${healthPercentage}%`;  // Set the width of the health bar
+        }
+    }
+
+    takeBossDamage(amount) {
+        if (!this.boss || this.boss.health <= 0) return;
+        
+        this.boss.health -= amount;
+        this.bossHitCount = (this.bossHitCount || 0) + 1; // Track hit count
+    
+        if (this.bossHitCount >= 5) {
+            this.repositionBoss();
+            this.bossHitCount = 0; // Reset hit count after teleporting
+        }
+    
+        if (this.boss.health <= 0) {
+            this.boss.health = 0;
+            this.boss.setVisible(false); // Hide the boss if health is 0
+            this.checkBossDefeat(); // Ensure level completion check
+        }
+    
+        this.updateBossHealthUI(); // Update health bar after damage
+    }
+
+    repositionBoss() {
+        let currentX = this.boss.x;
+        let minX = 500;
+        let maxX = 2500;
+        let minTeleportDistance = 1000; // Ensure boss teleports at least this far
+        let maxTeleportDistance = 1800; // Maximum teleport distance
+        let newX;
+    
+        // Stop the movement tween if it exists
+        if (this.bossTween) {
+            this.bossTween.stop();
+        }
+    
+        // Stop attacks and minion spawning
+        this.boss.setAlpha(0); // Hide boss
+        this.boss.setActive(false); // Disable physics interactions
+        this.boss.body.enable = false; // Disable physics body
+    
+        this.time.removeAllEvents(); // Stop shooting and spawning events
+    
+        // Ensure teleportation moves the boss a significant distance and stays within bounds
+        do {
+            let offset = Phaser.Math.Between(minTeleportDistance, maxTeleportDistance);
+            newX = (Math.random() > 0.5) ? currentX + offset : currentX - offset; // Move left or right
+        } while (newX < minX || newX > maxX); // Ensure within bounds
+    
+        let groundY = this.scale.height - 150; // Keep boss on the ground
+    
+        // **Delay before reappearing (simulating a teleport effect)**
+        this.time.delayedCall(1500, () => { // 1.5 seconds delay
+            this.boss.setPosition(newX, groundY);
+            this.boss.setAlpha(1); // Make boss visible again
+            this.boss.setActive(true); // Reactivate physics interactions
+            this.boss.body.enable = true; // Re-enable physics body
+    
+            console.log(`Boss teleported from ${currentX} to ${newX}`);
+    
+            // Restart movement tween after teleport
+            this.bossTween = this.tweens.add({
+                targets: this.boss,
+                x: newX - 300,  // Move boss 300px to the left
+                duration: 3000,  // Duration of movement
+                ease: 'Linear',
+                yoyo: true,      // Make the movement go back after finishing
+                repeat: -1,      // Repeat infinitely
+                onStart: () => {
+                    this.boss.setFlipX(true); // Flip boss to the left initially
+                },
+                onUpdate: (tween, target, time, delta) => {
+                    const progress = tween.progress;
+                    if (progress > 0.5) {
+                        this.boss.setFlipX(false); // Flip to face right
+                    } else {
+                        this.boss.setFlipX(true);  // Flip to face left
+                    }
+                }
+            });
+    
+            // **Restart boss attacks and minion spawning after teleport**
+            this.startBossActions();
+        });
+    }
+    
+    startBossActions() {
+        // **Restart Boss Shooting**
+        this.time.addEvent({
+            delay: 4000, // Fire every 4 seconds
+            callback: this.shootProjectiles,
+            callbackScope: this,
+            loop: true
+        });
+    
+        // **Restart Beignet Monster Spawning**
+        this.bossMinionCount = 0;
+        this.time.addEvent({
+            delay: 3000, // Spawn every 3 seconds
+            callback: () => {
+                this.spawnBeignetMonster();
+                this.bossMinionCount++;
+                if (this.bossMinionCount >= 5) {
+                    this.repositionBoss();
+                    this.bossMinionCount = 0; // Reset counter
+                }
+            },
+            callbackScope: this,
+            loop: true
+        });
     }
 
     shootProjectiles() {
@@ -228,28 +433,6 @@ export default class BossFight extends Phaser.Scene {
             projectile.setVelocity(Math.cos(angle) * speed, Math.sin(angle) * speed);
         }
     }    
-
-    spawnMinions() {
-        const activeMinions = this.minions.getChildren().filter((minion) => minion.active).length;
-        if (activeMinions >= 5) return;
-    
-        let spawnPoints = [
-            { x: 800, y: this.scale.height - 220 },
-            { x: 1800, y: this.scale.height - 320 },
-            { x: 2500, y: this.scale.height - 270 }
-        ];
-    
-        let randomPoint = Phaser.Utils.Array.GetRandom(spawnPoints);
-        
-        let minion = this.minions.create(randomPoint.x, randomPoint.y, 'beignetMonster');
-        if (minion) {
-            minion.setActive(true).setVisible(true);
-            minion.setVelocityX(Phaser.Math.Between(-100, 100));
-            minion.health = 2;
-            this.physics.add.collider(minion, this.ground);
-            this.physics.add.collider(minion, this.platforms);
-        }
-    }  
 
     spawnBeignetMonster() {
         if (!this.boss || !this.minions) return;
@@ -274,217 +457,65 @@ export default class BossFight extends Phaser.Scene {
         }
     }
     
-    shootMinionProjectile(minion) {
-        if (!minion.active) return; // Skip if minion is destroyed
-    
-        let projectile = this.bossProjectiles.get(minion.x, minion.y, 'beignetProjectile');
-        if (projectile) {
-            projectile.setActive(true).setVisible(true);
-            projectile.body.setAllowGravity(false);
-    
-            const angle = Phaser.Math.Angle.Between(minion.x, minion.y, this.player.x, this.player.y);
-            const speed = Phaser.Math.Between(200, 300); // Randomize projectile speed
-            projectile.setVelocity(Math.cos(angle) * speed, Math.sin(angle) * speed);
-        }
-    }
-
-    spawnHealthPack() {
-        let x = Phaser.Math.Between(50, this.scale.width - 50);
-        let healthPack = this.healthPacks.create(x, 50, 'healthPack');
-        healthPack.body.setAllowGravity(true);
-        healthPack.setBounce(0.5);
-    }
-
-    spawnHazard() {
-        let x = Phaser.Math.Between(50, this.scale.width - 50);
-        let hazard = this.hazards.create(x, 0, 'fallingHazard');
-        
-        if (hazard) {
-            hazard.setActive(true).setVisible(true);
-            hazard.body.setAllowGravity(true);
-            
-            // **Reduced falling speed**
-            hazard.setVelocityY(5); // Was 200, now 100 for a slower drop
-    
-            hazard.setScale(1); // Adjust size if needed
-            this.physics.add.collider(hazard, this.ground, () => {
-                hazard.destroy(); // Destroy when it hits the ground
-            });
-    
-            this.physics.add.overlap(this.player, hazard, this.handleHazardCollision, null, this);
-        }
-    }    
-
-    handlePlayerHit(player, projectile) {
-        // Handle player getting hit
-        this.sound.play('playerHit');
-        projectile.destroy();
-        this.playerHealth -= 1;
-        if (this.playerHealth <= 0) {
-            this.scene.start('GameOver');
-        }
-    }
-
-    handleProjectileCollision(playerProjectile, beignetProjectile) {
-        playerProjectile.destroy();
-        beignetProjectile.destroy();
-        console.log("Player projectile destroyed beignet projectile!");
-    }
-
-    handleHazardCollision(player, hazard) {
-        hazard.destroy();
-        this.playerHealth -= 3; // Damage taken from hazard
-        this.updateHealthUI();
-        this.sound.play('playerHit');
-    
-        if (this.playerHealth <= 0) {
-            this.scene.start('GameOver');
-        }
-    }
-
-    handleMinionCollision(player, minion) {
-        if (!minion.active) return;
-    
-        minion.health -= 1; // **Reduce minion health by 1**
-        
-        if (minion.health <= 0) {
-            minion.destroy(); // **Destroy minion if health reaches 0**
-        }
-    
-        this.playerHealth -= 2; // **Player takes 2 damage**
-        this.updateHealthUI();
-    
-        if (this.playerHealth <= 0) {
-            this.scene.start('GameOver');
-        }
-    }
-    
-    handleHazardCollision(player, hazard) {
-        hazard.destroy();
-        this.playerHealth -= 3;
-        this.updateHealthUI();
-        if (this.playerHealth <= 0) {
-            this.scene.start('GameOver');
-        }
-    }
-
-    handleBossHit(projectile, boss) {
-        projectile.destroy();
-        boss.health -= 1;
-        this.sound.play('bossHit');
-
-        if (boss.health <= 0) {
-            this.levelComplete();
-        }
-    }  
-
-    collectHealthPack(player, healthPack) {
-        healthPack.destroy();
-        this.playerHealth = Math.min(this.playerHealth + 5, 10);
-        this.updateHealthUI();
-    }
-
-    updateHealthUI() {
-        document.getElementById('health-bar-inner').style.width = `${(this.playerHealth / 10) * 100}%`;
-    }
-
-    updateEnemyCountUI() {
-        const remaining = 20 - this.totalEnemiesDefeated;
-        const bossMessage = this.boss.visible
-            ? "Boss Active!"
-            : `Enemies Left: ${remaining} (Defeat to revive the boss!)`;
-        document.getElementById('enemy-count').innerText = bossMessage;
-    }
-
-    spawnEnemies(count) {
-        for (let i = 0; i < count; i++) {
-            let x = Phaser.Math.Between(50, this.scale.width - 50);
-            let enemy = this.minions.create(x, 0, 'beignetMonster');
-    
-            if (enemy) {
-                enemy.setActive(true).setVisible(true);
-                enemy.setCollideWorldBounds(true);
-                enemy.body.setAllowGravity(true);
-                enemy.setBounce(0.2);
-                this.physics.add.collider(enemy, this.ground);
-    
-                this.physics.add.overlap(this.projectiles, enemy, (projectile, enemy) => {
-                    projectile.destroy();
-                    enemy.destroy();
-                    this.totalEnemiesDefeated += 1;
-                    this.updateEnemyCountUI();
-    
-                    if (this.totalEnemiesDefeated >= 20 && !this.boss.visible) {
-                        this.boss.setVisible(true);
-                        this.boss.health = 10;
-                    }
-                }, null, this);
-            }
-        }
-    }
-
-    spawnHazard() {
-        let x = this.player.x + Phaser.Math.Between(-100, 100); // Slightly randomize the drop position
-        let hazard = this.hazards.create(x, 0, 'fallingHazard');
-        
-        if (hazard) {
-            hazard.setActive(true).setVisible(true);
-            hazard.body.setAllowGravity(true);
-            hazard.setVelocityY(300); // Drop speed
-            hazard.setScale(1); // Adjust size if needed
-            this.physics.add.collider(hazard, this.ground, () => {
-                hazard.destroy(); // Destroy when it hits the ground
-            });
-    
-            this.physics.add.overlap(this.player, hazard, this.handleHazardCollision, null, this);
-        }
-    }
-    
-    startPhaseTwo() {
-        this.bossPhase = 2;
-        this.boss.setTint(0xff0000);
-        this.boss.setVelocityX(200);
-        this.time.addEvent({ delay: 2000, callback: () => {
-            this.boss.x = this.boss.x < 0 ? this.scale.width * 2 : 0;
-        }, loop: true });
-    }
-
-    changeBossPhase() {
-        if (this.boss.health <= 15) {
-            console.log("Boss entering phase 2!");
-            this.boss.setTint(0xff0000); // Visual cue: Boss glows red
-            this.time.removeEvent(this.shootProjectiles); // Remove old shooting pattern
-    
-            // Add a faster, more aggressive shooting pattern
-            this.time.addEvent({
-                delay: 800, // Faster attacks
-                callback: this.shootProjectiles,
-                callbackScope: this,
-                loop: true,
-            });
-    
-            // Increase boss speed slightly
-            this.boss.setVelocityX(this.boss.body.velocity.x * 1.2);
-        }
-    }
-
+    //UI
     gameOver() {
         console.log("Game Over!");
-        if (this.bossMusic) this.bossMusic.stop();
-        if (this.time) this.time.clearPendingEvents();
-        this.minions.clear(true, true);
-        this.bossProjectiles.clear(true, true);
-        this.projectiles.clear(true, true);
+        this.cleanUpLevel();
         this.add.image(this.scale.width / 2, this.scale.height / 2, 'gameOver').setOrigin(0.5);
+        this.handleLevelTransition(() => this.scene.restart());
+    }
     
-        this.input.keyboard.once('keydown-SPACE', () => {
-            this.scene.restart();
+    levelComplete() {
+        console.log("Final Boss Defeated! Game Complete!");
+        this.cleanUpLevel();
+        this.add.image(this.scale.width / 2, this.scale.height / 2, 'levelComplete').setOrigin(0.5);
+    
+        this.time.delayedCall(2000, () => { // 2-second delay
+            console.log("Transitioning to StartMenu...");
+            this.scene.start('StartMenu');
         });
     }
+    
+    
+    cleanUpLevel() {
+        console.log("Cleaning up level...");
+        if (this.bossMusic) {
+            this.bossMusic.stop();
+            this.bossMusic.destroy();
+        }
+        this.time.removeAllEvents();
+        
+        if (this.enemies) {
+            console.log("Clearing enemies...");
+            this.enemies.clear(true, true);
+        } else {
+            console.log("Warning: this.enemies is undefined!");
+        }
 
-    levelComplete() {
-        // Complete the level
-        console.log("Boss Defeated!");
-        this.scene.start('VictoryScene');
+        if (this.projectiles) {
+            console.log("Clearing projectiles...");
+            this.projectiles.clear(true, true);
+        } else {
+            console.log("Warning: this.projectiles is undefined!");
+        }
+
+        if (this.bossProjectiles) {
+            console.log("Clearing boss projectiles...");
+            this.bossProjectiles.clear(true, true);
+        } else {
+            console.log("Warning: this.bossProjectiles is undefined!");
+        }
+        console.log("Boss Fight cleaned up.");
+    }
+    
+    handleLevelTransition(callback) {
+        this.input.keyboard.once('keydown-SPACE', callback);
+        this.input.once('pointerdown', callback);
+    }
+
+    checkBossDefeat() {
+        if (this.boss.health <= 0) {
+            this.levelComplete();
+        }
     }
 }

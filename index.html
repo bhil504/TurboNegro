@@ -490,6 +490,38 @@
             font-size: 14px;
             cursor: pointer;
         }
+
+        #boss-health-bar-container {
+            display: flex;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: bold;
+            padding: 8px 15px;
+            background: rgba(50, 50, 50, 0.8);
+            border-radius: 8px;
+            color: #fff;
+            text-shadow: 1px 1px 4px rgba(0, 0, 0, 0.8);
+            width: 96%;
+            margin: 2px;
+        }
+
+        #boss-health-bar {
+            width: 75%;
+            height: 20px;
+            background-color: #770000;
+            border-radius: 12px;
+            border: 2px solid #444;
+            overflow: hidden;
+            margin-left: 8px;
+        }
+
+        #boss-health-bar-inner {
+            width: 100%;
+            height: 100%;
+            background-color: #00aa00;
+            transition: width 0.3s ease-in-out;
+        }
+
     </style>
 </head>
 <script>
@@ -594,6 +626,7 @@
             
             <div id="warning">Warning!<br>This game is in development<br>Meaning,<br>Game may glitch or pause due to updates<br>Updates occur often<br>Day or Night<br>We apologize for the inconveniece!</div>
             <div id="fullscreen">
+                
                 <div id="health-bar-container">
                     Health: 
                     <div id="health-bar">
@@ -615,6 +648,13 @@
                     cursor: pointer;
                     "><img src="assets/Logo/apple-share-icon.png" alt="Share" width="20px" height="20px"></button>
                     <div id="enemy-count">Enemies Left: 0</div>
+                    <div id="boss-health-bar-container" style="display: none;">
+                        Boss Health:
+                        <div id="boss-health-bar">
+                            <div id="boss-health-bar-inner"></div>
+                        </div>
+                    </div>
+                    
                 </div>
                 <div id="game-container"></div>
                 <!-- Google AdSense Ad -->
