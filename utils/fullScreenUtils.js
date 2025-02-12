@@ -1,7 +1,6 @@
 export function addFullscreenButton(scene) {
     const fullscreenElement = document.getElementById('fullscreen');
     const gameIframe = document.getElementById('game-iframe');
-    const onscreenControls = document.getElementById('onscreen-controls'); // Ensure onscreen controls are managed
 
     if (!fullscreenElement) {
         console.error("⚠️ Fullscreen element not found!");
@@ -17,10 +16,7 @@ export function addFullscreenButton(scene) {
             mobileFullscreenButton.addEventListener('click', () => {
                 exitIframeFullscreen(() => {
                     toggleFullscreen(fullscreenElement);
-                    setTimeout(() => {
-                        adjustScreenForLandscapeFullscreen();
-                        ensureControlsVisible(); // Ensures UI elements stay visible
-                    }, 500);
+                    setTimeout(adjustScreenForLandscapeFullscreen, 500);
                 });
             });
         }
@@ -37,10 +33,7 @@ export function addFullscreenButton(scene) {
         fullscreenButton.on('pointerdown', () => {
             exitIframeFullscreen(() => {
                 toggleFullscreen(fullscreenElement);
-                setTimeout(() => {
-                    adjustScreenForLandscapeFullscreen();
-                    ensureControlsVisible(); // Ensures UI elements stay visible
-                }, 500);
+                setTimeout(adjustScreenForLandscapeFullscreen, 500);
             });
         });
 
@@ -122,48 +115,12 @@ function adjustScreenForLandscapeFullscreen() {
         fullscreenElement.style.alignItems = "center";
         fullscreenElement.style.overflow = "hidden";
     }
-
-    ensureControlsVisible(); // Keep onscreen controls visible
-}
-
-function ensureControlsVisible() {
-    const onscreenControls = document.getElementById('onscreen-controls');
-    if (!onscreenControls) return;
-
-    if (document.fullscreenElement || document.webkitFullscreenElement) {
-        console.log("📺 Fullscreen Mode Active - Ensuring UI stays visible");
-        onscreenControls.style.display = "flex"; // Keep onscreen controls visible
-        onscreenControls.style.position = "absolute";
-        onscreenControls.style.bottom = "10px"; // Keep it at the bottom of the screen
-        onscreenControls.style.left = "50%";
-        onscreenControls.style.transform = "translateX(-50%)";
-        onscreenControls.style.zIndex = "1000"; // Ensure it stays on top
-    } else {
-        console.log("🔄 Exiting Fullscreen - Resetting UI");
-        onscreenControls.style.display = "flex"; // Reset to normal mode
-        onscreenControls.style.position = "relative";
-        onscreenControls.style.bottom = "auto";
-        onscreenControls.style.left = "auto";
-        onscreenControls.style.transform = "none";
-    }
 }
 
 // Listen for fullscreen and orientation changes
-document.addEventListener("fullscreenchange", () => {
-    adjustScreenForLandscapeFullscreen();
-    ensureControlsVisible(); // Re-check UI visibility
-});
-
-document.addEventListener("webkitfullscreenchange", () => {
-    adjustScreenForLandscapeFullscreen();
-    ensureControlsVisible(); // Re-check UI visibility
-});
-
-window.addEventListener("resize", () => {
-    adjustScreenForLandscapeFullscreen();
-    ensureControlsVisible(); // Re-check UI visibility
-});
-
+document.addEventListener("fullscreenchange", adjustScreenForLandscapeFullscreen);
+document.addEventListener("webkitfullscreenchange", adjustScreenForLandscapeFullscreen);
+window.addEventListener("resize", adjustScreenForLandscapeFullscreen);
 window.addEventListener("orientationchange", () => {
     console.log("🔄 Orientation changed. Resetting controls...");
 
@@ -181,9 +138,9 @@ window.addEventListener("orientationchange", () => {
         window.game.joystickForceY = 0;
     }
 
+    // Ensure Phaser canvas and game scale adjust properly
     setTimeout(() => {
         adjustScreenForLandscapeFullscreen();
-        ensureControlsVisible(); // Keep UI elements visible
         if (window.game && window.game.scale) {
             window.game.scale.resize(window.innerWidth, window.innerHeight);
         }
