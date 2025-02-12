@@ -54,6 +54,16 @@ export function setupJoystick(scene, player) {
     // Initialize joystick force values
     scene.joystickForceX = 0;
     scene.joystickForceY = 0;
+
+    // Reset joystick on orientation change
+    window.addEventListener("orientationchange", () => {
+        scene.joystickForceX = 0;
+        scene.joystickForceY = 0;
+        if (player) {
+            player.setVelocityX(0);
+            player.anims.play('idle', true);
+        }
+    });
 }
 
 export function applyJoystickForce(scene, player) {

@@ -5,7 +5,8 @@ export function enableTiltControls(scene, player) {
     window.addEventListener('deviceorientation', (event) => {
         let tilt;
         const isLandscape = window.innerWidth > window.innerHeight; // Check if device is in landscape mode
-        const isClockwise = window.orientation === 90; // Determine if in clockwise landscape mode
+        const isClockwise = screen.orientation.angle === 90;
+
 
         // Use gamma for portrait and beta for landscape
         tilt = isLandscape ? event.beta : event.gamma;

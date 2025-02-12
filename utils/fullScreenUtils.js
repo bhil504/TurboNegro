@@ -42,14 +42,20 @@ export function addFullscreenButton(scene) {
 }
 
 function exitIframeFullscreen(callback) {
-    if (document.fullscreenElement === document.getElementById('game-iframe') ||
-        document.webkitFullscreenElement === document.getElementById('game-iframe')) {
+    const iframe = document.getElementById('game-iframe');
+    
+    if (document.fullscreenElement === iframe ||
+        document.webkitFullscreenElement === iframe) {
         console.log("🔄 Exiting iframe fullscreen before entering game fullscreen...");
         document.exitFullscreen().then(() => {
-            setTimeout(callback, 300);
+            setTimeout(() => {
+                iframe.style.width = `${window.innerWidth}px`;
+                iframe.style.height = `${window.innerHeight}px`;
+                callback();
+            }, 500);
         }).catch((err) => {
             console.error("❌ Error exiting iframe fullscreen:", err);
-            callback(); // Proceed even if exiting fails
+            callback();
         });
     } else {
         callback();
@@ -60,7 +66,7 @@ function toggleFullscreen(element) {
     if (!document.fullscreenElement && !document.webkitFullscreenElement) {
         if (element.requestFullscreen) {
             element.requestFullscreen();
-        } else if (element.webkitRequestFullscreen) { // iOS Safari support
+        } else if (element.webkitRequestFullscreen) {
             element.webkitRequestFullscreen();
         }
     } else {
@@ -69,7 +75,7 @@ function toggleFullscreen(element) {
 }
 
 function adjustScreenForLandscapeFullscreen() {
-    const isLandscape = window.innerWidth > window.innerHeight;
+    const isLandscape = window.matchMedia("(orientation: landscape)").matches;
     const isStandalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone;
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     const fullscreenElement = document.getElementById('fullscreen');
@@ -88,23 +94,55 @@ function adjustScreenForLandscapeFullscreen() {
 
     if (isMobile && isLandscape) {
         console.log("📱 Adjusting fullscreen for mobile landscape mode...");
-        fullscreenElement.style.width = `${window.innerWidth}px`;
-        fullscreenElement.style.height = `${window.innerHeight}px`;
-        fullscreenElement.style.transform = "none"; // Remove previous transform
+        fullscreenElement.style.width = "100vw";
+        fullscreenElement.style.height = "100vh";
+        fullscreenElement.style.transform = "none";
     } else {
         console.log("🔄 Adjusting fullscreen for normal mode...");
         fullscreenElement.style.position = "relative";
         fullscreenElement.style.width = "100%";
         fullscreenElement.style.height = "auto";
-        fullscreenElement.style.transform = "none"; // Reset transform
+        fullscreenElement.style.transform = "none";
+    }
+
+    // Ensure Phaser canvas resizes properly
+    const gameCanvas = document.querySelector("canvas");
+    if (gameCanvas) {
+        gameCanvas.style.width = "100%";
+        gameCanvas.style.height = "100%";
+    }
+    if (window.game && window.game.scale) {
+        window.game.scale.resize(window.innerWidth, window.innerHeight);
     }
 }
-
 
 // Listen for fullscreen and orientation changes
 document.addEventListener("fullscreenchange", adjustScreenForLandscapeFullscreen);
 document.addEventListener("webkitfullscreenchange", adjustScreenForLandscapeFullscreen);
 window.addEventListener("resize", adjustScreenForLandscapeFullscreen);
 window.addEventListener("orientationchange", () => {
-    setTimeout(adjustScreenForLandscapeFullscreen, 300);
+    console.log("🔄 Orientation changed. Resetting controls...");
+
+    if (window.game && window.game.scene) {
+        const currentScene = window.game.scene.getScenes(true)[0];
+        if (currentScene && currentScene.player) {
+            currentScene.player.setVelocityX(0);
+            currentScene.player.anims.play('idle', true);
+        }
+    }
+
+    // Reset joystick and tilt input
+    if (window.game) {
+        window.game.joystickForceX = 0;
+        window.game.joystickForceY = 0;
+    }
+
+    // Ensure Phaser canvas and game scale adjust properly
+    setTimeout(() => {
+        adjustScreenForLandscapeFullscreen();
+        if (window.game && window.game.scale) {
+            window.game.scale.resize(window.innerWidth, window.innerHeight);
+        }
+    }, 500);
 });
+
