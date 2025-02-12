@@ -42,14 +42,20 @@ export function addFullscreenButton(scene) {
 }
 
 function exitIframeFullscreen(callback) {
-    if (document.fullscreenElement === document.getElementById('game-iframe') ||
-        document.webkitFullscreenElement === document.getElementById('game-iframe')) {
+    const iframe = document.getElementById('game-iframe');
+    
+    if (document.fullscreenElement === iframe ||
+        document.webkitFullscreenElement === iframe) {
         console.log("🔄 Exiting iframe fullscreen before entering game fullscreen...");
         document.exitFullscreen().then(() => {
-            setTimeout(callback, 300);
+            setTimeout(() => {
+                iframe.style.width = `${window.innerWidth}px`;
+                iframe.style.height = `${window.innerHeight}px`;
+                callback();
+            }, 500);
         }).catch((err) => {
             console.error("❌ Error exiting iframe fullscreen:", err);
-            callback(); // Proceed even if exiting fails
+            callback();
         });
     } else {
         callback();
@@ -60,7 +66,7 @@ function toggleFullscreen(element) {
     if (!document.fullscreenElement && !document.webkitFullscreenElement) {
         if (element.requestFullscreen) {
             element.requestFullscreen();
-        } else if (element.webkitRequestFullscreen) { // iOS Safari support
+        } else if (element.webkitRequestFullscreen) {
             element.webkitRequestFullscreen();
         }
     } else {
@@ -76,38 +82,37 @@ function adjustScreenForLandscapeFullscreen() {
 
     if (!fullscreenElement) return;
 
-    if (isMobile && isStandalone) {
-        console.log("🚀 Adjusting fullscreen for standalone mode...");
-        fullscreenElement.style.position = "absolute";
-        fullscreenElement.style.top = "0";
-        fullscreenElement.style.left = "0";
-        fullscreenElement.style.width = "100vw";
-        fullscreenElement.style.height = "100vh";
-        fullscreenElement.style.display = "flex";
-        fullscreenElement.style.justifyContent = "center";
-        fullscreenElement.style.alignItems = "center";
-        fullscreenElement.style.overflow = "hidden";
-    } else if (isMobile && isLandscape) {
+    fullscreenElement.style.position = "absolute";
+    fullscreenElement.style.top = "0";
+    fullscreenElement.style.left = "0";
+    fullscreenElement.style.width = "100vw";
+    fullscreenElement.style.height = "100vh";
+    fullscreenElement.style.display = "flex";
+    fullscreenElement.style.justifyContent = "center";
+    fullscreenElement.style.alignItems = "center";
+    fullscreenElement.style.overflow = "hidden";
+
+    if (isMobile && isLandscape) {
         console.log("📱 Adjusting fullscreen for mobile landscape mode...");
-        fullscreenElement.style.position = "fixed";
-        fullscreenElement.style.top = "0";
-        fullscreenElement.style.left = "50%";
-        fullscreenElement.style.transform = "translateX(-50%)";
-        fullscreenElement.style.width = "100vw";
-        fullscreenElement.style.height = "100vh";
-        fullscreenElement.style.display = "flex";
-        fullscreenElement.style.justifyContent = "center";
-        fullscreenElement.style.alignItems = "center";
-        fullscreenElement.style.overflow = "hidden";
+        fullscreenElement.style.width = `${window.innerWidth}px`;
+        fullscreenElement.style.height = `${window.innerHeight}px`;
+        fullscreenElement.style.transform = "none";
     } else {
         console.log("🔄 Adjusting fullscreen for normal mode...");
         fullscreenElement.style.position = "relative";
         fullscreenElement.style.width = "100%";
         fullscreenElement.style.height = "auto";
-        fullscreenElement.style.display = "flex";
-        fullscreenElement.style.justifyContent = "center";
-        fullscreenElement.style.alignItems = "center";
-        fullscreenElement.style.overflow = "hidden";
+        fullscreenElement.style.transform = "none";
+    }
+
+    // Ensure Phaser canvas resizes properly
+    const gameCanvas = document.querySelector("canvas");
+    if (gameCanvas) {
+        gameCanvas.style.width = `${window.innerWidth}px`;
+        gameCanvas.style.height = `${window.innerHeight}px`;
+    }
+    if (window.game && window.game.scale) {
+        window.game.scale.resize(window.innerWidth, window.innerHeight);
     }
 }
 
@@ -116,5 +121,21 @@ document.addEventListener("fullscreenchange", adjustScreenForLandscapeFullscreen
 document.addEventListener("webkitfullscreenchange", adjustScreenForLandscapeFullscreen);
 window.addEventListener("resize", adjustScreenForLandscapeFullscreen);
 window.addEventListener("orientationchange", () => {
-    setTimeout(adjustScreenForLandscapeFullscreen, 300);
+    console.log("🔄 Orientation changed. Resetting controls...");
+    
+    if (window.game && window.game.scene) {
+        const currentScene = window.game.scene.getScenes(true)[0];
+        if (currentScene && currentScene.player) {
+            currentScene.player.setVelocityX(0);
+            currentScene.player.anims.play('idle', true);
+        }
+    }
+    
+    // Reset joystick and tilt input
+    if (window.game) {
+        window.game.joystickForceX = 0;
+        window.game.joystickForceY = 0;
+    }
+    
+    setTimeout(adjustScreenForLandscapeFullscreen, 500);
 });

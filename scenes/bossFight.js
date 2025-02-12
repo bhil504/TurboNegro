@@ -6,18 +6,6 @@ export default class BossFight extends Phaser.Scene {
         super({ key: 'BossFight' });
     }
 
-    updateHealthUI() {
-        document.getElementById('health-bar-inner').style.width = `${(this.playerHealth / 10) * 100}%`;
-    }
-
-    updateEnemyCountUI() {
-        const remaining = 20 - this.totalEnemiesDefeated;
-        const bossMessage = this.boss.visible
-            ? "Boss Active!"
-            : `Enemies Left: ${remaining} (Defeat to revive the boss!)`;
-        document.getElementById('enemy-count').innerText = bossMessage;
-    }
-
     preload() {
         this.load.image('finalFightBackground', 'assets/Levels/BackGrounds/finalFight.webp');
         this.load.image('beignetBoss', 'assets/Characters/Enemies/Beignet_Boss.png');
@@ -458,6 +446,18 @@ export default class BossFight extends Phaser.Scene {
     }
     
     //UI
+    updateHealthUI() {
+        document.getElementById('health-bar-inner').style.width = `${(this.playerHealth / 10) * 100}%`;
+    }
+
+    updateEnemyCountUI() {
+        const remaining = 20 - this.totalEnemiesDefeated;
+        const bossMessage = this.boss.visible
+            ? "Boss Active!"
+            : `Enemies Left: ${remaining} (Defeat to revive the boss!)`;
+        document.getElementById('enemy-count').innerText = bossMessage;
+    }
+
     gameOver() {
         console.log("Game Over!");
         this.cleanUpLevel();
@@ -474,8 +474,7 @@ export default class BossFight extends Phaser.Scene {
             console.log("Transitioning to StartMenu...");
             this.scene.start('StartMenu');
         });
-    }
-    
+    }    
     
     cleanUpLevel() {
         console.log("Cleaning up level...");
