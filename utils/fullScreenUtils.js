@@ -75,44 +75,45 @@ function toggleFullscreen(element) {
 }
 
 function adjustScreenForLandscapeFullscreen() {
-    const isLandscape = window.matchMedia("(orientation: landscape)").matches;
+    const isLandscape = window.innerWidth > window.innerHeight;
     const isStandalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone;
     const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     const fullscreenElement = document.getElementById('fullscreen');
 
     if (!fullscreenElement) return;
 
-    fullscreenElement.style.position = "absolute";
-    fullscreenElement.style.top = "0";
-    fullscreenElement.style.left = "0";
-    fullscreenElement.style.width = "100vw";
-    fullscreenElement.style.height = "100vh";
-    fullscreenElement.style.display = "flex";
-    fullscreenElement.style.justifyContent = "center";
-    fullscreenElement.style.alignItems = "center";
-    fullscreenElement.style.overflow = "hidden";
-
-    if (isMobile && isLandscape) {
-        console.log("📱 Adjusting fullscreen for mobile landscape mode...");
+    if (isMobile && isStandalone) {
+        console.log("🚀 Adjusting fullscreen for standalone mode...");
+        fullscreenElement.style.position = "absolute";
+        fullscreenElement.style.top = "0";
+        fullscreenElement.style.left = "0";
         fullscreenElement.style.width = "100vw";
         fullscreenElement.style.height = "100vh";
-        fullscreenElement.style.transform = "none";
+        fullscreenElement.style.display = "flex";
+        fullscreenElement.style.justifyContent = "center";
+        fullscreenElement.style.alignItems = "center";
+        fullscreenElement.style.overflow = "hidden";
+    } else if (isMobile && isLandscape) {
+        console.log("📱 Adjusting fullscreen for mobile landscape mode...");
+        fullscreenElement.style.position = "fixed";
+        fullscreenElement.style.top = "0";
+        fullscreenElement.style.left = "50%";
+        fullscreenElement.style.transform = "translateX(-50%)";
+        fullscreenElement.style.width = "100vw";
+        fullscreenElement.style.height = "100vh";
+        fullscreenElement.style.display = "flex";
+        fullscreenElement.style.justifyContent = "center";
+        fullscreenElement.style.alignItems = "center";
+        fullscreenElement.style.overflow = "hidden";
     } else {
         console.log("🔄 Adjusting fullscreen for normal mode...");
         fullscreenElement.style.position = "relative";
         fullscreenElement.style.width = "100%";
         fullscreenElement.style.height = "auto";
-        fullscreenElement.style.transform = "none";
-    }
-
-    // Ensure Phaser canvas resizes properly
-    const gameCanvas = document.querySelector("canvas");
-    if (gameCanvas) {
-        gameCanvas.style.width = "100%";
-        gameCanvas.style.height = "100%";
-    }
-    if (window.game && window.game.scale) {
-        window.game.scale.resize(window.innerWidth, window.innerHeight);
+        fullscreenElement.style.display = "flex";
+        fullscreenElement.style.justifyContent = "center";
+        fullscreenElement.style.alignItems = "center";
+        fullscreenElement.style.overflow = "hidden";
     }
 }
 
@@ -145,4 +146,3 @@ window.addEventListener("orientationchange", () => {
         }
     }, 500);
 });
-
