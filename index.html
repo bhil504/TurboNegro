@@ -909,17 +909,26 @@
 
     </script>
     <script>
-            window.addEventListener("message", (event) => {
-        if (event.data && event.data.action === "requestGameFullscreen") {
-            console.log("📺 Game received fullscreen request inside iframe.");
-
-            if (document.fullscreenElement || document.webkitFullscreenElement) {
-                window.parent.postMessage({ action: "enterGameFullscreen" }, "*");
+        window.addEventListener("message", (event) => {
+            if (event.data && event.data.action === "requestGameFullscreen") {
+                console.log("📺 Game received fullscreen request inside iframe.");
+        
+                const gameCanvas = document.querySelector("canvas");
+                if (gameCanvas) {
+                    if (gameCanvas.requestFullscreen) {
+                        gameCanvas.requestFullscreen();
+                    } else if (gameCanvas.webkitRequestFullscreen) {
+                        gameCanvas.webkitRequestFullscreen();
+                    } else if (gameCanvas.mozRequestFullScreen) {
+                        gameCanvas.mozRequestFullScreen();
+                    } else if (gameCanvas.msRequestFullscreen) {
+                        gameCanvas.msRequestFullscreen();
+                    }
+                }
             }
-        }
-    });
-
-    </script>
+        });
+        </script>
+        
 
 </body>
 </html>
