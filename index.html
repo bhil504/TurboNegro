@@ -908,6 +908,15 @@
         }
 
     </script>
+    <script>
+        document.addEventListener("fullscreenchange", () => {
+            const onscreenControls = document.getElementById("onscreen-controls");
+            if (onscreenControls) {
+                onscreenControls.style.display = document.fullscreenElement ? "block" : "flex";
+            }
+        });
+        </script>
+        
 
 
 </body>
