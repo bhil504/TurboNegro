@@ -47,17 +47,15 @@ export default class Level5 extends Phaser.Scene {
         this.totalEnemiesToDefeat = 45;
         this.totalEnemiesDefeated = 0;
         this.updateEnemyCountUI();
-
-        this.playerHealth = 10;  // Or whatever the starting health should be
-        this.maxHealth = 10;      // Set max health
+    
+        this.playerHealth = 10;
+        this.maxHealth = 10;
         this.updateHealthUI();
-
     
         this.add.image(width / 2, height / 2, 'level5Background').setDisplaySize(width, height);
         this.levelMusic = this.sound.add('level5Music', { loop: true, volume: 0.5 });
         this.levelMusic.play();
     
-        // Initialize healthPacks group
         this.healthPacks = this.physics.add.group();
     
         this.playerHitSFX = this.sound.add('playerHit', { volume: 0.6 });
@@ -109,22 +107,23 @@ export default class Level5 extends Phaser.Scene {
         this.time.addEvent({ delay: 5000, callback: this.spawnBeignetMonster, callbackScope: this, loop: true });
     
         addFullscreenButton(this);
-         // ✅ Fix: Declare isMobile before using it
-         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-
-         // Setup mobile controls only if it's a mobile device
-         if (isMobile) {
-             console.log("📱 Mobile detected. Using mobileControls.js for shooting.");
-             setupMobileControls(this, this.player);
-         } else {
-             console.log("💻 Desktop detected. Using spacebar for shooting.");
-             
-             // **Enable spacebar shooting ONLY for desktop**
-             this.input.keyboard.on('keydown-SPACE', () => {
-                 this.fireProjectile(); // Only trigger fireProjectile() on desktop
-             });
-         }
+    
+        // ✅ Fix: Properly separate mobile and desktop controls
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    
+        if (isMobile) {
+            console.log("📱 Mobile detected. Using mobileControls.js for controls.");
+            setupMobileControls(this, this.player);
+        } else {
+            console.log("💻 Desktop detected. Using keyboard controls.");
+            
+            // ✅ Ensure spacebar is only triggered once
+            this.input.keyboard.on('keydown-SPACE', () => {
+                this.fireProjectile();
+            });
+        }
     }
+    
 
     update() {
         if (!this.player || !this.cursors) return;
@@ -164,11 +163,6 @@ export default class Level5 extends Phaser.Scene {
             this.player.play('jump', true);
         }
     
-        // Fire projectile logic
-        if (Phaser.Input.Keyboard.JustDown(this.attackKey)) {
-            this.fireProjectile();
-        }
-    
         // Ensure enemies keep moving and don't get stuck
         this.enemies.children.iterate((enemy) => {
             if (enemy.body.velocity.x === 0) {
@@ -182,20 +176,21 @@ export default class Level5 extends Phaser.Scene {
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     
         if (isMobile) {
-            console.warn(`fireProjectile() is disabled on mobile for ${this.scene.key}`);
-            return; // Prevent firing in the level if on mobile
+            console.warn(`🚫 Prevented level fireProjectile() - Mobile users should use mobileControls.js instead.`);
+            return; // Ensure mobile users fire only via mobileControls.js
         }
     
-        // Normal projectile logic (runs only on desktop)
+        // Proceed with firing for desktop users only
         const projectile = this.projectiles.create(this.player.x, this.player.y, 'projectileCD');
         if (projectile) {
-            projectile.setVelocityX(this.player.flipX ? -500 : 500);
+            projectile.setActive(true);
+            projectile.setVisible(true);
             projectile.body.setAllowGravity(false);
+            projectile.setVelocityX(this.player.flipX ? -500 : 500);
             this.playerProjectileFireSFX.play();
         }
     }
     
-
     shootBeignet(minion) {
         const projectile = this.beignetProjectiles.create(minion.x, minion.y, 'beignetProjectile');
         if (projectile) {

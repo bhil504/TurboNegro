@@ -120,20 +120,17 @@ export default class BossFight extends Phaser.Scene {
         this.fireKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
     
          // ✅ Fix: Declare isMobile before using it
-         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
 
-         // Setup mobile controls only if it's a mobile device
-         if (isMobile) {
-             console.log("📱 Mobile detected. Using mobileControls.js for shooting.");
-             setupMobileControls(this, this.player);
-         } else {
-             console.log("💻 Desktop detected. Using spacebar for shooting.");
-             
-             // **Enable spacebar shooting ONLY for desktop**
-             this.input.keyboard.on('keydown-SPACE', () => {
-                 this.fireProjectile(); // Only trigger fireProjectile() on desktop
-             });
-         }
+        // Setup mobile controls only if it's a mobile device
+        if (isMobile) {
+            console.log("📱 Mobile detected. Using mobileControls.js for shooting.");
+            setupMobileControls(this, this.player);
+        } else {
+            console.log("💻 Desktop detected. Using spacebar for shooting.");
+            
+            
+        }
     
         // **Fullscreen Button**
         addFullscreenButton(this);
@@ -254,82 +251,83 @@ export default class BossFight extends Phaser.Scene {
     }
 
     update() {
-        if (!this.player || !this.player.body) return; // Ensure player exists before updating
-    
-        this.player.setVelocityX(0);
-    
-        if (this.cursors.left.isDown) {
-            this.player.setVelocityX(-160).setFlipX(true);
-            if (this.anims.exists('walk')) {
-                this.player.play('walk', true);
-            }
-        } else if (this.cursors.right.isDown) {
-            this.player.setVelocityX(160).setFlipX(false);
-            if (this.anims.exists('walk')) {
-                this.player.play('walk', true);
-            }
-        } else {
-            if (this.anims.exists('idle')) {
-                this.player.play('idle', true);
-            }
+    if (!this.player || !this.player.body) return;
+
+    this.player.setVelocityX(0);
+
+    if (this.cursors.left.isDown) {
+        this.player.setVelocityX(-160).setFlipX(true);
+        if (this.anims.exists('walk')) {
+            this.player.play('walk', true);
         }
-    
-        if (this.cursors.up.isDown && this.player.body.touching.down) {
-            this.player.setVelocityY(-500);
+    } else if (this.cursors.right.isDown) {
+        this.player.setVelocityX(160).setFlipX(false);
+        if (this.anims.exists('walk')) {
+            this.player.play('walk', true);
         }
-    
-        if (Phaser.Input.Keyboard.JustDown(this.fireKey)) {
-            this.fireProjectile();
+    } else {
+        if (this.anims.exists('idle')) {
+            this.player.play('idle', true);
         }
-    
-        // Ensure force field exists before updating position
-        if (this.forceFieldActive && this.forceField) {
-            this.forceField.setPosition(this.boss.x, this.boss.y);
-        }
-    
-        if (this.minions) {
-            this.minions.children.iterate((zombie) => {
-                if (zombie && zombie.active) {
-                    const speed = 100;
-                    const direction = this.player ? Math.sign(this.player.x - zombie.x) : 1;
-                    zombie.setVelocityX(direction * speed);
-    
-                    // Random jump mechanic
-                    if (Phaser.Math.Between(1, 100) > 95 && zombie.body.touching.down) {
-                        zombie.setVelocityY(-250);
-                    }
-    
-                    // Ensure zombie flips direction
-                    zombie.setFlipX(direction < 0);
+    }
+
+    if (this.cursors.up.isDown && this.player.body.touching.down) {
+        this.player.setVelocityY(-500);
+    }
+
+    // ✅ Fix: Fire projectile only when the key is first pressed, not held down
+    if (this.fireKey.isDown && !this.spaceKeyJustPressed) {
+        this.spaceKeyJustPressed = true;
+        this.fireProjectile();
+    } else if (this.fireKey.isUp) {
+        this.spaceKeyJustPressed = false;
+    }
+
+    // Ensure force field exists before updating position
+    if (this.forceFieldActive && this.forceField) {
+        this.forceField.setPosition(this.boss.x, this.boss.y);
+    }
+
+    if (this.minions) {
+        this.minions.children.iterate((zombie) => {
+            if (zombie && zombie.active) {
+                const speed = 100;
+                const direction = this.player ? Math.sign(this.player.x - zombie.x) : 1;
+                zombie.setVelocityX(direction * speed);
+
+                if (Phaser.Math.Between(1, 100) > 95 && zombie.body.touching.down) {
+                    zombie.setVelocityY(-250);
                 }
-            });
-    
-            // Debugging: Log only active zombies
-            this.minions.children.iterate((zombie) => {
-                if (zombie && zombie.active) {
-                    console.log(`🧟 Zombie at (${zombie.x}, ${zombie.y}), Active: ${zombie.active}`);
-                }
-            });
-        }
-    
-        // **Fix: Ensure Parallax Background Scrolls Properly**
-        if (this.background) {
-            this.background.tilePositionX = this.cameras.main.scrollX * 0.5;
-        }
-    }    
+
+                zombie.setFlipX(direction < 0);
+            }
+        });
+    }
+
+    // **Fix: Ensure Parallax Background Scrolls Properly**
+    if (this.background) {
+        this.background.tilePositionX = this.cameras.main.scrollX * 0.5;
+    }
+}    
         
     //Player functions
     fireProjectile() {
+        if (!this.player || !this.projectiles) return;
+    
+        console.log("🔥 fireProjectile() called!");
+    
         let projectile = this.projectiles.create(this.player.x, this.player.y, 'playerProjectile');
         if (projectile) {
+            console.log("🎯 Projectile spawned!");
+    
             projectile.body.setAllowGravity(false);
             projectile.setVelocityX(this.player.flipX ? -500 : 500);
             this.sound.play('playerProjectileFire');
-
-            // Check if the projectile hits the boss
+    
             this.physics.add.overlap(projectile, this.boss, () => {
-                this.takeBossDamage(1); // Reduce boss health by 1 for each hit
-                projectile.destroy(); // Destroy projectile after hit
+                console.log("💥 Boss hit!");
+                this.takeBossDamage(1);
+                projectile.destroy();
             });
         }
     }

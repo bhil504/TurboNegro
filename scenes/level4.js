@@ -50,13 +50,13 @@ export default class Level4 extends Phaser.Scene {
         this.add.image(width / 2, height / 2, 'level4Background').setDisplaySize(width, height);
         this.levelMusic = this.sound.add('level4Music', { loop: true, volume: 0.5 });
         this.levelMusic.play();
-
+    
         // Sound Effects
         this.playerHitSFX = this.sound.add('playerHit', { volume: 0.6 });
         this.playerProjectileFireSFX = this.sound.add('playerProjectileFire', { volume: 0.6 });
         this.mardiGrasZombieHitSFX = this.sound.add('mardiGrasZombieHit', { volume: 0.6 });
         this.trumpetSkeletonSFX = this.sound.add('trumpetSkeletonSound', { volume: 0.4 });
-        this.beignetMinionHitSFX = this.sound.add('beignetMinionHit', { volume: 0.8 }); // <-- Added
+        this.beignetMinionHitSFX = this.sound.add('beignetMinionHit', { volume: 0.8 });
         this.beignetProjectileFireSFX = this.sound.add('beignetProjectileFire', { volume: 0.6 });
     
         // Player Setup
@@ -84,25 +84,10 @@ export default class Level4 extends Phaser.Scene {
     
         // Platforms Setup
         this.platforms = this.physics.add.staticGroup();
-    
-        // Add Invisible Ground
         this.ground = this.platforms.create(width / 2, height - 10, null).setDisplaySize(width, 20).setVisible(false).refreshBody();
-    
-        // Add Other Platforms
-        this.platforms.create(width / 2, height / 2 - 50, 'platform')
-            .setDisplaySize(150, 20)
-            .setVisible(true)
-            .refreshBody();
-    
-        this.platforms.create(50, height / 2, 'platform')
-            .setDisplaySize(150, 20)
-            .setVisible(true)
-            .refreshBody();
-    
-        this.platforms.create(width - 50, height / 2, 'platform')
-            .setDisplaySize(150, 20)
-            .setVisible(true)
-            .refreshBody();
+        this.platforms.create(width / 2, height / 2 - 50, 'platform').setDisplaySize(150, 20).setVisible(true).refreshBody();
+        this.platforms.create(50, height / 2, 'platform').setDisplaySize(150, 20).setVisible(true).refreshBody();
+        this.platforms.create(width - 50, height / 2, 'platform').setDisplaySize(150, 20).setVisible(true).refreshBody();
     
         this.physics.add.collider(this.player, this.platforms);
     
@@ -132,79 +117,30 @@ export default class Level4 extends Phaser.Scene {
         this.updateEnemyCountUI();
     
         // Enemy Spawns
-        this.enemySpawnTimer = this.time.addEvent({
-            delay: 2000,
-            callback: this.spawnMardiGrasZombie,
-            callbackScope: this,
-            loop: true,
-        });
-        
-        this.trumpetSpawnTimer = this.time.addEvent({
-            delay: 3000,
-            callback: this.spawnTrumpetSkeleton,
-            callbackScope: this,
-            loop: true,
-        });
-        
-        this.beignetMinionSpawnTimer = this.time.addEvent({
-            delay: 4000,
-            callback: this.spawnBeignetMinion,
-            callbackScope: this,
-            loop: true,
-        });
-        
+        this.enemySpawnTimer = this.time.addEvent({ delay: 2000, callback: this.spawnMardiGrasZombie, callbackScope: this, loop: true });
+        this.trumpetSpawnTimer = this.time.addEvent({ delay: 3000, callback: this.spawnTrumpetSkeleton, callbackScope: this, loop: true });
+        this.beignetMinionSpawnTimer = this.time.addEvent({ delay: 4000, callback: this.spawnBeignetMinion, callbackScope: this, loop: true });
     
-         // ✅ Fix: Declare isMobile before using it
-         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-
-         // Setup mobile controls only if it's a mobile device
-         if (isMobile) {
-             console.log("📱 Mobile detected. Using mobileControls.js for shooting.");
-             setupMobileControls(this, this.player);
-         } else {
-             console.log("💻 Desktop detected. Using spacebar for shooting.");
-             
-             // **Enable spacebar shooting ONLY for desktop**
-             this.input.keyboard.on('keydown-SPACE', () => {
-                 this.fireProjectile(); // Only trigger fireProjectile() on desktop
-             });
-         } 
+        // ✅ Fix: Properly separate mobile and desktop controls
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     
-        // Tap anywhere to attack (Mobile or Desktop)
-        this.input.on('pointerdown', (pointer) => {
-            if (!pointer.wasTouch) return;
-            this.fireProjectile();
-        });
-    
-        // Swipe up to jump
-        let startY = null;
-        this.input.on('pointerdown', (pointer) => {
-            startY = pointer.y;
-        });
-    
-        this.input.on('pointerup', (pointer) => {
-            if (startY !== null && pointer.y < startY - 50 && this.player.body.touching.down) {
-                this.player.setVelocityY(-500);
-                this.player.play('jump', true);
-            }
-            startY = null;
-        });
-    
-        // Bind attack button to fireProjectile
-        const attackButton = document.getElementById('attack-button');
-        if (attackButton) {
-            attackButton.addEventListener('click', () => {
+        if (isMobile) {
+            console.log("📱 Mobile detected. Using mobileControls.js for controls.");
+            setupMobileControls(this, this.player);
+        } else {
+            console.log("💻 Desktop detected. Using keyboard controls.");
+            
+            // ✅ Ensure spacebar is only triggered once
+            this.input.keyboard.on('keydown-SPACE', () => {
                 this.fireProjectile();
             });
-        } else {
-            console.warn("Attack button not found!");
         }
     
         addFullscreenButton(this);
-
+    
         console.log("Level 4 setup complete.");
-    }    
-
+    }
+        
     update() {
         if (!this.player || !this.cursors) return;
     
@@ -234,11 +170,9 @@ export default class Level4 extends Phaser.Scene {
             this.player.play('idle', true);
         }
     
-        if (Phaser.Input.Keyboard.JustDown(this.attackKey)) {
-            this.fireProjectile();
-        }
-    }  
-
+        // ✅ Removed duplicate JustDown check to prevent double firing
+    }
+      
     spawnHealthPack() {
         const { width } = this.scale;
         const x = Phaser.Math.Between(50, width - 50); // Random X position
@@ -366,18 +300,24 @@ export default class Level4 extends Phaser.Scene {
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
     
         if (isMobile) {
-            console.warn(`fireProjectile() is disabled on mobile for ${this.scene.key}`);
-            return; // Prevent firing in the level if on mobile
+            console.warn(`🚫 Prevented level fireProjectile() - Mobile users should use mobileControls.js instead.`);
+            return; // Ensure mobile users fire only via mobileControls.js
         }
     
-        // Normal projectile logic (runs only on desktop)
+        // Proceed with firing for desktop users only
         const projectile = this.projectiles.create(this.player.x, this.player.y, 'projectileCD');
         if (projectile) {
-            projectile.setVelocityX(this.player.flipX ? -500 : 500);
+            projectile.setActive(true);
+            projectile.setVisible(true);
             projectile.body.setAllowGravity(false);
+            projectile.setVelocityX(this.player.flipX ? -500 : 500);
             this.playerProjectileFireSFX.play();
         }
+        console.log("🎯 Player fired a projectile at:", this.player.x, this.player.y);
+
     }
+    
+    
     
 
     shootBeignet(minion) {
