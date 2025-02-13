@@ -73,7 +73,7 @@ export default class BossFight extends Phaser.Scene {
         this.bossMusic.play();
     
         // **Object Groups**
-        this.projectiles = this.physics.add.group({ defaultKey: 'playerProjectile', runChildUpdate: true });
+        this.projectiles = this.physics.add.group({ defaultKey: 'projectileCD', runChildUpdate: true });
         this.bossProjectiles = this.physics.add.group();
         this.minions = this.physics.add.group();
         this.healthPacks = this.physics.add.group();
