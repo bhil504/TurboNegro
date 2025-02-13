@@ -124,14 +124,7 @@ function setupAttackButton(scene, player) {
 }
 
 function fireProjectile(scene, player) {
-    // Check if the user is on a mobile device
-    const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-
-    // Prevent double firing by allowing only mobileControls.js to fire on mobile
-    if (isMobile && scene.scene.key !== 'mobileControls') {
-        console.warn(`fireProjectile() is disabled in ${scene.scene.key} for mobile. Using mobileControls.js instead.`);
-        return;
-    }
+    
 
     // Create projectile
     const projectile = scene.projectiles.create(player.x, player.y, 'projectileCD');
