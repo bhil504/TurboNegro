@@ -129,7 +129,7 @@ function fireProjectile(scene, player) {
     console.log("🔥 Mobile fireProjectile() called!");
 
     // Create projectile
-    const projectile = scene.projectiles.create(player.x, player.y, 'playerProjectile');
+    const projectile = scene.projectiles.create(player.x, player.y, 'projectileCD');
     if (projectile) {
         console.log("🎯 Mobile projectile spawned!");
 

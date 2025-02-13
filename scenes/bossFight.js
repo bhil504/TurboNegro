@@ -11,7 +11,7 @@ export default class BossFight extends Phaser.Scene {
         this.load.image('beignetBoss', 'assets/Characters/Enemies/Beignet_Boss.png');
         this.load.image('beignetProjectile', 'assets/Characters/Projectiles/Beignet/Beignet2.png');
         this.load.image('beignetMonster', 'assets/Characters/Enemies/Beignet_Monster.png');
-        this.load.image('playerProjectile', 'assets/Characters/Projectiles/CD/CDresize.png');
+        this.load.image('projectileCD', 'assets/Characters/Projectiles/CD/CDresize.png');
         this.load.image('mardiGrasZombie', 'assets/Characters/Enemies/MardiGrasZombie.png');
         this.load.image('turboNegroStanding1', 'assets/Characters/Character1/TurboNegroStanding/TurboNegroStanding1.png');
         this.load.image('turboNegroStanding2', 'assets/Characters/Character1/TurboNegroStanding/TurboNegroStanding2.png');
