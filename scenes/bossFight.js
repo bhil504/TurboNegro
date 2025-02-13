@@ -50,7 +50,7 @@ export default class BossFight extends Phaser.Scene {
         // **Moving Platforms Setup**
         this.movingPlatforms = this.physics.add.group({ allowGravity: false, immovable: true });
     
-        let platform1 = this.createMovingPlatform(800, height - 200, 200, 100, 200);
+        let platform1 = this.createMovingPlatform(800, height - 200, 200, 100, 200);  
         let platform2 = this.createMovingPlatform(1800, height - 300, 200, 150, 250);
         let platform3 = this.createMovingPlatform(2500, height - 250, 200, 120, 300);
     
@@ -77,7 +77,7 @@ export default class BossFight extends Phaser.Scene {
         this.bossProjectiles = this.physics.add.group();
         this.minions = this.physics.add.group();
         this.healthPacks = this.physics.add.group();
-        this.hazards = this.physics.add.group();
+        this.hazards = this.physics.add.group(); 
     
         // **Boss Setup**
         this.boss = this.physics.add.sprite(2800, height - 150, 'beignetBoss');
@@ -87,21 +87,6 @@ export default class BossFight extends Phaser.Scene {
         document.getElementById('boss-health-bar-container').style.display = 'block';
         this.physics.add.collider(this.boss, this.ground);
         this.physics.add.collider(this.boss, this.movingPlatforms);
-    
-        // ✅ **Ensure Boss Doesn't Disappear and Registers Hits Correctly**
-        this.physics.add.overlap(this.projectiles, this.boss, (projectile, boss) => {
-            if (this.boss.health > 0) {
-                console.log("💥 Projectile hit boss!");
-                this.takeBossDamage(1);
-                projectile.destroy();
-    
-                if (this.boss.health <= 0) {
-                    console.log("💀 Boss Defeated!");
-                    this.boss.setActive(false).setVisible(false);
-                    this.checkBossDefeat();
-                }
-            }
-        });
     
         // **Ensure collision between the player and boss projectiles**
         this.physics.add.overlap(this.player, this.bossProjectiles, this.handleBeignetProjectileCollision, null, this);
@@ -134,30 +119,21 @@ export default class BossFight extends Phaser.Scene {
         this.cursors = this.input.keyboard.createCursorKeys();
         this.fireKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
     
-        // ✅ **Ensure Mobile Controls Always Initialize**
-        setupMobileControls(this, this.player);
-    
+         // ✅ Fix: Declare isMobile before using it
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+        // Setup mobile controls only if it's a mobile device
         if (isMobile) {
-            console.log("📱 Mobile detected. Mobile controls enabled.");
+            console.log("📱 Mobile detected. Using mobileControls.js for shooting.");
+            setupMobileControls(this, this.player);
         } else {
             console.log("💻 Desktop detected. Using spacebar for shooting.");
+            
+            
         }
     
         // **Fullscreen Button**
         addFullscreenButton(this);
-    
-        // ✅ **Ensure mobile projectiles and all collisions work properly**
-        this.physics.add.collider(this.projectiles, this.minions, (projectile, minion) => {
-            projectile.destroy();
-            minion.health -= 1;
-            if (minion.health <= 0) {
-                this.handleEnemyDeath(minion);
-            }
-        });
-    
-        this.physics.add.overlap(this.projectiles, this.bossProjectiles, this.handleProjectileCollision, null, this);
-        this.physics.add.collider(this.minions, this.minions);
     
         // **Hazard Spawner**
         this.time.addEvent({
@@ -186,7 +162,22 @@ export default class BossFight extends Phaser.Scene {
             loop: true
         });
     
-        // **Player Takes Damage and Beignet Monster is Destroyed**
+        // **Destroy Beignet Monster when Hit by Player's Projectile**
+        this.physics.add.collider(this.projectiles, this.minions, (projectile, minion) => {
+            projectile.destroy();
+            minion.health -= 1;
+            if (minion.health <= 0) {
+                this.handleEnemyDeath(minion); // ✅ Centralized enemy death handling
+            }
+        });
+    
+        // **Ensure player's projectiles can destroy boss's beignet projectiles**
+        this.physics.add.collider(this.projectiles, this.bossProjectiles, this.handleProjectileCollision, null, this);
+    
+        // **New: Collision Logic from Previous Levels**
+        this.physics.add.collider(this.minions, this.minions);
+    
+        // **🔥 Player Takes Damage and Beignet Monster is Destroyed**
         this.physics.add.overlap(this.player, this.minions, (player, enemy) => {
             if (!player.active || !enemy.active) return;
     
@@ -196,30 +187,52 @@ export default class BossFight extends Phaser.Scene {
             this.playerHealth -= damage;
             console.log(`🩸 Player health reduced to ${this.playerHealth}`);
     
+            // Update UI
             this.updateHealthUI();
     
+            // Game Over Check
             if (this.playerHealth <= 0) {
                 console.log("💀 Player killed by enemy!");
                 this.gameOver();
                 return;
             }
     
+            // **Destroy Beignet Monster Immediately**
             if (enemy.texture.key === 'beignetMonster') {
                 console.log("🔥 Beignet Monster destroyed after collision!");
                 enemy.destroy();
             }
     
+            // Knockback effect
             let knockback = enemy.x < player.x ? 200 : -200;
             player.setVelocityX(knockback);
     
+            // Destroy zombie upon impact
             if (enemy.texture.key === 'mardiGrasZombie') {
                 enemy.destroy();
             }
+        }, null, this);
+    
+        // **Zombie AI - Move toward the player**
+        this.minions.children.iterate((zombie) => {
+            if (zombie.active) {
+                const speed = 100;
+                const direction = Math.sign(this.player.x - zombie.x);
+                zombie.setVelocityX(direction * speed);
+    
+                // Random jump mechanic
+                if (Phaser.Math.Between(1, 100) > 95 && zombie.body.touching.down) {
+                    zombie.setVelocityY(-250);
+                }
+    
+                // Ensure zombie flips direction
+                zombie.setFlipX(direction < 0);
+            }
         });
     
+        // ✅ Initialize the enemy count correctly
         this.updateEnemyCountUI();
-    }
-               
+    }           
     
     createMovingPlatform(x, y, width, speed, distance) {
         let platform = this.movingPlatforms.create(x, y, 'platform'); // Use the loaded image
