@@ -83,13 +83,29 @@ export default class BossFight extends Phaser.Scene {
         this.boss = this.physics.add.sprite(2800, height - 150, 'beignetBoss');
         this.boss.setCollideWorldBounds(true);
         this.boss.body.setAllowGravity(false);
-        this.boss.health = 20;
+        this.boss.health = 20; // Ensure boss health is set
         document.getElementById('boss-health-bar-container').style.display = 'block';
         this.physics.add.collider(this.boss, this.ground);
         this.physics.add.collider(this.boss, this.movingPlatforms);
     
         // **Ensure collision between the player and boss projectiles**
         this.physics.add.overlap(this.player, this.bossProjectiles, this.handleBeignetProjectileCollision, null, this);
+    
+        // ✅ **Ensure Boss Doesn't Disappear Too Fast**
+        this.physics.add.overlap(this.projectiles, this.boss, (projectile, boss) => {
+            if (this.boss.health > 0) {
+                console.log("💥 Projectile hit boss!");
+                this.takeBossDamage(1);
+                projectile.destroy();
+    
+                if (this.boss.health <= 0) {
+                    console.log("💀 Boss Defeated!");
+                    this.boss.health = 0;
+                    this.boss.setVisible(false);
+                    this.checkBossDefeat();
+                }
+            }
+        });
     
         // **Boss Walking Animation**
         this.tweens.add({
@@ -119,12 +135,10 @@ export default class BossFight extends Phaser.Scene {
         this.cursors = this.input.keyboard.createCursorKeys();
         this.fireKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
     
-        // ✅ Declare isMobile before using it
+        // ✅ **Ensure Mobile Controls Always Initialize**
+        setupMobileControls(this, this.player);
+    
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-    
-        // **Setup Mobile Controls**
-        setupMobileControls(this, this.player);  // ✅ Always initialize mobile controls
-    
         if (isMobile) {
             console.log("📱 Mobile detected. Mobile controls enabled.");
         } else {
@@ -134,7 +148,19 @@ export default class BossFight extends Phaser.Scene {
         // **Fullscreen Button**
         addFullscreenButton(this);
     
-        // **Hazard Spawner**
+        // ✅ **Ensure mobile projectiles are recognized**
+        this.physics.add.collider(this.projectiles, this.minions, (projectile, minion) => {
+            projectile.destroy();
+            minion.health -= 1;
+            if (minion.health <= 0) {
+                this.handleEnemyDeath(minion);
+            }
+        });
+    
+        // **New: Collision Logic from Previous Levels**
+        this.physics.add.collider(this.minions, this.minions);
+    
+        // **Ensure Hazards Spawn**
         this.time.addEvent({
             delay: 5000,
             callback: this.spawnHazard,
@@ -160,28 +186,6 @@ export default class BossFight extends Phaser.Scene {
             callbackScope: this,
             loop: true
         });
-    
-        // **Destroy Beignet Monster when Hit by Player's Projectile**
-        this.physics.add.collider(this.projectiles, this.minions, (projectile, minion) => {
-            projectile.destroy();
-            minion.health -= 1;
-            if (minion.health <= 0) {
-                this.handleEnemyDeath(minion); // ✅ Centralized enemy death handling
-            }
-        });
-    
-        // **Ensure player's projectiles can destroy boss's beignet projectiles**
-        this.physics.add.collider(this.projectiles, this.bossProjectiles, this.handleProjectileCollision, null, this);
-    
-        // ✅ **Ensure mobile projectiles can hit the boss**
-        this.physics.add.overlap(this.projectiles, this.boss, (projectile, boss) => {
-            console.log("💥 Projectile hit boss!");
-            this.takeBossDamage(1);
-            projectile.destroy();
-        });
-    
-        // **New: Collision Logic from Previous Levels**
-        this.physics.add.collider(this.minions, this.minions);
     
         // **🔥 Player Takes Damage and Beignet Monster is Destroyed**
         this.physics.add.overlap(this.player, this.minions, (player, enemy) => {
@@ -217,29 +221,12 @@ export default class BossFight extends Phaser.Scene {
             if (enemy.texture.key === 'mardiGrasZombie') {
                 enemy.destroy();
             }
-        }, null, this);
-    
-        // **Zombie AI - Move toward the player**
-        this.minions.children.iterate((zombie) => {
-            if (zombie.active) {
-                const speed = 100;
-                const direction = Math.sign(this.player.x - zombie.x);
-                zombie.setVelocityX(direction * speed);
-    
-                // Random jump mechanic
-                if (Phaser.Math.Between(1, 100) > 95 && zombie.body.touching.down) {
-                    zombie.setVelocityY(-250);
-                }
-    
-                // Ensure zombie flips direction
-                zombie.setFlipX(direction < 0);
-            }
         });
     
         // ✅ Initialize the enemy count correctly
         this.updateEnemyCountUI();
     }
-               
+              
     
     createMovingPlatform(x, y, width, speed, distance) {
         let platform = this.movingPlatforms.create(x, y, 'platform'); // Use the loaded image
