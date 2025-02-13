@@ -50,7 +50,7 @@ export default class BossFight extends Phaser.Scene {
         // **Moving Platforms Setup**
         this.movingPlatforms = this.physics.add.group({ allowGravity: false, immovable: true });
     
-        let platform1 = this.createMovingPlatform(800, height - 200, 200, 100, 200);  
+        let platform1 = this.createMovingPlatform(800, height - 200, 200, 100, 200);
         let platform2 = this.createMovingPlatform(1800, height - 300, 200, 150, 250);
         let platform3 = this.createMovingPlatform(2500, height - 250, 200, 120, 300);
     
@@ -77,7 +77,7 @@ export default class BossFight extends Phaser.Scene {
         this.bossProjectiles = this.physics.add.group();
         this.minions = this.physics.add.group();
         this.healthPacks = this.physics.add.group();
-        this.hazards = this.physics.add.group(); 
+        this.hazards = this.physics.add.group();
     
         // **Boss Setup**
         this.boss = this.physics.add.sprite(2800, height - 150, 'beignetBoss');
@@ -119,17 +119,16 @@ export default class BossFight extends Phaser.Scene {
         this.cursors = this.input.keyboard.createCursorKeys();
         this.fireKey = this.input.keyboard.addKey(Phaser.Input.Keyboard.KeyCodes.SPACE);
     
-         // ✅ Fix: Declare isMobile before using it
+        // ✅ Declare isMobile before using it
         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
-
-        // Setup mobile controls only if it's a mobile device
+    
+        // **Setup Mobile Controls**
+        setupMobileControls(this, this.player);  // ✅ Always initialize mobile controls
+    
         if (isMobile) {
-            console.log("📱 Mobile detected. Using mobileControls.js for shooting.");
-            setupMobileControls(this, this.player);
+            console.log("📱 Mobile detected. Mobile controls enabled.");
         } else {
             console.log("💻 Desktop detected. Using spacebar for shooting.");
-            
-            
         }
     
         // **Fullscreen Button**
@@ -173,6 +172,13 @@ export default class BossFight extends Phaser.Scene {
     
         // **Ensure player's projectiles can destroy boss's beignet projectiles**
         this.physics.add.collider(this.projectiles, this.bossProjectiles, this.handleProjectileCollision, null, this);
+    
+        // ✅ **Ensure mobile projectiles can hit the boss**
+        this.physics.add.overlap(this.projectiles, this.boss, (projectile, boss) => {
+            console.log("💥 Projectile hit boss!");
+            this.takeBossDamage(1);
+            projectile.destroy();
+        });
     
         // **New: Collision Logic from Previous Levels**
         this.physics.add.collider(this.minions, this.minions);
@@ -232,7 +238,8 @@ export default class BossFight extends Phaser.Scene {
     
         // ✅ Initialize the enemy count correctly
         this.updateEnemyCountUI();
-    }           
+    }
+               
     
     createMovingPlatform(x, y, width, speed, distance) {
         let platform = this.movingPlatforms.create(x, y, 'platform'); // Use the loaded image

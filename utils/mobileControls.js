@@ -135,9 +135,9 @@ function fireProjectile(scene, player) {
 
         projectile.setVelocityX(player.flipX ? -500 : 500); // Fire direction
         projectile.body.setAllowGravity(false);
-        scene.playerProjectileFireSFX.play();
+        scene.sound.play('playerProjectileFire');
 
-        // **Ensure projectiles can hit the boss**
+        // ✅ Ensure projectiles collide with the boss
         if (scene.boss) {
             scene.physics.add.overlap(projectile, scene.boss, () => {
                 console.log("💥 Mobile projectile hit boss!");
@@ -147,5 +147,6 @@ function fireProjectile(scene, player) {
         }
     }
 }
+
 
 
