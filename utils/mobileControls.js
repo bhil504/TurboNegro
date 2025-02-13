@@ -124,39 +124,28 @@ function setupAttackButton(scene, player) {
 }
 
 function fireProjectile(scene, player) {
-    
+    if (!scene || !scene.projectiles) return;
+
+    console.log("🔥 Mobile fireProjectile() called!");
 
     // Create projectile
-    const projectile = scene.projectiles.create(player.x, player.y, 'projectileCD');
+    const projectile = scene.projectiles.create(player.x, player.y, 'playerProjectile');
     if (projectile) {
+        console.log("🎯 Mobile projectile spawned!");
+
         projectile.setVelocityX(player.flipX ? -500 : 500); // Fire direction
         projectile.body.setAllowGravity(false);
-
-        // Log if the sound is loaded
-        if (scene.cache.audio.exists('playerProjectileFire')) {
-            console.log("✅ Sound is loaded!");
-        } else {
-            console.log("❌ Sound is NOT loaded!");
-        }
-
-        // Play the sound after triggering the projectile
         scene.playerProjectileFireSFX.play();
-        
-        // Ensure projectiles collide with enemies
-        scene.physics.add.collider(projectile, scene.enemies, (proj, enemy) => {
-            proj.destroy();
-            enemy.destroy();
-            scene.totalEnemiesDefeated++;
-            scene.updateEnemyCountUI();
 
-            if (scene.totalEnemiesDefeated === 12) {
-                scene.spawnHealthPack();
-            }
-
-            if (scene.totalEnemiesDefeated >= 20) {
-                scene.levelComplete();
-            }
-        });
+        // **Ensure projectiles can hit the boss**
+        if (scene.boss) {
+            scene.physics.add.overlap(projectile, scene.boss, () => {
+                console.log("💥 Mobile projectile hit boss!");
+                scene.takeBossDamage(1);
+                projectile.destroy();
+            });
+        }
     }
 }
+
 
