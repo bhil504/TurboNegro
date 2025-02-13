@@ -251,64 +251,64 @@ export default class BossFight extends Phaser.Scene {
     }
 
     update() {
-    if (!this.player || !this.player.body) return;
+        if (!this.player || !this.player.body) return;
 
-    this.player.setVelocityX(0);
+        this.player.setVelocityX(0);
 
-    if (this.cursors.left.isDown) {
-        this.player.setVelocityX(-160).setFlipX(true);
-        if (this.anims.exists('walk')) {
-            this.player.play('walk', true);
-        }
-    } else if (this.cursors.right.isDown) {
-        this.player.setVelocityX(160).setFlipX(false);
-        if (this.anims.exists('walk')) {
-            this.player.play('walk', true);
-        }
-    } else {
-        if (this.anims.exists('idle')) {
-            this.player.play('idle', true);
-        }
-    }
-
-    if (this.cursors.up.isDown && this.player.body.touching.down) {
-        this.player.setVelocityY(-500);
-    }
-
-    // ✅ Fix: Fire projectile only when the key is first pressed, not held down
-    if (this.fireKey.isDown && !this.spaceKeyJustPressed) {
-        this.spaceKeyJustPressed = true;
-        this.fireProjectile();
-    } else if (this.fireKey.isUp) {
-        this.spaceKeyJustPressed = false;
-    }
-
-    // Ensure force field exists before updating position
-    if (this.forceFieldActive && this.forceField) {
-        this.forceField.setPosition(this.boss.x, this.boss.y);
-    }
-
-    if (this.minions) {
-        this.minions.children.iterate((zombie) => {
-            if (zombie && zombie.active) {
-                const speed = 100;
-                const direction = this.player ? Math.sign(this.player.x - zombie.x) : 1;
-                zombie.setVelocityX(direction * speed);
-
-                if (Phaser.Math.Between(1, 100) > 95 && zombie.body.touching.down) {
-                    zombie.setVelocityY(-250);
-                }
-
-                zombie.setFlipX(direction < 0);
+        if (this.cursors.left.isDown) {
+            this.player.setVelocityX(-160).setFlipX(true);
+            if (this.anims.exists('walk')) {
+                this.player.play('walk', true);
             }
-        });
-    }
+        } else if (this.cursors.right.isDown) {
+            this.player.setVelocityX(160).setFlipX(false);
+            if (this.anims.exists('walk')) {
+                this.player.play('walk', true);
+            }
+        } else {
+            if (this.anims.exists('idle')) {
+                this.player.play('idle', true);
+            }
+        }
 
-    // **Fix: Ensure Parallax Background Scrolls Properly**
-    if (this.background) {
-        this.background.tilePositionX = this.cameras.main.scrollX * 0.5;
-    }
-}    
+        if (this.cursors.up.isDown && this.player.body.touching.down) {
+            this.player.setVelocityY(-500);
+        }
+
+        // ✅ Fix: Fire projectile only when the key is first pressed, not held down
+        if (this.fireKey.isDown && !this.spaceKeyJustPressed) {
+            this.spaceKeyJustPressed = true;
+            this.fireProjectile();
+        } else if (this.fireKey.isUp) {
+            this.spaceKeyJustPressed = false;
+        }
+
+        // Ensure force field exists before updating position
+        if (this.forceFieldActive && this.forceField) {
+            this.forceField.setPosition(this.boss.x, this.boss.y);
+        }
+
+        if (this.minions) {
+            this.minions.children.iterate((zombie) => {
+                if (zombie && zombie.active) {
+                    const speed = 100;
+                    const direction = this.player ? Math.sign(this.player.x - zombie.x) : 1;
+                    zombie.setVelocityX(direction * speed);
+
+                    if (Phaser.Math.Between(1, 100) > 95 && zombie.body.touching.down) {
+                        zombie.setVelocityY(-250);
+                    }
+
+                    zombie.setFlipX(direction < 0);
+                }
+            });
+        }
+
+        // **Fix: Ensure Parallax Background Scrolls Properly**
+        if (this.background) {
+            this.background.tilePositionX = this.cameras.main.scrollX * 0.5;
+        }
+    }    
         
     //Player functions
     fireProjectile() {
@@ -332,7 +332,6 @@ export default class BossFight extends Phaser.Scene {
         }
     }
     
-
     checkPlayerHealth() {
         if (this.playerHealth <= 0) {
             this.gameOver();
