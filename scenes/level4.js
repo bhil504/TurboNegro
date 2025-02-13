@@ -154,13 +154,21 @@ export default class Level4 extends Phaser.Scene {
         });
         
     
-        // Setup mobile controls
-        if (/Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent)) {
-                    console.log("Mobile device detected. Initializing controls...");
-                    setupMobileControls(this, this.player);
-        } else {
-            console.log("Desktop detected. Skipping mobile controls.");
-        }   
+         // ✅ Fix: Declare isMobile before using it
+         const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+
+         // Setup mobile controls only if it's a mobile device
+         if (isMobile) {
+             console.log("📱 Mobile detected. Using mobileControls.js for shooting.");
+             setupMobileControls(this, this.player);
+         } else {
+             console.log("💻 Desktop detected. Using spacebar for shooting.");
+             
+             // **Enable spacebar shooting ONLY for desktop**
+             this.input.keyboard.on('keydown-SPACE', () => {
+                 this.fireProjectile(); // Only trigger fireProjectile() on desktop
+             });
+         } 
     
         // Tap anywhere to attack (Mobile or Desktop)
         this.input.on('pointerdown', (pointer) => {
@@ -354,15 +362,23 @@ export default class Level4 extends Phaser.Scene {
     }
 
     fireProjectile() {
+        // Check if the user is on a mobile device
+        const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+    
+        if (isMobile) {
+            console.warn(`fireProjectile() is disabled on mobile for ${this.scene.key}`);
+            return; // Prevent firing in the level if on mobile
+        }
+    
+        // Normal projectile logic (runs only on desktop)
         const projectile = this.projectiles.create(this.player.x, this.player.y, 'projectileCD');
         if (projectile) {
-            projectile.setActive(true);
-            projectile.setVisible(true);
-            projectile.body.setAllowGravity(false);
             projectile.setVelocityX(this.player.flipX ? -500 : 500);
+            projectile.body.setAllowGravity(false);
             this.playerProjectileFireSFX.play();
         }
     }
+    
 
     shootBeignet(minion) {
         const projectile = this.beignetProjectiles.create(minion.x, minion.y, 'beignetProjectile');

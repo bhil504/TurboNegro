@@ -89,7 +89,7 @@ export default class StartMenu extends Phaser.Scene {
             this.scene.start('Level1');
         });
 
-       
+        
 
         
         this.music = this.sound.add('menuMusic', { loop: true, volume: 0.6 });
