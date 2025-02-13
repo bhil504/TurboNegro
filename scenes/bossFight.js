@@ -83,15 +83,12 @@ export default class BossFight extends Phaser.Scene {
         this.boss = this.physics.add.sprite(2800, height - 150, 'beignetBoss');
         this.boss.setCollideWorldBounds(true);
         this.boss.body.setAllowGravity(false);
-        this.boss.health = 20; // Ensure boss health is set
+        this.boss.health = 20;
         document.getElementById('boss-health-bar-container').style.display = 'block';
         this.physics.add.collider(this.boss, this.ground);
         this.physics.add.collider(this.boss, this.movingPlatforms);
     
-        // **Ensure collision between the player and boss projectiles**
-        this.physics.add.overlap(this.player, this.bossProjectiles, this.handleBeignetProjectileCollision, null, this);
-    
-        // ✅ **Ensure Boss Doesn't Disappear Too Fast**
+        // ✅ **Ensure Boss Doesn't Disappear and Registers Hits Correctly**
         this.physics.add.overlap(this.projectiles, this.boss, (projectile, boss) => {
             if (this.boss.health > 0) {
                 console.log("💥 Projectile hit boss!");
@@ -100,12 +97,14 @@ export default class BossFight extends Phaser.Scene {
     
                 if (this.boss.health <= 0) {
                     console.log("💀 Boss Defeated!");
-                    this.boss.health = 0;
-                    this.boss.setVisible(false);
+                    this.boss.setActive(false).setVisible(false);
                     this.checkBossDefeat();
                 }
             }
         });
+    
+        // **Ensure collision between the player and boss projectiles**
+        this.physics.add.overlap(this.player, this.bossProjectiles, this.handleBeignetProjectileCollision, null, this);
     
         // **Boss Walking Animation**
         this.tweens.add({
@@ -148,7 +147,7 @@ export default class BossFight extends Phaser.Scene {
         // **Fullscreen Button**
         addFullscreenButton(this);
     
-        // ✅ **Ensure mobile projectiles are recognized**
+        // ✅ **Ensure mobile projectiles and all collisions work properly**
         this.physics.add.collider(this.projectiles, this.minions, (projectile, minion) => {
             projectile.destroy();
             minion.health -= 1;
@@ -157,10 +156,10 @@ export default class BossFight extends Phaser.Scene {
             }
         });
     
-        // **New: Collision Logic from Previous Levels**
+        this.physics.add.overlap(this.projectiles, this.bossProjectiles, this.handleProjectileCollision, null, this);
         this.physics.add.collider(this.minions, this.minions);
     
-        // **Ensure Hazards Spawn**
+        // **Hazard Spawner**
         this.time.addEvent({
             delay: 5000,
             callback: this.spawnHazard,
@@ -187,7 +186,7 @@ export default class BossFight extends Phaser.Scene {
             loop: true
         });
     
-        // **🔥 Player Takes Damage and Beignet Monster is Destroyed**
+        // **Player Takes Damage and Beignet Monster is Destroyed**
         this.physics.add.overlap(this.player, this.minions, (player, enemy) => {
             if (!player.active || !enemy.active) return;
     
@@ -197,36 +196,30 @@ export default class BossFight extends Phaser.Scene {
             this.playerHealth -= damage;
             console.log(`🩸 Player health reduced to ${this.playerHealth}`);
     
-            // Update UI
             this.updateHealthUI();
     
-            // Game Over Check
             if (this.playerHealth <= 0) {
                 console.log("💀 Player killed by enemy!");
                 this.gameOver();
                 return;
             }
     
-            // **Destroy Beignet Monster Immediately**
             if (enemy.texture.key === 'beignetMonster') {
                 console.log("🔥 Beignet Monster destroyed after collision!");
                 enemy.destroy();
             }
     
-            // Knockback effect
             let knockback = enemy.x < player.x ? 200 : -200;
             player.setVelocityX(knockback);
     
-            // Destroy zombie upon impact
             if (enemy.texture.key === 'mardiGrasZombie') {
                 enemy.destroy();
             }
         });
     
-        // ✅ Initialize the enemy count correctly
         this.updateEnemyCountUI();
     }
-              
+               
     
     createMovingPlatform(x, y, width, speed, distance) {
         let platform = this.movingPlatforms.create(x, y, 'platform'); // Use the loaded image
@@ -245,64 +238,64 @@ export default class BossFight extends Phaser.Scene {
     }
 
     update() {
-        if (!this.player || !this.player.body) return;
+    if (!this.player || !this.player.body) return;
 
-        this.player.setVelocityX(0);
+    this.player.setVelocityX(0);
 
-        if (this.cursors.left.isDown) {
-            this.player.setVelocityX(-160).setFlipX(true);
-            if (this.anims.exists('walk')) {
-                this.player.play('walk', true);
-            }
-        } else if (this.cursors.right.isDown) {
-            this.player.setVelocityX(160).setFlipX(false);
-            if (this.anims.exists('walk')) {
-                this.player.play('walk', true);
-            }
-        } else {
-            if (this.anims.exists('idle')) {
-                this.player.play('idle', true);
-            }
+    if (this.cursors.left.isDown) {
+        this.player.setVelocityX(-160).setFlipX(true);
+        if (this.anims.exists('walk')) {
+            this.player.play('walk', true);
         }
-
-        if (this.cursors.up.isDown && this.player.body.touching.down) {
-            this.player.setVelocityY(-500);
+    } else if (this.cursors.right.isDown) {
+        this.player.setVelocityX(160).setFlipX(false);
+        if (this.anims.exists('walk')) {
+            this.player.play('walk', true);
         }
-
-        // ✅ Fix: Fire projectile only when the key is first pressed, not held down
-        if (this.fireKey.isDown && !this.spaceKeyJustPressed) {
-            this.spaceKeyJustPressed = true;
-            this.fireProjectile();
-        } else if (this.fireKey.isUp) {
-            this.spaceKeyJustPressed = false;
+    } else {
+        if (this.anims.exists('idle')) {
+            this.player.play('idle', true);
         }
+    }
 
-        // Ensure force field exists before updating position
-        if (this.forceFieldActive && this.forceField) {
-            this.forceField.setPosition(this.boss.x, this.boss.y);
-        }
+    if (this.cursors.up.isDown && this.player.body.touching.down) {
+        this.player.setVelocityY(-500);
+    }
 
-        if (this.minions) {
-            this.minions.children.iterate((zombie) => {
-                if (zombie && zombie.active) {
-                    const speed = 100;
-                    const direction = this.player ? Math.sign(this.player.x - zombie.x) : 1;
-                    zombie.setVelocityX(direction * speed);
+    // ✅ Fix: Fire projectile only when the key is first pressed, not held down
+    if (this.fireKey.isDown && !this.spaceKeyJustPressed) {
+        this.spaceKeyJustPressed = true;
+        this.fireProjectile();
+    } else if (this.fireKey.isUp) {
+        this.spaceKeyJustPressed = false;
+    }
 
-                    if (Phaser.Math.Between(1, 100) > 95 && zombie.body.touching.down) {
-                        zombie.setVelocityY(-250);
-                    }
+    // Ensure force field exists before updating position
+    if (this.forceFieldActive && this.forceField) {
+        this.forceField.setPosition(this.boss.x, this.boss.y);
+    }
 
-                    zombie.setFlipX(direction < 0);
+    if (this.minions) {
+        this.minions.children.iterate((zombie) => {
+            if (zombie && zombie.active) {
+                const speed = 100;
+                const direction = this.player ? Math.sign(this.player.x - zombie.x) : 1;
+                zombie.setVelocityX(direction * speed);
+
+                if (Phaser.Math.Between(1, 100) > 95 && zombie.body.touching.down) {
+                    zombie.setVelocityY(-250);
                 }
-            });
-        }
 
-        // **Fix: Ensure Parallax Background Scrolls Properly**
-        if (this.background) {
-            this.background.tilePositionX = this.cameras.main.scrollX * 0.5;
-        }
-    }    
+                zombie.setFlipX(direction < 0);
+            }
+        });
+    }
+
+    // **Fix: Ensure Parallax Background Scrolls Properly**
+    if (this.background) {
+        this.background.tilePositionX = this.cameras.main.scrollX * 0.5;
+    }
+}    
         
     //Player functions
     fireProjectile() {
@@ -325,6 +318,7 @@ export default class BossFight extends Phaser.Scene {
             });
         }
     }
+    
 
     checkPlayerHealth() {
         if (this.playerHealth <= 0) {
