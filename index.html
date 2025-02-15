@@ -799,6 +799,7 @@
         import Level4 from './scenes/level4.js';
         import Level5 from './scenes/level5.js';
         import BossFight from './scenes/bossFight.js';
+        import VictoryScene from './scenes/victoryScene.js'; // ✅ Add VictoryScene
         import { setupJoystick } from './utils/joystickUtils.js';
         import { enableTiltControls } from './utils/tiltUtils.js';
         import { addFullscreenButton } from './utils/fullScreenUtils.js';
@@ -869,7 +870,7 @@
                 default: 'arcade',
                 arcade: { gravity: { y: 300 }, debug: false },
             },
-            scene: [StartMenu, Level1, Level2, Level3, Level4, Level5, BossFight],
+            scene: [StartMenu, Level1, Level2, Level3, Level4, Level5, BossFight,VictoryScene],
         };
 
         const game = new Phaser.Game(config);

@@ -11,6 +11,7 @@ export default class BossFight extends Phaser.Scene {
         this.load.image('beignetBoss', 'assets/Characters/Enemies/Beignet_Boss.png');
         this.load.image('beignetProjectile', 'assets/Characters/Projectiles/Beignet/Beignet2.png');
         this.load.image('beignetMonster', 'assets/Characters/Enemies/Beignet_Monster.png');
+        this.load.image('beignetMinion', 'assets/Characters/Enemies/Beignet_Minion.png');
         this.load.image('projectileCD', 'assets/Characters/Projectiles/CD/CDresize.png');
         this.load.image('mardiGrasZombie', 'assets/Characters/Enemies/MardiGrasZombie.png');
         this.load.image('turboNegroStanding1', 'assets/Characters/Character1/TurboNegroStanding/TurboNegroStanding1.png');
@@ -20,6 +21,7 @@ export default class BossFight extends Phaser.Scene {
         this.load.image('turboNegroWalking', 'assets/Characters/Character1/TurboNegroWalking/TurboNegroWalking.png');
         this.load.image('healthPack', 'assets/Characters/Pickups/HealthPack.png');
         this.load.image('fallingHazard', 'assets/Levels/Platforms/fallingHazard.png');
+        this.load.image('gameOver', 'assets/UI/gameOver.png');
         this.load.image('platform', 'assets/Levels/Platforms/platform.png'); // <-- Load platform image
         this.load.image('forceField', 'assets/Effects/forceField.png'); // Adjust the path accordingly
         this.load.audio('bossMusic', 'assets/Audio/LevelMusic/mp3/SmoothDaggers.mp3');
@@ -171,47 +173,84 @@ export default class BossFight extends Phaser.Scene {
             }
         });
     
+        // **Destroy Minions when Hit by Player's Projectile**
+        this.physics.add.collider(this.projectiles, this.minions, (projectile, minion) => {
+            if (!projectile || !minion) return;
+
+            console.log(`🎯 Projectile hit ${minion.texture.key}`);
+
+            // ✅ Ensure Beignet Minion takes 1 damage and gets destroyed
+            if (minion.texture.key === 'beignetMinion') {
+                console.log("🍩 Beignet Minion hit! Taking 1 damage.");
+                minion.health -= 1;
+                projectile.destroy();
+
+                if (minion.health <= 0) {
+                    console.log("💥 Beignet Minion destroyed!");
+                    this.handleEnemyDeath(minion); // ✅ Centralized enemy death handling
+                }
+                return;
+            }
+
+            // ✅ Normal minion handling
+            minion.health -= 1;
+            projectile.destroy();
+
+            if (minion.health <= 0) {
+                console.log(`💀 ${minion.texture.key} destroyed!`);
+                this.handleEnemyDeath(minion);
+            }
+        });
+
         // **Ensure player's projectiles can destroy boss's beignet projectiles**
         this.physics.add.collider(this.projectiles, this.bossProjectiles, this.handleProjectileCollision, null, this);
-    
+
         // **New: Collision Logic from Previous Levels**
         this.physics.add.collider(this.minions, this.minions);
-    
-        // **🔥 Player Takes Damage and Beignet Monster is Destroyed**
+
+        // ✅ **Prevent Player from Taking Damage on Beignet Minion Collision**
+        this.physics.add.overlap(this.player, this.minions, (player, minion) => {
+            if (minion.texture.key === 'beignetMinion') {
+                console.log("✅ Player collided with Beignet Minion - No damage taken.");
+                return; // Ensures no damage is taken
+            }
+        }, null, this);
+
+        // **🔥 Player Takes Damage from Normal Minions & Beignet Monsters**
         this.physics.add.overlap(this.player, this.minions, (player, enemy) => {
             if (!player.active || !enemy.active) return;
-    
+
+            // ✅ Ignore Beignet Minions (Handled in separate overlap above)
+            if (enemy.texture.key === 'beignetMinion') return;
+
             console.log(`🚨 Player hit by ${enemy.texture.key}`);
-    
+
             let damage = enemy.texture.key === 'beignetMonster' ? 2 : 1;
             this.playerHealth -= damage;
             console.log(`🩸 Player health reduced to ${this.playerHealth}`);
-    
-            // Update UI
+
             this.updateHealthUI();
-    
-            // Game Over Check
+
             if (this.playerHealth <= 0) {
                 console.log("💀 Player killed by enemy!");
                 this.gameOver();
                 return;
             }
-    
+
             // **Destroy Beignet Monster Immediately**
             if (enemy.texture.key === 'beignetMonster') {
                 console.log("🔥 Beignet Monster destroyed after collision!");
                 enemy.destroy();
             }
-    
-            // Knockback effect
+
             let knockback = enemy.x < player.x ? 200 : -200;
             player.setVelocityX(knockback);
-    
-            // Destroy zombie upon impact
+
             if (enemy.texture.key === 'mardiGrasZombie') {
                 enemy.destroy();
             }
         }, null, this);
+
     
         // **Zombie AI - Move toward the player**
         this.minions.children.iterate((zombie) => {
@@ -229,6 +268,15 @@ export default class BossFight extends Phaser.Scene {
                 zombie.setFlipX(direction < 0);
             }
         });
+
+        // Beignet Minion Spawning Timer (Fix)
+        this.time.addEvent({
+            delay: 4000, // Spawns every 4 seconds
+            callback: this.spawnBeignetMinion,
+            callbackScope: this,
+            loop: true // Ensures continuous spawning
+        });
+
     
         // ✅ Initialize the enemy count correctly
         this.updateEnemyCountUI();
@@ -316,7 +364,7 @@ export default class BossFight extends Phaser.Scene {
     
         console.log("🔥 fireProjectile() called!");
     
-        let projectile = this.projectiles.create(this.player.x, this.player.y, 'playerProjectile');
+        let projectile = this.projectiles.create(this.player.x, this.player.y, 'projectileCD');
         if (projectile) {
             console.log("🎯 Projectile spawned!");
     
@@ -395,6 +443,24 @@ export default class BossFight extends Phaser.Scene {
         playerProjectile.destroy();
         bossProjectile.destroy();
     }
+
+    handleBeignetProjectileCollision(player, projectile) {
+        if (!player || !projectile) return;
+    
+        console.log("🔥 Player hit by Beignet Projectile!");
+        projectile.destroy(); // Remove projectile
+    
+        this.playerHealth -= 1; // Always deal 1 damage
+        this.updateHealthUI();
+        this.sound.play('playerHit');
+    
+        if (this.playerHealth <= 0) {
+            console.log("💀 Player died from Beignet Projectile!");
+            this.gameOver();
+        }
+    }
+    
+    
 
     //Boss functions
     updateBossHealthUI() {
@@ -647,6 +713,68 @@ export default class BossFight extends Phaser.Scene {
         this.updateEnemyCountUI();
 
     }
+
+    spawnBeignetMinion() {
+        if (!this.movingPlatforms || !this.minions) return;
+    
+        // Get a random moving platform
+        let platforms = this.movingPlatforms.getChildren();
+        if (platforms.length === 0) return; // No platforms available
+    
+        let platform = Phaser.Math.RND.pick(platforms); // Pick a random moving platform
+        let x = platform.x; // Align minion with platform's X position
+        let y = platform.y - 30; // Position above the platform
+    
+        let minion = this.minions.create(x, y, 'beignetMinion'); // Spawn on platform
+        if (minion) {
+            minion.setActive(true).setVisible(true);
+            minion.setCollideWorldBounds(true);
+            minion.body.setAllowGravity(false); // Prevent falling
+            minion.setImmovable(true); // Ensure it doesn’t move on its own
+            minion.health = 1;
+    
+            // ✅ Keep minion attached to platform as it moves
+            this.time.addEvent({
+                delay: 16, // Updates ~60 times per second
+                loop: true,
+                callback: () => {
+                    if (minion.active && platform.active) {
+                        minion.x = platform.x; // Keep minion's X position locked to platform
+                    }
+                },
+            });
+    
+            // ✅ Minion shoots projectiles
+            this.time.addEvent({
+                delay: 4000, // Fire every 4 seconds
+                loop: true,
+                callback: () => {
+                    if (minion.active) this.shootBeignet(minion);
+                },
+            });
+    
+            console.log(`🍩 Beignet Minion spawned on moving platform at (${x}, ${y})`);
+        }
+    }    
+    
+    shootBeignet(minion) {
+        if (!minion || !this.bossProjectiles) return;
+    
+        let projectile = this.bossProjectiles.create(minion.x, minion.y, 'beignetProjectile');
+        if (projectile) {
+            projectile.setActive(true).setVisible(true);
+            projectile.body.setAllowGravity(false);
+    
+            // Calculate angle between minion and player
+            const angle = Phaser.Math.Angle.Between(minion.x, minion.y, this.player.x, this.player.y);
+    
+            // Set velocity towards the player
+            const speed = 250;
+            projectile.setVelocity(Math.cos(angle) * speed, Math.sin(angle) * speed);
+        }
+    }
+    
+    
     
     //UI
     updateHealthUI() {
@@ -663,52 +791,60 @@ export default class BossFight extends Phaser.Scene {
     }
 
     gameOver() {
-        if (this.isGameOver) return;  // Prevent running twice
-        this.isGameOver = true;
-        
-        console.log("🚨 Game Over! Cleaning up...");
+        console.log("💀 Game Over! Restarting Boss Fight...");
     
-        // Remove Input Listeners to Avoid Repeated Calls
-        this.input.keyboard.removeAllListeners();
-        this.input.removeAllListeners();
-    
-        // Clean Up Before Restarting
+        // ✅ Stop everything
         this.cleanUpLevel();
     
-        // Show Game Over Screen
+        // ✅ Display Game Over UI
         this.add.image(this.scale.width / 2, this.scale.height / 2, 'gameOver').setOrigin(0.5);
     
-        // Restart Scene with Delay to Avoid Input Spamming
-        this.time.delayedCall(2000, () => {
+        // ✅ Restart level after delay or on player input
+        this.time.delayedCall(3000, () => {
+            console.log("🔄 Restarting Boss Fight...");
+            this.scene.restart();
+        });
+    
+        this.input.keyboard.once('keydown-SPACE', () => {
+            console.log("🔄 Restarting Boss Fight via SPACE key...");
+            this.scene.restart();
+        });
+    
+        this.input.once('pointerdown', () => {
+            console.log("🔄 Restarting Boss Fight via Click/Tap...");
             this.scene.restart();
         });
     }
     
+    
+    
     levelComplete() {
         console.log("Final Boss Defeated! Game Complete!");
-        this.cleanUpLevel();
-        this.add.image(this.scale.width / 2, this.scale.height / 2, 'levelComplete').setOrigin(0.5);
-    
-        this.time.delayedCall(2000, () => { // 2-second delay
-            console.log("Transitioning to StartMenu...");
-            this.scene.start('StartMenu');
+        
+        // Delay cleanup to ensure transition happens smoothly
+        this.time.delayedCall(1000, () => {
+            this.cleanUpLevel();
+            
+            this.time.delayedCall(2000, () => {
+                this.scene.start('VictoryScene');
+            });
         });
-    }    
+    }
+    
     
     cleanUpLevel() {
         console.log("🧹 Cleaning up level...");
-    
+        
         if (this.isCleaningUp) return;
         this.isCleaningUp = true;
     
-        // 🛑 Stop & Kill Everything
         this.tweens.killAll();
         this.time.removeAllEvents();
         this.physics.world.colliders.destroy();
         this.input.keyboard.removeAllListeners();
         this.input.removeAllListeners();
     
-        // 🎵 Stop Music
+        // Stop Music
         if (this.bossMusic) {
             console.log("🎵 Stopping boss music...");
             this.bossMusic.stop();
@@ -716,7 +852,7 @@ export default class BossFight extends Phaser.Scene {
             this.bossMusic = null;
         }
     
-        // 🔥 Clear Physics Objects (Enemies, Projectiles, Hazards)
+        // Clear Physics Objects
         const objectGroups = [this.minions, this.projectiles, this.bossProjectiles, this.hazards, this.healthPacks];
     
         objectGroups.forEach(group => {
@@ -726,7 +862,7 @@ export default class BossFight extends Phaser.Scene {
             }
         });
     
-        // 💀 Destroy Boss & Force Field (if exist)
+        // **Ensure Boss and Force Field Exist Before Destroying**
         if (this.boss) {
             console.log("💀 Destroying boss...");
             this.boss.destroy();
@@ -741,6 +877,7 @@ export default class BossFight extends Phaser.Scene {
     
         console.log("✅ Cleanup Complete!");
     }
+    
     
     handleLevelTransition(callback) {
         this.input.keyboard.once('keydown-SPACE', callback);

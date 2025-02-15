@@ -316,9 +316,6 @@ export default class Level4 extends Phaser.Scene {
         console.log("🎯 Player fired a projectile at:", this.player.x, this.player.y);
 
     }
-    
-    
-    
 
     shootBeignet(minion) {
         const projectile = this.beignetProjectiles.create(minion.x, minion.y, 'beignetProjectile');
