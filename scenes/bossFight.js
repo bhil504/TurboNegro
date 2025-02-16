@@ -7,35 +7,50 @@ export default class BossFight extends Phaser.Scene {
     }
 
     preload() {
+        console.log("Preloading assets for Boss Fight...");
+    
+        // Background & Platforms
         this.load.image('finalFightBackground', 'assets/Levels/BackGrounds/finalFight.webp');
-        this.load.image('beignetBoss', 'assets/Characters/Enemies/Beignet_Boss.png');
-        this.load.image('beignetProjectile', 'assets/Characters/Projectiles/Beignet/Beignet2.png');
-        this.load.image('beignetMonster', 'assets/Characters/Enemies/Beignet_Monster.png');
-        this.load.image('beignetMinion', 'assets/Characters/Enemies/Beignet_Minion.png');
-        this.load.image('projectileCD', 'assets/Characters/Projectiles/CD/CDresize.png');
-        this.load.image('mardiGrasZombie', 'assets/Characters/Enemies/MardiGrasZombie.png');
+        this.load.image('platform', 'assets/Levels/Platforms/platform.png');
+    
+        // Player Animations
         this.load.image('turboNegroStanding1', 'assets/Characters/Character1/TurboNegroStanding/TurboNegroStanding1.png');
         this.load.image('turboNegroStanding2', 'assets/Characters/Character1/TurboNegroStanding/TurboNegroStanding2.png');
         this.load.image('turboNegroStanding3', 'assets/Characters/Character1/TurboNegroStanding/TurboNegroStanding3.png');
         this.load.image('turboNegroStanding4', 'assets/Characters/Character1/TurboNegroStanding/TurboNegroStanding4.png');
         this.load.image('turboNegroWalking', 'assets/Characters/Character1/TurboNegroWalking/TurboNegroWalking.png');
         this.load.image('turboNegroJump', 'assets/Characters/Character1/TurboNegroJump.png');
-        this.load.image('healthPack', 'assets/Characters/Pickups/HealthPack.png');
+    
+        // Enemies & Projectiles
+        this.load.image('beignetBoss', 'assets/Characters/Enemies/Beignet_Boss.png');
+        this.load.image('mardiGrasZombie', 'assets/Characters/Enemies/MardiGrasZombie.png');
+        this.load.image('beignetMinion', 'assets/Characters/Enemies/Beignet_Minion.png');
+        this.load.image('beignetMonster', 'assets/Characters/Enemies/Beignet_Monster.png');
+        this.load.image('beignetProjectile', 'assets/Characters/Projectiles/Beignet/Beignet2.png');
+        this.load.image('projectileCD', 'assets/Characters/Projectiles/CD/CDresize.png');
+    
+        // Items
+        this.load.image('healthPack', 'assets/Items/HealthPack.png');
         this.load.image('fallingHazard', 'assets/Levels/Platforms/fallingHazard.png');
+    
+        // Effects
+        this.load.image('forceField', 'assets/Effects/forceField.png');
+    
+        // UI
         this.load.image('gameOver', 'assets/UI/gameOver.png');
-        this.load.image('platform', 'assets/Levels/Platforms/platform.png'); // <-- Load platform image
-        this.load.image('forceField', 'assets/Effects/forceField.png'); // Adjust the path accordingly
-
-        
+    
+        // Music & Sound Effects
         this.load.audio('bossMusic', 'assets/Audio/LevelMusic/mp3/SmoothDaggers.mp3');
+        this.load.audio('playerHit', 'assets/Audio/SoundFX/mp3/playerHit.mp3');
         this.load.audio('playerProjectileFire', 'assets/Audio/SoundFX/mp3/playerprojectilefire.mp3');
         this.load.audio('bossHit', 'assets/Audio/SoundFX/mp3/bossHit.mp3');
-        this.load.audio('playerHit', 'assets/Audio/SoundFX/mp3/playerHit.mp3');
         this.load.audio('mardiGrasZombieHit', 'assets/Audio/SoundFX/mp3/MardiGrasZombieHit.mp3');
         this.load.audio('beignetMinionHit', 'assets/Audio/SoundFX/mp3/beignetminionHit.mp3');
         this.load.audio('beignetProjectileFire', 'assets/Audio/SoundFX/mp3/beignetprojectilefire.mp3');
         this.load.audio('beignetMonsterHit', 'assets/Audio/SoundFX/mp3/beignetmonsterHit.mp3');
-    }
+    
+        console.log("Boss Fight assets preloaded.");
+    }    
     
     create() {
         const { width, height } = this.scale;
@@ -55,6 +70,33 @@ export default class BossFight extends Phaser.Scene {
             .setDisplaySize(3072, 10)
             .setVisible(false)
             .refreshBody();
+
+        // **Player Animations**
+        this.anims.create({
+            key: 'idle',
+            frames: [
+                { key: 'turboNegroStanding1' },
+                { key: 'turboNegroStanding2' },
+                { key: 'turboNegroStanding3' },
+                { key: 'turboNegroStanding4' }
+            ],
+            frameRate: 5,
+            repeat: -1
+        });
+
+        this.anims.create({
+            key: 'walk',
+            frames: [{ key: 'turboNegroWalking' }],
+            frameRate: 10,
+            repeat: -1
+        });
+
+        this.anims.create({
+            key: 'jump',
+            frames: [{ key: 'turboNegroJump' }],
+            frameRate: 1,
+            repeat: -1
+        });
     
         // **Moving Platforms Setup**
         this.movingPlatforms = this.physics.add.group({ allowGravity: false, immovable: true });
@@ -290,8 +332,7 @@ export default class BossFight extends Phaser.Scene {
         this.beignetMonsterHitSFX = this.sound.add('beignetMonsterHit', { volume: 1 });
         this.beignetProjectileFireSFX = this.sound.add('beignetProjectileFire', { volume: 1 });
 
-        console.log("🎵 Available Sounds:", this.sound.list);
-
+        console.log("🔊 Sound Check:", this.mardiGrasZombieHitSFX);
 
         // ✅ Initialize the enemy count correctly
         this.updateEnemyCountUI();
@@ -315,29 +356,38 @@ export default class BossFight extends Phaser.Scene {
 
     update() {
         if (!this.player || !this.player.body) return;
-
+    
         this.player.setVelocityX(0);
-
+    
+        // Handle left and right movement
         if (this.cursors.left.isDown) {
             this.player.setVelocityX(-160).setFlipX(true);
-            if (this.anims.exists('walk')) {
+            if (this.player.body.touching.down && this.anims.exists('walk')) {
                 this.player.play('walk', true);
             }
         } else if (this.cursors.right.isDown) {
             this.player.setVelocityX(160).setFlipX(false);
-            if (this.anims.exists('walk')) {
+            if (this.player.body.touching.down && this.anims.exists('walk')) {
                 this.player.play('walk', true);
             }
-        } else {
+        } else if (this.player.body.touching.down) {
             if (this.anims.exists('idle')) {
                 this.player.play('idle', true);
             }
         }
-
+    
+        // Handle jump logic
         if (this.cursors.up.isDown && this.player.body.touching.down) {
             this.player.setVelocityY(-500);
+            if (this.anims.exists('jump')) {
+                this.player.play('jump', true);
+            }
+        } else if (!this.player.body.touching.down) {
+            if (this.anims.exists('jump')) {
+                this.player.play('jump', true);
+            }
         }
-
+    
         // ✅ Fix: Fire projectile only when the key is first pressed, not held down
         if (this.fireKey.isDown && !this.spaceKeyJustPressed) {
             this.spaceKeyJustPressed = true;
@@ -345,33 +395,40 @@ export default class BossFight extends Phaser.Scene {
         } else if (this.fireKey.isUp) {
             this.spaceKeyJustPressed = false;
         }
-
+    
         // Ensure force field exists before updating position
         if (this.forceFieldActive && this.forceField) {
             this.forceField.setPosition(this.boss.x, this.boss.y);
         }
-
+    
+        // ✅ Fix: Prevent errors when updating minions
         if (this.minions) {
             this.minions.children.iterate((zombie) => {
-                if (zombie && zombie.active) {
+                if (!zombie || !zombie.body) return; // Ensure zombie exists before applying physics
+    
+                if (zombie.active) {
                     const speed = 100;
                     const direction = this.player ? Math.sign(this.player.x - zombie.x) : 1;
                     zombie.setVelocityX(direction * speed);
-
+    
                     if (Phaser.Math.Between(1, 100) > 95 && zombie.body.touching.down) {
                         zombie.setVelocityY(-250);
                     }
-
+    
                     zombie.setFlipX(direction < 0);
                 }
             });
+        } else {
+            console.warn("⚠️ Minions group is undefined! Possible spawning issue.");
         }
-
-        // **Fix: Ensure Parallax Background Scrolls Properly**
+    
+        // ✅ Fix: Ensure Parallax Background Scrolls Properly
         if (this.background) {
             this.background.tilePositionX = this.cameras.main.scrollX * 0.5;
+        } else {
+            console.warn("⚠️ Background not found! Ensure it is loaded properly.");
         }
-    }    
+    }            
         
     //Player functions
     fireProjectile() {
@@ -650,66 +707,92 @@ export default class BossFight extends Phaser.Scene {
 
     //EnemySpawns
     spawnMardiGrasZombies() {
-        if (!this.minions) return;
+        if (!this.minions) {
+            console.warn("⚠️ Minions group is missing! Cannot spawn zombies.");
+            return;
+        }
+
         const { width, height } = this.scale;
         const numZombies = 5;
         const spawnSpacing = width / (numZombies + 1);
-    
+
         for (let i = 0; i < numZombies; i++) {
             let spawnX = spawnSpacing * (i + 1);
             let spawnY = height - 150;
-    
+
             let zombie = this.minions.create(spawnX, spawnY, 'mardiGrasZombie');
+
             if (!zombie) {
-                console.error("🚨 Zombie creation failed at", spawnX, spawnY);
-                return;
+                console.error("🚨 Failed to create zombie at", spawnX, spawnY);
+                continue; // Skip this loop iteration
             }
-    
+
+            // ✅ Ensure zombie is set up properly
             zombie.setActive(true).setVisible(true);
             zombie.setCollideWorldBounds(true);
             zombie.body.setAllowGravity(true);
             zombie.setBounce(0.2);
             zombie.health = 1;
-    
+
+            // ✅ Prevent NaN health issues
+            if (isNaN(zombie.health)) {
+                console.warn("⚠️ Zombie health is NaN! Resetting to 1.");
+                zombie.health = 1;
+            }
+
+            // ✅ Safe AI Movement Setup
             let speed = 100;
             let direction = Phaser.Math.Between(0, 1) === 0 ? -1 : 1;
-    
-            // ✅ Fix: Delay velocity setting for proper spawn physics
+
             this.time.delayedCall(100, () => {
-                zombie.setVelocityX(direction * speed);
-                zombie.setFlipX(direction < 0);
+                if (zombie && zombie.body) {
+                    zombie.setVelocityX(direction * speed);
+                    zombie.setFlipX(direction < 0);
+                }
             });
-    
+
             this.minions.add(zombie);
-    
+
             this.physics.add.collider(zombie, this.ground);
             if (this.movingPlatforms) {
                 this.physics.add.collider(zombie, this.movingPlatforms);
             }
-    
+
             this.physics.add.overlap(this.player, zombie, this.handleMinionCollision, null, this);
+
+            // ✅ Handle projectile damage safely WITH sound effect ONLY on death
             this.physics.add.overlap(this.projectiles, zombie, (projectile, zombie) => {
-                if (!zombie || !projectile) return;
+                if (!zombie || !zombie.active || !projectile) return;
                 projectile.destroy();
                 zombie.health -= 1;
                 console.log(`🩸 Zombie hit! Remaining health: ${zombie.health}`);
-    
-                if (this.mardiGrasZombieHitSFX) {
-                    this.mardiGrasZombieHitSFX.play();
-                }
-    
+
                 if (zombie.health <= 0) {
                     console.log("💀 Zombie destroyed!");
-                    zombie.destroy();
+
+                    // ✅ Ensure sound plays **before** destroying the zombie
+                    if (this.mardiGrasZombieHitSFX) {
+                        console.log("🔊 Playing zombie death sound...");
+                        this.mardiGrasZombieHitSFX.play();
+                    } else {
+                        console.warn("⚠️ Zombie death sound not found.");
+                    }
+
+                    // ✅ Delay destruction slightly so sound can play
+                    this.time.delayedCall(200, () => {
+                        if (zombie && zombie.active) {
+                            zombie.destroy();
+                        }
+                    });
                 }
             });
-    
+
             console.log(`🧟‍♂️ Zombie spawned at (${spawnX}, ${spawnY})`);
         }
-    
+
         this.updateEnemyCountUI();
-    }    
- 
+    }
+
     spawnBeignetMonster() {
         if (!this.boss || !this.minions) return;
     

@@ -38,14 +38,29 @@ export default class VictoryScene extends Phaser.Scene {
         }).setOrigin(0.5);
 
         // Credit Roll with better readability, moving to circled area
-        const creditsText = this.add.text(width / 2, height, 'Turbo Negro! Saves The French Quarter!!!\nCreated by Bhillion Dollar Productions\nDeveloped with Phaser.js\nvisit www.bhilliondollar.com for more!', {
-            fontSize: '28px',
+        const creditsText = this.add.text(width / 2, height, 
+            'Turbo Negro! Saves The French Quarter!!!\n' +
+            'Created by Bhillion Dollar Productions\n' +
+            'Developed with Phaser.js\n' +
+            'visit www.bhilliondollar.com for more!', {
+            fontSize: '25px',
             fontFamily: 'Metal Mania',
             color: '#FFD700',
             align: 'center',
-            backgroundColor: 'gray'
+            stroke: '#000000', // Black Outline for readability
+            strokeThickness: 6, // Thicker outline for clarity
+            backgroundColor: 'gray',
+            shadow: {
+                offsetX: 3,
+                offsetY: 3.2,
+                color: 'black',
+                blur: 6,
+                stroke: false,
+                fill: true
+            }
         }).setOrigin(0.5);
 
+        // Credit Roll Animation - Moves to the circled area
         this.tweens.add({
             targets: creditsText,
             y: height * 0.62,
