@@ -41,9 +41,9 @@ export default class VictoryScene extends Phaser.Scene {
         const creditsText = this.add.text(width / 2, height, 'Turbo Negro! Saves The French Quarter!!!\nCreated by Bhillion Dollar Productions\nDeveloped with Phaser.js\nvisit www.bhilliondollar.com for more!', {
             fontSize: '28px',
             fontFamily: 'Metal Mania',
-            color: '#FFFFFF',
+            color: '#FFD700',
             align: 'center',
-            backgroundColor: 'black'
+            backgroundColor: 'gray'
         }).setOrigin(0.5);
 
         this.tweens.add({

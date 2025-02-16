@@ -19,15 +19,22 @@ export default class BossFight extends Phaser.Scene {
         this.load.image('turboNegroStanding3', 'assets/Characters/Character1/TurboNegroStanding/TurboNegroStanding3.png');
         this.load.image('turboNegroStanding4', 'assets/Characters/Character1/TurboNegroStanding/TurboNegroStanding4.png');
         this.load.image('turboNegroWalking', 'assets/Characters/Character1/TurboNegroWalking/TurboNegroWalking.png');
+        this.load.image('turboNegroJump', 'assets/Characters/Character1/TurboNegroJump.png');
         this.load.image('healthPack', 'assets/Characters/Pickups/HealthPack.png');
         this.load.image('fallingHazard', 'assets/Levels/Platforms/fallingHazard.png');
         this.load.image('gameOver', 'assets/UI/gameOver.png');
         this.load.image('platform', 'assets/Levels/Platforms/platform.png'); // <-- Load platform image
         this.load.image('forceField', 'assets/Effects/forceField.png'); // Adjust the path accordingly
+
+        
         this.load.audio('bossMusic', 'assets/Audio/LevelMusic/mp3/SmoothDaggers.mp3');
         this.load.audio('playerProjectileFire', 'assets/Audio/SoundFX/mp3/playerprojectilefire.mp3');
         this.load.audio('bossHit', 'assets/Audio/SoundFX/mp3/bossHit.mp3');
         this.load.audio('playerHit', 'assets/Audio/SoundFX/mp3/playerHit.mp3');
+        this.load.audio('mardiGrasZombieHit', 'assets/Audio/SoundFX/mp3/MardiGrasZombieHit.mp3');
+        this.load.audio('beignetMinionHit', 'assets/Audio/SoundFX/mp3/beignetminionHit.mp3');
+        this.load.audio('beignetProjectileFire', 'assets/Audio/SoundFX/mp3/beignetprojectilefire.mp3');
+        this.load.audio('beignetMonsterHit', 'assets/Audio/SoundFX/mp3/beignetmonsterHit.mp3');
     }
     
     create() {
@@ -85,7 +92,7 @@ export default class BossFight extends Phaser.Scene {
         this.boss = this.physics.add.sprite(2800, height - 150, 'beignetBoss');
         this.boss.setCollideWorldBounds(true);
         this.boss.body.setAllowGravity(false);
-        this.boss.health = 20;
+        this.boss.health = 30;
         document.getElementById('boss-health-bar-container').style.display = 'block';
         this.physics.add.collider(this.boss, this.ground);
         this.physics.add.collider(this.boss, this.movingPlatforms);
@@ -130,8 +137,6 @@ export default class BossFight extends Phaser.Scene {
             setupMobileControls(this, this.player);
         } else {
             console.log("💻 Desktop detected. Using spacebar for shooting.");
-            
-            
         }
     
         // **Fullscreen Button**
@@ -277,7 +282,17 @@ export default class BossFight extends Phaser.Scene {
             loop: true // Ensures continuous spawning
         });
 
-    
+        this.playerProjectileFireSFX = this.sound.add('playerProjectileFire', { volume: 1 });
+        this.bossHitSFX = this.sound.add('bossHit', { volume: 1 });
+        this.playerHitSFX = this.sound.add('playerHit', { volume: 1 });
+        this.mardiGrasZombieHitSFX = this.sound.add('mardiGrasZombieHit', { volume: 1 });
+        this.beignetMinionHitSFX = this.sound.add('beignetMinionHit', { volume: 1 });
+        this.beignetMonsterHitSFX = this.sound.add('beignetMonsterHit', { volume: 1 });
+        this.beignetProjectileFireSFX = this.sound.add('beignetProjectileFire', { volume: 1 });
+
+        console.log("🎵 Available Sounds:", this.sound.list);
+
+
         // ✅ Initialize the enemy count correctly
         this.updateEnemyCountUI();
     }           
@@ -437,6 +452,8 @@ export default class BossFight extends Phaser.Scene {
             console.log("❌ Player health depleted! Game over.");
             this.gameOver();
         }
+
+        this.playerHitSFX.play();
     }
 
     handleProjectileCollision(playerProjectile, bossProjectile) {
@@ -460,11 +477,9 @@ export default class BossFight extends Phaser.Scene {
         }
     }
     
-    
-
     //Boss functions
     updateBossHealthUI() {
-        const healthPercentage = (this.boss.health / 20) * 100;  // Assuming max health is 20
+        const healthPercentage = (this.boss.health / 30) * 100;  // Assuming max health is 20
         const healthBar = document.getElementById('boss-health-bar-inner');
         
         if (healthBar) {
@@ -493,6 +508,7 @@ export default class BossFight extends Phaser.Scene {
         // Boss takes damage normally
         this.boss.health -= amount;
         this.bossHitCount = (this.bossHitCount || 0) + 1; // Track hit count
+        this.bossHitSFX.play();
     
         console.log(`🔥 Boss hit! Health: ${this.boss.health}, Hit Count: ${this.bossHitCount}`);
     
@@ -550,7 +566,7 @@ export default class BossFight extends Phaser.Scene {
     
         let groundY = this.scale.height - 150;
     
-        this.time.delayedCall(1500, () => { // 1.5 sec delay
+        this.time.delayedCall(3000, () => { // 3 sec delay
             this.boss.setPosition(newX, groundY);
             this.boss.setAlpha(1);
             this.boss.setActive(true);
@@ -580,7 +596,7 @@ export default class BossFight extends Phaser.Scene {
     startBossActions() {
         // **Restart Boss Shooting**
         this.time.addEvent({
-            delay: 4000, // Fire every 4 seconds
+            delay: 3000, // Fire every 3 seconds
             callback: this.shootProjectiles,
             callbackScope: this,
             loop: true
@@ -618,6 +634,7 @@ export default class BossFight extends Phaser.Scene {
             const speed = 300; // Adjust speed as needed
             projectile.setVelocity(Math.cos(angle) * speed, Math.sin(angle) * speed);
         }
+        this.beignetProjectileFireSFX.play();
     }    
 
     handleBeignetProjectileCollision(player, projectile) {
@@ -633,60 +650,77 @@ export default class BossFight extends Phaser.Scene {
 
     //EnemySpawns
     spawnMardiGrasZombies() {
+        if (!this.minions) return;
         const { width, height } = this.scale;
         const numZombies = 5;
-        const spawnSpacing = width / (numZombies + 1); // Distribute evenly
+        const spawnSpacing = width / (numZombies + 1);
     
         for (let i = 0; i < numZombies; i++) {
-            let spawnX = spawnSpacing * (i + 1); // Ensure even spacing
-            let spawnY = height - 150; // Ensure they spawn near the ground
+            let spawnX = spawnSpacing * (i + 1);
+            let spawnY = height - 150;
     
-            let zombie = this.physics.add.sprite(spawnX, spawnY, 'mardiGrasZombie');
+            let zombie = this.minions.create(spawnX, spawnY, 'mardiGrasZombie');
+            if (!zombie) {
+                console.error("🚨 Zombie creation failed at", spawnX, spawnY);
+                return;
+            }
     
-            if (zombie) {
-                zombie.setVisible(true);
-                zombie.setActive(true);
-                zombie.setCollideWorldBounds(true);
-                zombie.body.setAllowGravity(true);
-                zombie.setBounce(0.2);
-                zombie.health = 1;
+            zombie.setActive(true).setVisible(true);
+            zombie.setCollideWorldBounds(true);
+            zombie.body.setAllowGravity(true);
+            zombie.setBounce(0.2);
+            zombie.health = 1;
     
-                // Increase movement speed & randomly decide movement direction
-                let speed = 100; // 🔥 Faster zombies
-                let direction = Phaser.Math.Between(0, 1) === 0 ? -1 : 1; // Random left or right
+            let speed = 100;
+            let direction = Phaser.Math.Between(0, 1) === 0 ? -1 : 1;
+    
+            // ✅ Fix: Delay velocity setting for proper spawn physics
+            this.time.delayedCall(100, () => {
                 zombie.setVelocityX(direction * speed);
                 zombie.setFlipX(direction < 0);
+            });
     
-                // Add to minion group
-                this.minions.add(zombie);
+            this.minions.add(zombie);
     
-                // Ensure collision with ground & platforms
-                this.physics.add.collider(zombie, this.ground);
+            this.physics.add.collider(zombie, this.ground);
+            if (this.movingPlatforms) {
                 this.physics.add.collider(zombie, this.movingPlatforms);
-                this.physics.add.overlap(this.player, zombie, this.handleMinionCollision, null, this);
-    
-                console.log(`🧟‍♂️ Zombie spawned at (${spawnX}, ${spawnY})`);
-            } else {
-                console.log("❌ Zombie failed to spawn!");
             }
+    
+            this.physics.add.overlap(this.player, zombie, this.handleMinionCollision, null, this);
+            this.physics.add.overlap(this.projectiles, zombie, (projectile, zombie) => {
+                if (!zombie || !projectile) return;
+                projectile.destroy();
+                zombie.health -= 1;
+                console.log(`🩸 Zombie hit! Remaining health: ${zombie.health}`);
+    
+                if (this.mardiGrasZombieHitSFX) {
+                    this.mardiGrasZombieHitSFX.play();
+                }
+    
+                if (zombie.health <= 0) {
+                    console.log("💀 Zombie destroyed!");
+                    zombie.destroy();
+                }
+            });
+    
+            console.log(`🧟‍♂️ Zombie spawned at (${spawnX}, ${spawnY})`);
         }
-
+    
         this.updateEnemyCountUI();
-
-    }
-      
+    }    
+ 
     spawnBeignetMonster() {
         if (!this.boss || !this.minions) return;
     
-        let patrolPoints = [500, 1000, 1500, 2000, 2500]; // Define patrol points
+        let patrolPoints = [500, 1000, 1500, 2000, 2500];
         let x;
     
-        // Ensure Beignet Monster does NOT spawn too close to the player
         do {
             x = Phaser.Math.RND.pick(patrolPoints);
-        } while (Math.abs(x - this.player.x) < 150); // Avoid spawning too close
+        } while (Math.abs(x - this.player.x) < 150);
     
-        let monster = this.minions.create(x, this.scale.height - 150, 'beignetMonster'); // Spawn at patrol point
+        let monster = this.minions.create(x, this.scale.height - 150, 'beignetMonster');
         if (monster) {
             monster.setActive(true).setVisible(true);
             monster.setCollideWorldBounds(true);
@@ -694,7 +728,6 @@ export default class BossFight extends Phaser.Scene {
             monster.setBounce(0.2);
             monster.health = 2;
     
-            // Patrol logic
             this.tweens.add({
                 targets: monster,
                 x: x + 300,
@@ -704,58 +737,80 @@ export default class BossFight extends Phaser.Scene {
                 ease: 'Linear'
             });
     
-            // Ensure collision with ground and platforms
             this.physics.add.collider(monster, this.ground);
             this.physics.add.collider(monster, this.movingPlatforms);
             this.physics.add.overlap(this.player, monster, this.handleMinionCollision, null, this);
+            this.physics.add.overlap(this.projectiles, monster, (projectile, monster) => {
+                projectile.destroy();
+                monster.health -= 1;
+                if (this.beignetMonsterHitSFX) {
+                    this.beignetMonsterHitSFX.play();
+                } else {
+                    console.warn("🚨 Sound effect 'beignetMonsterHitSFX' is not initialized!");
+                }
+                if (monster.health <= 0) {
+                    monster.destroy();
+                }
+            });
         }
-
         this.updateEnemyCountUI();
-
     }
 
     spawnBeignetMinion() {
         if (!this.movingPlatforms || !this.minions) return;
     
-        // Get a random moving platform
         let platforms = this.movingPlatforms.getChildren();
-        if (platforms.length === 0) return; // No platforms available
+        if (platforms.length === 0) return;
     
-        let platform = Phaser.Math.RND.pick(platforms); // Pick a random moving platform
-        let x = platform.x; // Align minion with platform's X position
-        let y = platform.y - 30; // Position above the platform
+        let platform = Phaser.Math.RND.pick(platforms);
+        let x = platform.x;
+        let y = platform.y - 30;
     
-        let minion = this.minions.create(x, y, 'beignetMinion'); // Spawn on platform
+        let minion = this.minions.create(x, y, 'beignetMinion');
         if (minion) {
             minion.setActive(true).setVisible(true);
             minion.setCollideWorldBounds(true);
-            minion.body.setAllowGravity(false); // Prevent falling
-            minion.setImmovable(true); // Ensure it doesn’t move on its own
+            minion.body.setAllowGravity(false);
+            minion.setImmovable(true);
             minion.health = 1;
     
-            // ✅ Keep minion attached to platform as it moves
             this.time.addEvent({
-                delay: 16, // Updates ~60 times per second
+                delay: 16,
                 loop: true,
                 callback: () => {
                     if (minion.active && platform.active) {
-                        minion.x = platform.x; // Keep minion's X position locked to platform
+                        minion.x = platform.x;
                     }
                 },
             });
     
-            // ✅ Minion shoots projectiles
             this.time.addEvent({
-                delay: 4000, // Fire every 4 seconds
+                delay: 4000,
                 loop: true,
                 callback: () => {
-                    if (minion.active) this.shootBeignet(minion);
+                    if (minion.active) {
+                        this.shootBeignet(minion);
+                        if (this.beignetProjectileFireSFX) {
+                            this.beignetProjectileFireSFX.play();
+                        }
+                    }
                 },
+            });
+    
+            this.physics.add.overlap(this.projectiles, minion, (projectile, minion) => {
+                projectile.destroy();
+                minion.health -= 1;
+                if (this.beignetMinionHitSFX) {
+                    this.beignetMinionHitSFX.play();
+                }
+                if (minion.health <= 0) {
+                    minion.destroy();
+                }
             });
     
             console.log(`🍩 Beignet Minion spawned on moving platform at (${x}, ${y})`);
         }
-    }    
+    }  
     
     shootBeignet(minion) {
         if (!minion || !this.bossProjectiles) return;
@@ -773,9 +828,7 @@ export default class BossFight extends Phaser.Scene {
             projectile.setVelocity(Math.cos(angle) * speed, Math.sin(angle) * speed);
         }
     }
-    
-    
-    
+
     //UI
     updateHealthUI() {
         document.getElementById('health-bar-inner').style.width = `${(this.playerHealth / 10) * 100}%`;
@@ -816,8 +869,6 @@ export default class BossFight extends Phaser.Scene {
         });
     }
     
-    
-    
     levelComplete() {
         console.log("Final Boss Defeated! Game Complete!");
         
@@ -830,7 +881,6 @@ export default class BossFight extends Phaser.Scene {
             });
         });
     }
-    
     
     cleanUpLevel() {
         console.log("🧹 Cleaning up level...");
@@ -877,7 +927,6 @@ export default class BossFight extends Phaser.Scene {
     
         console.log("✅ Cleanup Complete!");
     }
-    
     
     handleLevelTransition(callback) {
         this.input.keyboard.once('keydown-SPACE', callback);
