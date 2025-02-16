@@ -89,42 +89,7 @@ export default class StartMenu extends Phaser.Scene {
             this.scene.start('Level1');
         });
 
-        // Boss Fight Button
-        const bossFightButton = this.add.text(width / 2, height / 1.2, 'Boss Fight', {
-            fontSize: '42px',
-            fontFamily: 'Metal Mania',
-            fill: '#FF4500',
-            backgroundColor: '#000000',
-            padding: { left: 20, right: 20, top: 10, bottom: 10 },
-            align: 'center',
-            stroke: '#8B0000',
-            strokeThickness: 5,
-        })
-        .setOrigin(0.5)
-        .setInteractive();
-
-        this.tweens.add({
-            targets: bossFightButton,
-            alpha: 0,
-            duration: 500,
-            yoyo: true,
-            repeat: -1
-        });
-
-        bossFightButton.on('pointerover', () => {
-            bossFightButton.setStyle({ fill: '#ffffff', backgroundColor: '#ff4500' });
-        });
-
-        bossFightButton.on('pointerout', () => {
-            bossFightButton.setStyle({ fill: '#FF4500', backgroundColor: '#000000' });
-        });
-
-        bossFightButton.on('pointerdown', () => {
-            this.sound.stopAll();
-            this.tweens.killAll();
-            this.scene.start('BossFight');
-        });
-
+        
         
         this.music = this.sound.add('menuMusic', { loop: true, volume: 0.6 });
         this.music.play();
