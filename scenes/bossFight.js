@@ -711,74 +711,64 @@ export default class BossFight extends Phaser.Scene {
             console.warn("⚠️ Minions group is missing! Cannot spawn zombies.");
             return;
         }
-
+    
         const { width, height } = this.scale;
         const numZombies = 5;
         const spawnSpacing = width / (numZombies + 1);
-
+    
         for (let i = 0; i < numZombies; i++) {
             let spawnX = spawnSpacing * (i + 1);
             let spawnY = height - 150;
-
+    
             let zombie = this.minions.create(spawnX, spawnY, 'mardiGrasZombie');
-
+    
             if (!zombie) {
                 console.error("🚨 Failed to create zombie at", spawnX, spawnY);
-                continue; // Skip this loop iteration
+                continue;
             }
-
-            // ✅ Ensure zombie is set up properly
+    
             zombie.setActive(true).setVisible(true);
             zombie.setCollideWorldBounds(true);
             zombie.body.setAllowGravity(true);
             zombie.setBounce(0.2);
             zombie.health = 1;
-
-            // ✅ Prevent NaN health issues
+    
             if (isNaN(zombie.health)) {
                 console.warn("⚠️ Zombie health is NaN! Resetting to 1.");
                 zombie.health = 1;
             }
-
-            // ✅ Safe AI Movement Setup
-            let speed = 100;
+    
+            let speed = 200;
             let direction = Phaser.Math.Between(0, 1) === 0 ? -1 : 1;
-
+    
             this.time.delayedCall(100, () => {
                 if (zombie && zombie.body) {
                     zombie.setVelocityX(direction * speed);
                     zombie.setFlipX(direction < 0);
                 }
             });
-
+    
             this.minions.add(zombie);
-
             this.physics.add.collider(zombie, this.ground);
             if (this.movingPlatforms) {
                 this.physics.add.collider(zombie, this.movingPlatforms);
             }
-
             this.physics.add.overlap(this.player, zombie, this.handleMinionCollision, null, this);
-
-            // ✅ Handle projectile damage safely WITH sound effect ONLY on death
+    
             this.physics.add.overlap(this.projectiles, zombie, (projectile, zombie) => {
                 if (!zombie || !zombie.active || !projectile) return;
                 projectile.destroy();
                 zombie.health -= 1;
                 console.log(`🩸 Zombie hit! Remaining health: ${zombie.health}`);
-
+    
                 if (zombie.health <= 0) {
-                    console.log("💀 Zombie destroyed!");
-
-                    // ✅ Ensure sound plays **before** destroying the zombie
                     if (this.mardiGrasZombieHitSFX) {
-                        console.log("🔊 Playing zombie death sound...");
+                        console.log("🔊 Playing zombie hit sound...");
                         this.mardiGrasZombieHitSFX.play();
                     } else {
-                        console.warn("⚠️ Zombie death sound not found.");
+                        console.warn("⚠️ Zombie hit sound not found.");
                     }
-
-                    // ✅ Delay destruction slightly so sound can play
+                    
                     this.time.delayedCall(200, () => {
                         if (zombie && zombie.active) {
                             zombie.destroy();
@@ -786,10 +776,10 @@ export default class BossFight extends Phaser.Scene {
                     });
                 }
             });
-
+    
             console.log(`🧟‍♂️ Zombie spawned at (${spawnX}, ${spawnY})`);
         }
-
+    
         this.updateEnemyCountUI();
     }
 
@@ -933,8 +923,7 @@ export default class BossFight extends Phaser.Scene {
         }
     
         enemy.destroy();
-    }
-    
+    }    
 
     gameOver() {
         console.log("💀 Game Over! Restarting Boss Fight...");
