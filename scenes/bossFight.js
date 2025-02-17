@@ -324,13 +324,13 @@ export default class BossFight extends Phaser.Scene {
             loop: true // Ensures continuous spawning
         });
 
-        this.playerProjectileFireSFX = this.sound.add('playerProjectileFire', { volume: 1 });
-        this.bossHitSFX = this.sound.add('bossHit', { volume: 1 });
-        this.playerHitSFX = this.sound.add('playerHit', { volume: 1 });
-        this.mardiGrasZombieHitSFX = this.sound.add('mardiGrasZombieHit', { volume: 1 });
-        this.beignetMinionHitSFX = this.sound.add('beignetMinionHit', { volume: 1 });
-        this.beignetMonsterHitSFX = this.sound.add('beignetMonsterHit', { volume: 1 });
-        this.beignetProjectileFireSFX = this.sound.add('beignetProjectileFire', { volume: 1 });
+        this.playerHitSFX = this.sound.add('playerHit', { volume: 0.6 });
+        this.playerProjectileFireSFX = this.sound.add('playerProjectileFire', { volume: 0.6 });
+        this.bossHitSFX = this.sound.add('bossHit', { volume: 0.8 });
+        this.mardiGrasZombieHitSFX = this.sound.add('mardiGrasZombieHit', { volume: 0.6 });
+        this.beignetMinionHitSFX = this.sound.add('beignetMinionHit', { volume: 0.8 });
+        this.beignetMonsterHitSFX = this.sound.add('beignetMonsterHit', { volume: 0.8 });
+        this.beignetProjectileFireSFX = this.sound.add('beignetProjectileFire', { volume: 0.6 });
 
         console.log("🔊 Sound Check:", this.mardiGrasZombieHitSFX);
 
@@ -442,7 +442,7 @@ export default class BossFight extends Phaser.Scene {
     
             projectile.body.setAllowGravity(false);
             projectile.setVelocityX(this.player.flipX ? -500 : 500);
-            this.sound.play('playerProjectileFire');
+            this.playerProjectileFireSFX.play(); // ✅ Ensure sound plays when shooting
     
             this.physics.add.overlap(projectile, this.boss, () => {
                 console.log("💥 Boss hit!");
@@ -450,7 +450,7 @@ export default class BossFight extends Phaser.Scene {
                 projectile.destroy();
             });
         }
-    }
+    }    
     
     checkPlayerHealth() {
         if (this.playerHealth <= 0) {
@@ -524,15 +524,16 @@ export default class BossFight extends Phaser.Scene {
         console.log("🔥 Player hit by Beignet Projectile!");
         projectile.destroy(); // Remove projectile
     
-        this.playerHealth -= 1; // Always deal 1 damage
+        this.playerHealth -= 1;
         this.updateHealthUI();
-        this.sound.play('playerHit');
+        
+        this.playerHitSFX.play(); // ✅ Ensure sound plays on hit
     
         if (this.playerHealth <= 0) {
             console.log("💀 Player died from Beignet Projectile!");
             this.gameOver();
         }
-    }
+    }    
     
     //Boss functions
     updateBossHealthUI() {
@@ -554,26 +555,25 @@ export default class BossFight extends Phaser.Scene {
             if (this.forceFieldHealth <= 0) {
                 console.log("💥 Force Field Destroyed!");
                 this.forceField.setVisible(false);
-                this.forceFieldActive = false; // Disable force field
-                
-                // 🔥 Teleport the boss after force field is destroyed
+                this.forceFieldActive = false;
                 this.repositionBoss();
             }
-            return; // Prevent boss from taking damage while force field is up
+            return;
         }
     
-        // Boss takes damage normally
+        // ✅ Play boss hit sound
+        this.bossHitSFX.play();  
+    
         this.boss.health -= amount;
-        this.bossHitCount = (this.bossHitCount || 0) + 1; // Track hit count
-        this.bossHitSFX.play();
+        this.bossHitCount = (this.bossHitCount || 0) + 1; 
     
         console.log(`🔥 Boss hit! Health: ${this.boss.health}, Hit Count: ${this.bossHitCount}`);
     
         if (this.bossHitCount >= 5) {
-            console.log("🧟‍♂️ Spawning Mardi Gras Zombies!");
-            this.spawnMardiGrasZombies(); // ✅ Call spawn function here
-            this.activateForceField(); // ✅ Activate force field
-            this.bossHitCount = 0; // Reset hit count
+            console.log("🧟‍♂️ Spawning Minions!");
+            this.spawnMardiGrasZombies();
+            this.activateForceField();
+            this.bossHitCount = 0;
         }
     
         if (this.boss.health <= 0) {
@@ -583,8 +583,8 @@ export default class BossFight extends Phaser.Scene {
             this.checkBossDefeat();
         }
     
-        this.updateBossHealthUI(); // Update health bar after damage
-    }
+        this.updateBossHealthUI();
+    }    
     
     activateForceField() {
         this.forceFieldHealth = 5; // Set force field durability
@@ -921,10 +921,20 @@ export default class BossFight extends Phaser.Scene {
         document.getElementById('enemy-count').innerText = `Enemies Left: ${this.minions.countActive(true)}`;
     }
     
-    handleEnemyDeath(minion) {
-        minion.destroy();
-        this.updateEnemyCountUI(); // Update the count when an enemy dies
+    handleEnemyDeath(enemy) {
+        if (!enemy || !enemy.active) return;
+    
+        console.log(`💀 Enemy defeated: ${enemy.texture.key}`);
+    
+        if (enemy.texture.key === 'beignetMinion') {
+            this.beignetMinionHitSFX.play(); // ✅ Play Minion Hit SFX
+        } else if (enemy.texture.key === 'beignetMonster') {
+            this.beignetMonsterHitSFX.play(); // ✅ Play Monster Hit SFX
+        }
+    
+        enemy.destroy();
     }
+    
 
     gameOver() {
         console.log("💀 Game Over! Restarting Boss Fight...");
