@@ -1,5 +1,5 @@
 /*
-  Content-Security-Policy: frame-ancestors 'self' https://www.bhilliondollar.com https://www.bhilliondollarproductions.com https://turbonegrogame.netlify.app;
+  Content-Security-Policy: frame-ancestors 'self' https://www.bhilliondollar.com https://turbonegrogame.netlify.app;
   X-Frame-Options: ALLOWALL
   Access-Control-Allow-Origin: *
   X-Content-Type-Options: nosniff
