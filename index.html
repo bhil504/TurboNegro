@@ -1029,36 +1029,6 @@
     const game = new Phaser.Game(config);
 }
 
-// Wait for GameDistribution SDK before starting the game
-window.onload = function () {
-    if (typeof GdApi !== "undefined") {
-        console.log("GameDistribution SDK Loaded! Starting game...");
-        window.gdApi = new GdApi({
-            gameId: "cdb2ae4638494b8d9cc4f9c1ed64d3d6",
-            onEvent: function (event) {
-                console.log("GD Event: " + event.name);
-            }
-        });
-        startGame();
-    } else {
-        console.error("GameDistribution SDK not loaded! Retrying...");
-        setTimeout(() => {
-            if (typeof GdApi !== "undefined") {
-                window.gdApi = new GdApi({
-                    gameId: "cdb2ae4638494b8d9cc4f9c1ed64d3d6",
-                    onEvent: function (event) {
-                        console.log("GD Event (retry): " + event.name);
-                    }
-                });
-                startGame();
-            } else {
-                console.error("GameDistribution SDK failed to load.");
-            }
-        }, 3000);
-    }
-};
-
-
     </script>
 
     <div id="bhilliondollar">
