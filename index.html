@@ -6,11 +6,13 @@
     <meta name="touch-action" content="manipulation">
     <title>Turbo Negro - Saves The French Quarter!</title>
     <script src="https://html5.api.gamedistribution.com/main.min.js"></script>
+    <script defer src="https://html5.api.gamedistribution.com/main.min.js"></script>
+
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-GFC2WF2CGJ"></script>
     
 
-    <link rel="apple-touch-icon" href="assets/Logo/Turbo Negro.png">
+    <link rel="apple-touch-icon" href="assets/Logo/TurboNegro.png">
     <link rel="manifest" href="manifest.json">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="Turbo Negro">
@@ -643,7 +645,7 @@
 
 <div id="ios-prompt">
     <p><strong>Add Turbo Negro to your home screen for fullscreen mode!</strong></p>
-    <p>Tap the <strong>Share</strong> button <img src="assets/Logo/Turbo Negro.png alt="Share"> and then <strong>Add to Home Screen</strong></p>
+    <p>Tap the <strong>Share</strong> button <img src="assets/Logo/TurboNegro.png" alt="Share"> and then <strong>Add to Home Screen</strong></p>
     <button id="dismiss-ios-prompt">Dismiss</button>
 </div>
 
@@ -652,7 +654,7 @@
         <!-- UI and Game Container -->
         <div id="ui-container">
             <div id="logo-title-container">
-                <img id="logo" src="assets/Logo/Turbo Negro.png" alt="Turbo Negro Logo">
+                <img id="logo" src="assets/Logo/TurboNegro.png" alt="Turbo Negro Logo">
                 <h1 id="title">Saves The French Quarter!</h1>
             </div>
 
@@ -1058,6 +1060,7 @@
         }
 
     </script>
+
     <script>
         document.addEventListener("fullscreenchange", () => {
             const onscreenControls = document.getElementById("onscreen-controls");
@@ -1065,9 +1068,9 @@
                 onscreenControls.style.display = document.fullscreenElement ? "block" : "flex";
             }
         });
-        </script>
+    </script>
         
-        <script>
+    <script>
             document.addEventListener("DOMContentLoaded", function () {
                 if (typeof window.adsbygoogle !== "undefined") {
                     try {
@@ -1077,20 +1080,32 @@
                     }
                 }
             });
-        </script>
+    </script>
 
-<script>
-    var gdApi;
-    document.addEventListener("DOMContentLoaded", function () {
-        gdApi = new GdApi({
-            gameId: "cdb2ae4638494b8d9cc4f9c1ed64d3d6", // Your GameDistribution Game ID
-            onEvent: function (event) {
-                console.log("GD Event: " + event.name);
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            if (typeof GdApi !== "undefined") {
+                window.gdApi = new GdApi({
+                    gameId: "cdb2ae4638494b8d9cc4f9c1ed64d3d6",
+                    onEvent: function (event) {
+                        console.log("GD Event: " + event.name);
+                    }
+                });
+            } else {
+                console.error("GameDistribution SDK not loaded! Retrying...");
+                setTimeout(() => {
+                    if (typeof GdApi !== "undefined") {
+                        window.gdApi = new GdApi({
+                            gameId: "cdb2ae4638494b8d9cc4f9c1ed64d3d6",
+                            onEvent: function (event) {
+                                console.log("GD Event (retry): " + event.name);
+                            }
+                        });
+                    }
+                }, 3000); // Retry after 3 seconds
             }
         });
-    });
-</script>
+    </script>
 
-        
 </body>
 </html>
