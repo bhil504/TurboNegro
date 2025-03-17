@@ -6,7 +6,7 @@
     <meta name="touch-action" content="manipulation">
     <title>Turbo Negro - Saves The French Quarter!</title>
 
-    <script src="./sdk/index.js"></script>
+    <script src="https://html5.api.gamedistribution.com/main.min.js"></script>
 
     <!-- Google tag (gtag.js) -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-GFC2WF2CGJ"></script>
@@ -1024,7 +1024,40 @@
             scene: [StartMenu, Level1, Level2, Level3, Level4, Level5, BossFight,VictoryScene],
         };
 
-        const game = new Phaser.Game(config);
+        function startGame() {
+    console.log("Starting Phaser Game...");
+    const game = new Phaser.Game(config);
+}
+
+// Wait for GameDistribution SDK before starting the game
+window.onload = function () {
+    if (typeof GdApi !== "undefined") {
+        console.log("GameDistribution SDK Loaded! Starting game...");
+        window.gdApi = new GdApi({
+            gameId: "cdb2ae4638494b8d9cc4f9c1ed64d3d6",
+            onEvent: function (event) {
+                console.log("GD Event: " + event.name);
+            }
+        });
+        startGame();
+    } else {
+        console.error("GameDistribution SDK not loaded! Retrying...");
+        setTimeout(() => {
+            if (typeof GdApi !== "undefined") {
+                window.gdApi = new GdApi({
+                    gameId: "cdb2ae4638494b8d9cc4f9c1ed64d3d6",
+                    onEvent: function (event) {
+                        console.log("GD Event (retry): " + event.name);
+                    }
+                });
+                startGame();
+            } else {
+                console.error("GameDistribution SDK failed to load.");
+            }
+        }, 3000);
+    }
+};
+
 
     </script>
 
@@ -1082,30 +1115,34 @@
             });
     </script>
 
-    <script>
-        document.addEventListener("DOMContentLoaded", function () {
-            if (typeof GdApi !== "undefined") {
-                window.gdApi = new GdApi({
-                    gameId: "cdb2ae4638494b8d9cc4f9c1ed64d3d6",
-                    onEvent: function (event) {
-                        console.log("GD Event: " + event.name);
-                    }
-                });
-            } else {
-                console.error("GameDistribution SDK not loaded! Retrying...");
-                setTimeout(() => {
-                    if (typeof GdApi !== "undefined") {
-                        window.gdApi = new GdApi({
-                            gameId: "cdb2ae4638494b8d9cc4f9c1ed64d3d6",
-                            onEvent: function (event) {
-                                console.log("GD Event (retry): " + event.name);
-                            }
-                        });
-                    }
-                }, 3000); // Retry after 3 seconds
-            }
-        });
-    </script>
+<script>
+    window.onload = function () {
+        if (typeof GdApi !== "undefined") {
+            console.log("GameDistribution SDK Loaded!");
+            window.gdApi = new GdApi({
+                gameId: "cdb2ae4638494b8d9cc4f9c1ed64d3d6",
+                onEvent: function (event) {
+                    console.log("GD Event: " + event.name);
+                }
+            });
+        } else {
+            console.error("GameDistribution SDK not loaded! Retrying...");
+            setTimeout(() => {
+                if (typeof GdApi !== "undefined") {
+                    window.gdApi = new GdApi({
+                        gameId: "cdb2ae4638494b8d9cc4f9c1ed64d3d6",
+                        onEvent: function (event) {
+                            console.log("GD Event (retry): " + event.name);
+                        }
+                    });
+                } else {
+                    console.error("GameDistribution SDK failed to load.");
+                }
+            }, 3000);
+        }
+    };
+</script>
+
 
 </body>
 </html>
