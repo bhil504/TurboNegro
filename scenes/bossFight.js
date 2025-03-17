@@ -949,6 +949,11 @@ export default class BossFight extends Phaser.Scene {
             console.log("🔄 Restarting Boss Fight via Click/Tap...");
             this.scene.restart();
         });
+
+        if (typeof gdApi !== "undefined" && gdApi.showAd) {
+            gdApi.showAd();
+        }
+        
     }
     
     levelComplete() {

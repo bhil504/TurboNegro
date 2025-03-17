@@ -15,6 +15,11 @@ export default class StartMenu extends Phaser.Scene {
     create() {
         const width = 1100;
         const height = 500;
+
+        if (typeof gdApi !== "undefined" && gdApi.showAd) {
+            gdApi.showAd();
+        }
+        
     
         const background = this.add.image(width / 2, height / 2, 'startBackground');
         background.setDisplaySize(width, height).setOrigin(0.5);
