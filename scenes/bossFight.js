@@ -958,16 +958,25 @@ export default class BossFight extends Phaser.Scene {
     
     levelComplete() {
         console.log("Final Boss Defeated! Game Complete!");
-        
+    
+        // ✅ Fire Meta Pixel GameCompleted event
+        if (typeof fbq === 'function') {
+            fbq('trackCustom', 'GameCompleted');
+            console.log("📈 Meta Pixel: GameCompleted event fired!");
+        } else {
+            console.warn("⚠️ Meta Pixel fbq function not found.");
+        }
+    
         // Delay cleanup to ensure transition happens smoothly
         this.time.delayedCall(1000, () => {
             this.cleanUpLevel();
-            
+    
             this.time.delayedCall(2000, () => {
                 this.scene.start('VictoryScene');
             });
         });
     }
+    
     
     cleanUpLevel() {
         console.log("🧹 Cleaning up level...");

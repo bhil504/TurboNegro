@@ -321,10 +321,21 @@ export default class Level5 extends Phaser.Scene {
 
     levelComplete() {
         console.log("Level 5 Complete!");
-        this.cleanUpLevel();  // FIXED: Clean up level before transition
+    
+        // 🔥 Meta Pixel custom event for Level 5 completion
+        if (typeof fbq !== 'undefined') {
+            fbq('trackCustom', 'LevelComplete', { level: '5' });
+        }
+    
+        this.cleanUpLevel(); // Stop everything and clean up
+    
+        // Show level complete screen
         this.add.image(this.scale.width / 2, this.scale.height / 2, 'levelComplete').setOrigin(0.5);
+    
+        // Proceed to boss fight
         this.handleLevelTransition(() => this.scene.start('BossFight'));
     }
+    
 
     gameOver() {
         console.log("Game Over");

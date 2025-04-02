@@ -386,6 +386,12 @@ export default class Level4 extends Phaser.Scene {
 
     levelComplete() {
         console.log("Level Complete!");
+    
+        // 🔥 Meta Pixel custom event for Level 4 completion
+        if (typeof fbq !== 'undefined') {
+            fbq('trackCustom', 'LevelComplete', { level: '4' });
+        }
+    
         this.cleanUpLevel(); // Stop all enemy spawns
     
         // Show level complete UI

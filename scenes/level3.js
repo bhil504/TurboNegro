@@ -609,6 +609,11 @@ export default class Level3 extends Phaser.Scene {
     levelComplete() {
         console.log("Level Complete! Moving to Level 4");
     
+        // 🔥 Meta Pixel custom event for Level 3 completion
+        if (typeof fbq !== 'undefined') {
+            fbq('trackCustom', 'LevelComplete', { level: '3' });
+        }
+    
         // Stop blimp movement and destruction
         if (this.mardiGrasBlimp) {
             this.tweens.killTweensOf(this.mardiGrasBlimp);

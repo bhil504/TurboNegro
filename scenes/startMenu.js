@@ -87,10 +87,14 @@ export default class StartMenu extends Phaser.Scene {
         // Start game when clicked
         startButton.on('pointerdown', () => {
             this.sound.stopAll();
+
+            // 🔥 Meta Pixel custom event for game start
+            if (typeof fbq !== 'undefined') {
+                fbq('trackCustom', 'GameStarted');
+            }
+
             this.scene.start('Level1');
         });
-
-        
 
         this.music = this.sound.add('menuMusic', { loop: true, volume: 0.6 });
         this.music.play();

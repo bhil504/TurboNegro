@@ -297,6 +297,11 @@ export default class Level1 extends Phaser.Scene {
     levelComplete() {
         console.log("Level Complete! Moving to Level 2");
     
+        // 🔥 Meta Pixel custom event for Level 1 completion
+        if (typeof fbq !== 'undefined') {
+            fbq('trackCustom', 'LevelComplete', { level: '1' });
+        }
+    
         // Stop all sounds and timers
         this.cleanUpLevel();
     
@@ -309,7 +314,7 @@ export default class Level1 extends Phaser.Scene {
         };
     
         this.handleLevelTransition(proceedToNextLevel);
-    }
+    }    
     
     cleanUpLevel() {
         // Stop music if it's playing
