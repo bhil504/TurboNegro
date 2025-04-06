@@ -559,7 +559,7 @@
     </style>
 
     <!-- Meta Pixel Code -->
-<script>
+    <script>
     !function(f,b,e,v,n,t,s)
     {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
     n.callMethod.apply(n,arguments):n.queue.push(arguments)};
@@ -570,105 +570,108 @@
     'https://connect.facebook.net/en_US/fbevents.js');
     fbq('init', '932990387396685'); // Use your Pixel ID here
     fbq('track', 'PageView');
-  </script>
-  <noscript>
-    <img height="1" width="1" style="display:none"
-    src="https://www.facebook.com/tr?id=932990387396685&ev=PageView&noscript=1"/>
-  </noscript>
-  <!-- End Meta Pixel Code -->
+    </script>
+    <noscript>
+        <img height="1" width="1" style="display:none"
+        src="https://www.facebook.com/tr?id=932990387396685&ev=PageView&noscript=1"/>
+    </noscript>
+    <!-- End Meta Pixel Code -->
   
 
 </head>
-<script>
-    document.addEventListener("DOMContentLoaded", function () {
-    function isInStandaloneMode() {
-        return window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone;
-    }
-
-    if (isInStandaloneMode()) {
-        // Adjust game container for iOS fullscreen
-        document.body.style.height = "100vh";
-        document.body.style.overflow = "hidden";
-
-        const gameContainer = document.getElementById("fullscreen");
-        gameContainer.style.position = "absolute";
-        gameContainer.style.top = "0";
-        gameContainer.style.left = "0";
-        gameContainer.style.width = "100vw";
-        gameContainer.style.height = "100vh";
-
-        // Hide fullscreen button since iOS standalone ignores requestFullscreen()
-        const fullscreenButton = document.getElementById("mobile-fullscreen-button");
-        if (fullscreenButton) {
-            fullscreenButton.style.display = "none";
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+        function isInStandaloneMode() {
+            return window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone;
         }
-    }
-});
 
-</script> 
+        if (isInStandaloneMode()) {
+            // Adjust game container for iOS fullscreen
+            document.body.style.height = "100vh";
+            document.body.style.overflow = "hidden";
 
-<script>
-    document.addEventListener("DOMContentLoaded", function () {
-        const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
-        
-        if (isIOS) {
-            document.getElementById("ios-share-button").style.display = "block"; // Show button for iOS users
-        }
-    
-        document.getElementById("ios-share-button").addEventListener("click", function () {
-            if (navigator.share) {
-                navigator.share({
-                    title: "Turbo Negro - Saves The French Quarter!",
-                    text: "Play Turbo Negro now! Add it to your home screen for fullscreen mode.",
-                    url: window.location.href
-                })
-                .then(() => console.log("Shared successfully"))
-                .catch((error) => console.log("Error sharing:", error));
-            } else {
-                alert("Sharing is not supported on this browser. For the best experience, use Safari to add Turbo Negro to your home screen.");
+            const gameContainer = document.getElementById("fullscreen");
+            gameContainer.style.position = "absolute";
+            gameContainer.style.top = "0";
+            gameContainer.style.left = "0";
+            gameContainer.style.width = "100vw";
+            gameContainer.style.height = "100vh";
+
+            // Hide fullscreen button since iOS standalone ignores requestFullscreen()
+            const fullscreenButton = document.getElementById("mobile-fullscreen-button");
+            if (fullscreenButton) {
+                fullscreenButton.style.display = "none";
             }
-        });
+        }
     });
-</script>
 
-<script>
-    document.addEventListener("DOMContentLoaded", function () {
-        function adjustForFullscreen() {
-            const isStandalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone;
-            const isLandscape = window.innerWidth > window.innerHeight;
+    </script> 
 
-            if (isStandalone && isLandscape) {
-                document.body.style.position = "absolute";
-                document.body.style.width = "100vw";
-                document.body.style.height = "100vh";
-                document.body.style.overflow = "hidden";
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            const isIOS = /iPhone|iPad|iPod/.test(navigator.userAgent);
+            
+            if (isIOS) {
+                document.getElementById("ios-share-button").style.display = "block"; // Show button for iOS users
+            }
+        
+            document.getElementById("ios-share-button").addEventListener("click", function () {
+                if (navigator.share) {
+                    navigator.share({
+                        title: "Turbo Negro - Saves The French Quarter!",
+                        text: "Play Turbo Negro now! Add it to your home screen for fullscreen mode.",
+                        url: window.location.href
+                    })
+                    .then(() => console.log("Shared successfully"))
+                    .catch((error) => console.log("Error sharing:", error));
+                } else {
+                    alert("Sharing is not supported on this browser. For the best experience, use Safari to add Turbo Negro to your home screen.");
+                }
+            });
+        });
+    </script>
 
-                const fullscreenElement = document.getElementById("fullscreen");
-                if (fullscreenElement) {
-                    fullscreenElement.style.position = "absolute";
-                    fullscreenElement.style.top = "0";
-                    fullscreenElement.style.left = "0";
-                    fullscreenElement.style.width = "100vw";
-                    fullscreenElement.style.height = "100vh";
-                    fullscreenElement.style.justifyContent = "center";
-                    fullscreenElement.style.alignItems = "center";
+    <script>
+        document.addEventListener("DOMContentLoaded", function () {
+            function adjustForFullscreen() {
+                const isStandalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone;
+                const isLandscape = window.innerWidth > window.innerHeight;
+
+                if (isStandalone && isLandscape) {
+                    document.body.style.position = "absolute";
+                    document.body.style.width = "100vw";
+                    document.body.style.height = "100vh";
+                    document.body.style.overflow = "hidden";
+
+                    const fullscreenElement = document.getElementById("fullscreen");
+                    if (fullscreenElement) {
+                        fullscreenElement.style.position = "absolute";
+                        fullscreenElement.style.top = "0";
+                        fullscreenElement.style.left = "0";
+                        fullscreenElement.style.width = "100vw";
+                        fullscreenElement.style.height = "100vh";
+                        fullscreenElement.style.justifyContent = "center";
+                        fullscreenElement.style.alignItems = "center";
+                    }
                 }
             }
-        }
 
-        // Run adjustments on load and when rotating the screen
-        adjustForFullscreen();
-        window.addEventListener("orientationchange", () => {
-            setTimeout(adjustForFullscreen, 300);
+            // Run adjustments on load and when rotating the screen
+            adjustForFullscreen();
+            window.addEventListener("orientationchange", () => {
+                setTimeout(adjustForFullscreen, 300);
+            });
         });
-    });
-</script>
+    </script>
 
-<div id="ios-prompt">
-    <p><strong>Add Turbo Negro to your home screen for fullscreen mode!</strong></p>
-    <p>Tap the <strong>Share</strong> button <img src="assets/Logo/TurboNegro.png" alt="Share"> and then <strong>Add to Home Screen</strong></p>
-    <button id="dismiss-ios-prompt">Dismiss</button>
-</div>
+    <div id="ios-prompt">
+        <p><strong>Add Turbo Negro to your home screen for fullscreen mode!</strong></p>
+        <p>Tap the <strong>Share</strong> button <img src="assets/Logo/TurboNegro.png" alt="Share"> and then <strong>Add to Home Screen</strong></p>
+        <button id="dismiss-ios-prompt">Dismiss</button>
+    </div>
+
+    <div id="warning">Warning!<br>
+        Updates will be continuing soon!</div>
 
 <body>
     <div id="main-container">
